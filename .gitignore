@@ -1,3 +1,9 @@
+build
+nbproject
+test
+build.xml
+manifest.mf
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
