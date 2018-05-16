@@ -1,14 +1,21 @@
 package dt;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.util.ArrayList;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
 /**
  * Constructs a DT of a point set and a quadrilateral by constructing a VoronoiDiagram then computing its dual
  * 
  * @author Lee Glendenning
  */
-public class DelaunayTriangulation {
+public class DelaunayTriangulation extends JPanel{
     
     private final ArrayList<Point> points;
     private ArrayList<DelaunayNode> nodes;
@@ -105,6 +112,40 @@ public class DelaunayTriangulation {
      */
     public void drawDT() {
         System.out.println("Drawing DT");
+        
+        // Set up display window
+        JFrame window = new JFrame("Delaunay Triangulation");
+        window.setSize(800, 700);
+        window.setResizable(false);
+        window.setLocation(375, 25);
+        window.getContentPane().setBackground(Color.BLACK);
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        Container contentPane = window.getContentPane();
+        contentPane.setLayout(new BorderLayout());
+        contentPane.add(this, BorderLayout.CENTER);
+        window.setPreferredSize(new Dimension(800, 700));
+        window.setLocationRelativeTo(null);
+        window.pack();
+        window.setVisible(true);
+    }
+    
+    /** 
+     * Draws the Delaunay triangulation to the window
+     * 
+     * @param g Graphics object used to draw to the screen
+     */
+    @Override
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        
+        //g.setColor(new Color(51, 153, 255));
+        
+        // Draw points - change to nodes later
+        for (Point p : this.points) {
+            g.fillOval(p.x * 100, p.y * 100, 10, 10); // x, y, width, height
+        }
+        
     }
     
 }
