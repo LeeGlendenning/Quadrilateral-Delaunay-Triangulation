@@ -96,12 +96,17 @@ public class Quadrilateral {
      * @param scaleFactor Factor to scale pixels by
      */
     public void drawQuad(Graphics2D g2d, Point p, int scaleFactor) {
-        for (int i = 0; i < 3; i ++) {
+        System.out.println("---Drawing quad---");
+        System.out.println("Center: (" + p.x + ", " + p.y + ")");
+        int j = 1;
+        for (int i = 0; i < 4; i ++) {
+            j = (j==3) ? 0 : i+1; // Wrap around to draw edge from vertices[3] to vertices[0]
             g2d.drawLine((p.x + distToCenter[i].x)*scaleFactor, (p.y + distToCenter[i].y)*scaleFactor, 
-                    (p.x + distToCenter[i+1].x)*scaleFactor, (p.y + distToCenter[i+1].y)*scaleFactor); // x1, y1, x2, y2
+                    (p.x + distToCenter[j].x)*scaleFactor, (p.y + distToCenter[j].y)*scaleFactor); // x1, y1, x2, y2
+            System.out.print("(" + (p.x + distToCenter[i].x) + ", " + (p.y + distToCenter[i].y) + ") ");
+            System.out.println("(" + (p.x + distToCenter[j].x) + ", " + (p.y + distToCenter[j].y) + ")");
         }
-        g2d.drawLine((p.x + distToCenter[3].x)*scaleFactor, (p.y + distToCenter[3].y)*scaleFactor, 
-                    (p.x + distToCenter[0].x)*scaleFactor, (p.y + distToCenter[0].y)*scaleFactor); // x1, y1, x2, y2
+        System.out.println();
     }
     
 }

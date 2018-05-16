@@ -49,7 +49,7 @@ public class VoronoiDiagram extends JPanel{
             for (int j = 1+i; j < points.size(); j ++) 
             {
                 // 1 bisector has negative recipricol of slope p1,p2
-                Point p1 = points.get(i);
+                /*Point p1 = points.get(i);
                 Point p2 = points.get(j);
                 ArrayList<Point> adjPoints = new ArrayList();
                 adjPoints.add(p1);
@@ -59,7 +59,7 @@ public class VoronoiDiagram extends JPanel{
                 Point bisectorEndPt = new Point((p2.y - p1.y) + xIntercept, -(p2.x - p1.x));
                 System.out.println("BisectorStartPt: (" + bisectorStartPt.x + ", " + bisectorStartPt.y + ")");
                 System.out.println("bisectorEndPt: (" + bisectorEndPt.x + ", " + bisectorEndPt.y + ")");
-                voronoiEdges.add(new VoronoiBisector(adjPoints, bisectorStartPt, bisectorEndPt));
+                voronoiEdges.add(new VoronoiBisector(adjPoints, bisectorStartPt, bisectorEndPt));*/
             }
         }
     }
@@ -96,7 +96,8 @@ public class VoronoiDiagram extends JPanel{
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         
-        int scaleFactor = 100;
+        int scaleFactor = 10;
+        int pointRadius = 3;
         
         Graphics2D g2d = (Graphics2D) g;
         g2d.setStroke(new BasicStroke(1.5f));
@@ -104,7 +105,8 @@ public class VoronoiDiagram extends JPanel{
         // Draw points and quads
         for (Point p : this.points) 
         {
-            g2d.fill(new Ellipse2D.Double(p.x * scaleFactor, p.y * scaleFactor, 6, 6)); // x, y, width, height
+            // Subtract pointRadius because points are drawn at coordinates from top left
+            g2d.fill(new Ellipse2D.Double(p.x * scaleFactor - pointRadius, p.y * scaleFactor - pointRadius, pointRadius*2, pointRadius*2)); // x, y, width, height
             quad.drawQuad(g2d, p, scaleFactor);
         }
         
@@ -114,6 +116,7 @@ public class VoronoiDiagram extends JPanel{
             g2.drawLine(bisector.startPoint.x * scaleFactor, bisector.startPoint.y * scaleFactor, bisector.endPoint.x * scaleFactor, bisector.endPoint.y * scaleFactor);
         }*/
         
+        System.out.println("***********************");
     }
     
 }
