@@ -85,6 +85,7 @@ public class VoronoiDiagram extends JPanel{
         window.setLocationRelativeTo(null);
         window.pack();
         window.setVisible(true);
+        quad.scaleQuad(4.0);
     }
     
     /** 
@@ -96,7 +97,7 @@ public class VoronoiDiagram extends JPanel{
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         
-        int scaleFactor = 10;
+        int pixelFactor = 1;
         int pointRadius = 3;
         
         Graphics2D g2d = (Graphics2D) g;
@@ -106,8 +107,8 @@ public class VoronoiDiagram extends JPanel{
         for (Point p : this.points) 
         {
             // Subtract pointRadius because points are drawn at coordinates from top left
-            g2d.fill(new Ellipse2D.Double(p.x * scaleFactor - pointRadius, p.y * scaleFactor - pointRadius, pointRadius*2, pointRadius*2)); // x, y, width, height
-            quad.drawQuad(g2d, p, scaleFactor);
+            g2d.fill(new Ellipse2D.Double(p.x * pixelFactor - pointRadius, p.y * pixelFactor - pointRadius, pointRadius*2, pointRadius*2)); // x, y, width, height
+            quad.drawQuad(g2d, p, pixelFactor);
         }
         
         // Draw bisectors

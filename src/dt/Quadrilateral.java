@@ -11,8 +11,8 @@ import java.awt.Point;
 public class Quadrilateral {
     
     private Point[] vertices = new Point[4];
-    private double[] slopeToCenter = new double[4]; // Slope of each point to center
-    private Point[] distToCenter = new Point[4];
+    private double[] slopeToCenter; 
+    private Point[] distToCenter;
     //private int[] yIntercepts = new int[4];
     private Point center;
 
@@ -22,12 +22,22 @@ public class Quadrilateral {
      * @param vertices array of Point objects defining vertices
      */
     public Quadrilateral(Point[] vertices) {
+        this.slopeToCenter = new double[4];
+        this.distToCenter = new Point[4];
         this.vertices = vertices;
         center = new Point();
         computeCenter();
         computeSlopes();
         computeDistToCenter();
         //computeYIntercepts();
+        
+    }
+    
+    private void printVertices() {
+        for (int i = 0; i < 4; i ++) {
+            System.out.print("(" + this.vertices[i].x + ", " + this.vertices[i].y + ") ");
+        }
+        System.out.println();
     }
     
     /**
@@ -36,6 +46,8 @@ public class Quadrilateral {
      * @param filename name of file to load vertices from
      */
     public Quadrilateral(String filename) {
+        this.slopeToCenter = new double[4];
+        this.distToCenter = new Point[4];
         
     }
     
@@ -80,11 +92,33 @@ public class Quadrilateral {
     }
     
     /**
-     * Scale quad such that it intersects with another quad
+     * Scale quad by a scaling factor
      * 
-     * @param q2 Quad to intersect with
+     * @param scaleFactor Factor to scale vertices by
      */
-    public void scaleQuad(Quadrilateral q2) {
+    public void scaleQuad(double scaleFactor) {
+        
+        for (int i = 0; i < 4; i ++) {
+            // Translate center of quad to origin
+            this.vertices[i].x -= this.center.x;
+            this.vertices[i].y -= this.center.y;
+            
+            // Multiply x and y coords by scale factor
+            this.vertices[i].x *= scaleFactor;
+            this.vertices[i].y *= scaleFactor;
+            
+            // Translate quad back to its location
+            this.vertices[i].x += this.center.x;
+            this.vertices[i].y += this.center.y;
+        }
+        // Update distances of each vertex to center for drawing
+        computeDistToCenter();
+    }
+    
+    /**
+     * Scale quad to minimum size
+     */
+    private void minimizeQuad() {
         
     }
     
@@ -93,16 +127,16 @@ public class Quadrilateral {
      * 
      * @param g2d Graphics 2D object used to draw to the screen
      * @param p Point to draw quad around
-     * @param scaleFactor Factor to scale pixels by
+     * @param pixelFactor Factor to scale pixels by
      */
-    public void drawQuad(Graphics2D g2d, Point p, int scaleFactor) {
+    public void drawQuad(Graphics2D g2d, Point p, int pixelFactor) {
         System.out.println("---Drawing quad---");
         System.out.println("Center: (" + p.x + ", " + p.y + ")");
         int j = 1;
         for (int i = 0; i < 4; i ++) {
             j = (j==3) ? 0 : i+1; // Wrap around to draw edge from vertices[3] to vertices[0]
-            g2d.drawLine((p.x + distToCenter[i].x)*scaleFactor, (p.y + distToCenter[i].y)*scaleFactor, 
-                    (p.x + distToCenter[j].x)*scaleFactor, (p.y + distToCenter[j].y)*scaleFactor); // x1, y1, x2, y2
+            g2d.drawLine((p.x + distToCenter[i].x)*pixelFactor, (p.y + distToCenter[i].y)*pixelFactor, 
+                    (p.x + distToCenter[j].x)*pixelFactor, (p.y + distToCenter[j].y)*pixelFactor); // x1, y1, x2, y2
             System.out.print("(" + (p.x + distToCenter[i].x) + ", " + (p.y + distToCenter[i].y) + ") ");
             System.out.println("(" + (p.x + distToCenter[j].x) + ", " + (p.y + distToCenter[j].y) + ")");
         }

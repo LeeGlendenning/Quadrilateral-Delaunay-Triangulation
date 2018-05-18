@@ -18,11 +18,11 @@ public class Test {
     public static void main(String[] args) {
         
         ArrayList<Point> pts = new ArrayList();
-        pts.add(new Point(1, 1));
-        pts.add(new Point(5, 3));
-        pts.add(new Point(2, 3));
+        pts.add(new Point(100, 100));
+        pts.add(new Point(500, 300));
+        pts.add(new Point(200, 300));
         
-        Point[] quad = {new Point(0,0), new Point(2,0), new Point(2,2), new Point(0,2)};
+        Point[] quad = {new Point(0,0), new Point(20,0), new Point(40,20), new Point(0,20)};
         Quadrilateral q = new Quadrilateral(quad);
         
         DelaunayTriangulation dt = new DelaunayTriangulation(q, pts);
