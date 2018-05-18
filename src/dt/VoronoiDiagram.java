@@ -65,6 +65,23 @@ public class VoronoiDiagram extends JPanel{
     }
     
     /**
+     * Scales quads until first intersection is found
+     */
+    private void findFirstIntersection() {
+        
+    }
+    
+    /**
+     * Determine whether Quadrilateral q intersects this quad
+     * 
+     * @param q reference quad
+     * @return true if q intersects the quad, false otherwise
+     */
+    public boolean isIntersection(Quadrilateral q) {
+        return false;
+    }
+    
+    /**
      * Create a window and draw the Voronoi diagram to the screen
      */
     private void drawVoronoi() {
@@ -85,7 +102,10 @@ public class VoronoiDiagram extends JPanel{
         window.setLocationRelativeTo(null);
         window.pack();
         window.setVisible(true);
-        quad.scaleQuad(4.0);
+        
+        
+        //quad.minimizeQuad();      
+        //quad.scaleQuad(3);
     }
     
     /** 

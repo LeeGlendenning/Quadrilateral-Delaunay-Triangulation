@@ -11,9 +11,7 @@ import java.awt.Point;
 public class Quadrilateral {
     
     private Point[] vertices = new Point[4];
-    private double[] slopeToCenter; 
     private Point[] distToCenter;
-    //private int[] yIntercepts = new int[4];
     private Point center;
 
     /**
@@ -22,20 +20,16 @@ public class Quadrilateral {
      * @param vertices array of Point objects defining vertices
      */
     public Quadrilateral(Point[] vertices) {
-        this.slopeToCenter = new double[4];
         this.distToCenter = new Point[4];
         this.vertices = vertices;
-        center = new Point();
+        this.center = new Point();
         computeCenter();
-        computeSlopes();
-        computeDistToCenter();
-        //computeYIntercepts();
-        
+        minimizeQuad();
     }
     
-    private void printVertices() {
+    private void printVertices(Point[] vSet) {
         for (int i = 0; i < 4; i ++) {
-            System.out.print("(" + this.vertices[i].x + ", " + this.vertices[i].y + ") ");
+            System.out.print("(" + vSet[i].x + ", " + vSet[i].y + ") ");
         }
         System.out.println();
     }
@@ -46,7 +40,6 @@ public class Quadrilateral {
      * @param filename name of file to load vertices from
      */
     public Quadrilateral(String filename) {
-        this.slopeToCenter = new double[4];
         this.distToCenter = new Point[4];
         
     }
@@ -62,15 +55,6 @@ public class Quadrilateral {
     }
     
     /**
-     * Compute and store the slope of each line defined by a vertex and the center of the quad
-     */
-    private void computeSlopes() {
-        for (int i = 0; i < 4; i ++) {
-            slopeToCenter[i] = (vertices[i].y - center.y) / (vertices[i].x - center.x);
-        }
-    }
-    
-    /**
      * Compute and store the distance of each vertex to the center of the quad
      */
     private void computeDistToCenter() {
@@ -79,25 +63,14 @@ public class Quadrilateral {
         }
     }
     
-    
-    
-    /**
-     * Determine whether Quadrilateral q intersects this quad
-     * 
-     * @param q reference quad
-     * @return true if q intersects the quad, false otherwise
-     */
-    public boolean isIntersection(Quadrilateral q) {
-        return false;
-    }
-    
     /**
      * Scale quad by a scaling factor
      * 
      * @param scaleFactor Factor to scale vertices by
+     * @return True if scaling changed coordinates, false otherwise (due to integer rounding)
      */
-    public void scaleQuad(double scaleFactor) {
-        
+    public boolean scaleQuad(double scaleFactor) {
+        Point[] tempVertices = deepCopyPointSet(this.vertices);
         for (int i = 0; i < 4; i ++) {
             // Translate center of quad to origin
             this.vertices[i].x -= this.center.x;
@@ -111,15 +84,85 @@ public class Quadrilateral {
             this.vertices[i].x += this.center.x;
             this.vertices[i].y += this.center.y;
         }
+        //this.currentScale = scaleFactor;
         // Update distances of each vertex to center for drawing
         computeDistToCenter();
+        printVertices(this.vertices);
+        
+        return pointsDifferent(tempVertices, this.vertices);
+    }
+    
+    /**
+     * Create deep copy of a point array
+     * 
+     * @param ptSet Point array to clone
+     * @return Deep copy of ptSet
+     */
+    private Point[] deepCopyPointSet(Point[] ptSet) {
+        Point[] newSet = new Point[4];
+        for (int i = 0; i < 4; i ++) {
+            newSet[i] = new Point();
+            newSet[i].x = ptSet[i].x;
+            newSet[i].y = ptSet[i].y;
+        }
+        return newSet;
+    }
+    
+    /**
+     * Determines whether two point sets are the same or not
+     * 
+     * @param pSet1 First point set
+     * @param pSet2 Second point set
+     * @return True if point sets are different, false otherwise
+     */
+    private boolean pointsDifferent(Point[] ptSet1, Point[] ptSet2) {
+        for (int i = 0; i < 4; i ++) {
+            if (ptSet1[i].x != ptSet2[i].x || ptSet1[i].y != ptSet2[i].y) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**
      * Scale quad to minimum size
+     * Scales just below min but scaling back up by a small amount doesn't do anything because of integer coordinates (doubles rounded)
      */
     private void minimizeQuad() {
-        
+        // Actual min is 3 but due to integer rounding this ensures min will be 3
+        while (edgeLengthsLargerThanMin(4.0)) {
+            System.out.println(scaleQuad(0.9));
+        }
+    }
+    
+    /**
+     * Check that area of quad is less than 1
+     * 
+     * @param min Minimum allowed length of an edge in the quad
+     * @return True if area is larger than 1, false otherwise
+     */
+    private boolean edgeLengthsLargerThanMin(double min) {
+        int j = 1;
+        for (int i = 0; i < 4; i ++) 
+        {
+            j = (j==3) ? 0 : i+1;
+            if (euclideanDistance(this.vertices[i], this.vertices[j]) < min){
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Compute the Euclidean distance between two points
+     * 
+     * @param p1 First point
+     * @param p2 Second point
+     * @return Euclidean distance between p1 and p2
+     */
+    private double euclideanDistance(Point p1, Point p2) {
+        System.out.println("dist( (" + p1.x + "," + p1.y + "), (" + p2.x + "," + p2.y + ") ) = " + (Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2))));
+        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
     }
     
     /**
