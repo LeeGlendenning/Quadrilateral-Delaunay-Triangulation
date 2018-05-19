@@ -7,7 +7,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import javax.swing.JFrame;
@@ -43,23 +42,23 @@ public class VoronoiDiagram extends JPanel{
      * Construct Voronoi diagram for the point set using the quad
      */
     private void constructVoronoi() {
-        // for each pair of points, find bisectors
-        for (int i = 0; i < points.size(); i ++) 
-        {
-            for (int j = 1+i; j < points.size(); j ++) 
+        
+        for (int iterations = 0; iterations < 35; iterations ++) {
+            double scale = 1.1;
+            
+            this.quad.scaleQuad(scale);
+            
+            // for each pair of points, check for quad intersection
+            for (int i = 0; i < points.size(); i ++) 
             {
-                // 1 bisector has negative recipricol of slope p1,p2
-                /*Point p1 = points.get(i);
-                Point p2 = points.get(j);
-                ArrayList<Point> adjPoints = new ArrayList();
-                adjPoints.add(p1);
-                adjPoints.add(p2);
-                int xIntercept = p2.x - p1.x;
-                Point bisectorStartPt = new Point(-(p2.y - p1.y) + xIntercept, (p2.x - p1.x));
-                Point bisectorEndPt = new Point((p2.y - p1.y) + xIntercept, -(p2.x - p1.x));
-                System.out.println("BisectorStartPt: (" + bisectorStartPt.x + ", " + bisectorStartPt.y + ")");
-                System.out.println("bisectorEndPt: (" + bisectorEndPt.x + ", " + bisectorEndPt.y + ")");
-                voronoiEdges.add(new VoronoiBisector(adjPoints, bisectorStartPt, bisectorEndPt));*/
+                for (int j = i+1; j < points.size(); j ++) 
+                {
+                    if (isIntersection(this.quad, this.points.get(i), this.points.get(j))) {
+                        // Found first intersection, all we care about rn
+                        // To do: draw it and keep going
+                        return;
+                    }
+                }
             }
         }
     }
@@ -72,12 +71,14 @@ public class VoronoiDiagram extends JPanel{
     }
     
     /**
-     * Determine whether Quadrilateral q intersects this quad
+     * Determine whether Quadrilateral q around two points has an intersection
      * 
-     * @param q reference quad
+     * @param q Reference quad
+     * @param p1 First point
+     * @param p2 Second point
      * @return true if q intersects the quad, false otherwise
      */
-    public boolean isIntersection(Quadrilateral q) {
+    public boolean isIntersection(Quadrilateral q, Point p1, Point p2) {
         return false;
     }
     

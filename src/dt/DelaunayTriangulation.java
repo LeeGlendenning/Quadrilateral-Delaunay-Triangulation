@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Point;
 import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -143,7 +142,7 @@ public class DelaunayTriangulation extends JPanel{
         
         // Draw points - change to nodes later
         for (Point p : this.points) {
-            g.fillOval(p.x * 100, p.y * 100, 10, 10); // x, y, width, height
+            g.fillOval((int)Math.round(p.x) * 100, (int)Math.round(p.y) * 100, 10, 10); // x, y, width, height
         }
         
     }

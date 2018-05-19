@@ -1,7 +1,6 @@
 package dt;
 
 import java.awt.Graphics2D;
-import java.awt.Point;
 
 /**
  * Maintains a quadrilateral given 4 vertices
@@ -48,8 +47,8 @@ public class Quadrilateral {
      * Compute and store center of quad
      */
     private void computeCenter() {
-        int x = (vertices[0].x + vertices[1].x + vertices[2].x + vertices[3].x) / 4;
-        int y = (vertices[0].y + vertices[1].y + vertices[2].y + vertices[3].y) / 4;
+        double x = (vertices[0].x + vertices[1].x + vertices[2].x + vertices[3].x) / 4;
+        double y = (vertices[0].y + vertices[1].y + vertices[2].y + vertices[3].y) / 4;
         center = new Point(x, y);
         System.out.println("Center of quad: (" + center.x + ", " + center.y + ")");
     }
@@ -67,9 +66,8 @@ public class Quadrilateral {
      * Scale quad by a scaling factor
      * 
      * @param scaleFactor Factor to scale vertices by
-     * @return True if scaling changed coordinates, false otherwise (due to integer rounding)
      */
-    public boolean scaleQuad(double scaleFactor) {
+    public void scaleQuad(double scaleFactor) {
         Point[] tempVertices = deepCopyPointSet(this.vertices);
         for (int i = 0; i < 4; i ++) {
             // Translate center of quad to origin
@@ -89,7 +87,7 @@ public class Quadrilateral {
         computeDistToCenter();
         printVertices(this.vertices);
         
-        return pointsDifferent(tempVertices, this.vertices);
+        //return pointsDifferent(tempVertices, this.vertices);
     }
     
     /**
@@ -115,24 +113,26 @@ public class Quadrilateral {
      * @param pSet2 Second point set
      * @return True if point sets are different, false otherwise
      */
-    private boolean pointsDifferent(Point[] ptSet1, Point[] ptSet2) {
+    /*private boolean pointsDifferent(Point[] ptSet1, Point[] ptSet2) {
         for (int i = 0; i < 4; i ++) {
             if (ptSet1[i].x != ptSet2[i].x || ptSet1[i].y != ptSet2[i].y) {
                 return true;
             }
         }
         return false;
-    }
+    }*/
     
     /**
      * Scale quad to minimum size
      * Scales just below min but scaling back up by a small amount doesn't do anything because of integer coordinates (doubles rounded)
      */
     private void minimizeQuad() {
+        System.out.println("Minimizing quad");
         // Actual min is 3 but due to integer rounding this ensures min will be 3
-        while (edgeLengthsLargerThanMin(4.0)) {
-            System.out.println(scaleQuad(0.9));
+        while (edgeLengthsLargerThanMin(8.0)) {
+            scaleQuad(0.9);
         }
+        System.out.println();
     }
     
     /**
@@ -161,7 +161,7 @@ public class Quadrilateral {
      * @return Euclidean distance between p1 and p2
      */
     private double euclideanDistance(Point p1, Point p2) {
-        System.out.println("dist( (" + p1.x + "," + p1.y + "), (" + p2.x + "," + p2.y + ") ) = " + (Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2))));
+        //System.out.println("dist( (" + p1.x + "," + p1.y + "), (" + p2.x + "," + p2.y + ") ) = " + (Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2))));
         return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
     }
     
@@ -178,8 +178,8 @@ public class Quadrilateral {
         int j = 1;
         for (int i = 0; i < 4; i ++) {
             j = (j==3) ? 0 : i+1; // Wrap around to draw edge from vertices[3] to vertices[0]
-            g2d.drawLine((p.x + distToCenter[i].x)*pixelFactor, (p.y + distToCenter[i].y)*pixelFactor, 
-                    (p.x + distToCenter[j].x)*pixelFactor, (p.y + distToCenter[j].y)*pixelFactor); // x1, y1, x2, y2
+            g2d.drawLine(((int)Math.round(p.x + distToCenter[i].x))*pixelFactor, ((int)Math.round(p.y + distToCenter[i].y))*pixelFactor, 
+                    ((int)Math.round(p.x + distToCenter[j].x))*pixelFactor, ((int)Math.round(p.y + distToCenter[j].y))*pixelFactor); // x1, y1, x2, y2
             System.out.print("(" + (p.x + distToCenter[i].x) + ", " + (p.y + distToCenter[i].y) + ") ");
             System.out.println("(" + (p.x + distToCenter[j].x) + ", " + (p.y + distToCenter[j].y) + ")");
         }

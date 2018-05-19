@@ -1,8 +1,8 @@
 package dt.Test;
 
 import dt.DelaunayTriangulation;
+import dt.Point;
 import dt.Quadrilateral;
-import java.awt.Point;
 import java.util.ArrayList;
 
 /**
