@@ -9,6 +9,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
+import java.util.Random;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
@@ -43,7 +44,7 @@ public class VoronoiDiagram extends JPanel{
      */
     private void constructVoronoi() {
         
-        for (int iterations = 0; iterations < 35; iterations ++) {
+        for (int iterations = 0; iterations < 40; iterations ++) {
             double scale = 1.1;
             
             this.quad.scaleQuad(scale);
@@ -64,13 +65,6 @@ public class VoronoiDiagram extends JPanel{
     }
     
     /**
-     * Scales quads until first intersection is found
-     */
-    private void findFirstIntersection() {
-        
-    }
-    
-    /**
      * Determine whether Quadrilateral q around two points has an intersection
      * 
      * @param q Reference quad
@@ -79,6 +73,9 @@ public class VoronoiDiagram extends JPanel{
      * @return true if q intersects the quad, false otherwise
      */
     public boolean isIntersection(Quadrilateral q, Point p1, Point p2) {
+        
+        
+        
         return false;
     }
     
@@ -109,6 +106,11 @@ public class VoronoiDiagram extends JPanel{
         //quad.scaleQuad(3);
     }
     
+    private Color randomColour() {
+        Random rand = new Random();
+        return new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
+    }
+    
     /** 
      * Draws the Voronoi diagram to the window
      * 
@@ -122,11 +124,13 @@ public class VoronoiDiagram extends JPanel{
         int pointRadius = 3;
         
         Graphics2D g2d = (Graphics2D) g;
+        
         g2d.setStroke(new BasicStroke(1.5f));
         
         // Draw points and quads
         for (Point p : this.points) 
         {
+            g2d.setColor(randomColour());
             // Subtract pointRadius because points are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(p.x * pixelFactor - pointRadius, p.y * pixelFactor - pointRadius, pointRadius*2, pointRadius*2)); // x, y, width, height
             quad.drawQuad(g2d, p, pixelFactor);
