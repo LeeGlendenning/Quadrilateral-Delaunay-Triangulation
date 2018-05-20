@@ -11,7 +11,7 @@ import java.awt.Graphics2D;
 public class Quadrilateral {
     
     private Point[] vertices = new Point[4];
-    private Point[] distToCenter;
+    //private Point[] distToCenter;
     private Point center;
 
     /**
@@ -20,7 +20,7 @@ public class Quadrilateral {
      * @param vertices array of Point objects defining vertices
      */
     public Quadrilateral(Point[] vertices) {
-        this.distToCenter = new Point[4];
+        //this.distToCenter = new Point[4];
         this.vertices = vertices;
         this.center = new Point();
         computeCenter();
@@ -40,7 +40,6 @@ public class Quadrilateral {
      * @param filename name of file to load vertices from
      */
     public Quadrilateral(String filename) {
-        this.distToCenter = new Point[4];
         
     }
     
@@ -57,38 +56,41 @@ public class Quadrilateral {
     /**
      * Compute and store the distance of each vertex to the center of the quad
      */
-    private void computeDistToCenter() {
+    private Point[] computeDistToCenter(Point[] verts) {
+        Point[] distToCenter = new Point[4];
         for (int i = 0; i < 4; i ++) {
-            distToCenter[i] = new Point(vertices[i].x - center.x, vertices[i].y - center.y);
+            distToCenter[i] = new Point(verts[i].x - this.center.x, verts[i].y - this.center.y);
         }
+        return distToCenter;
     }
     
     /**
      * Scale quad by a scaling factor
      * 
      * @param scaleFactor Factor to scale vertices by
+     * @return Array of scaled vertices
      */
-    public void scaleQuad(double scaleFactor) {
-        Point[] tempVertices = deepCopyPointSet(this.vertices);
+    public Point[] scaleQuad(double scaleFactor) {
+        Point[] scaledVertices = deepCopyPointSet(this.vertices);
         for (int i = 0; i < 4; i ++) {
             // Translate center of quad to origin
-            this.vertices[i].x -= this.center.x;
-            this.vertices[i].y -= this.center.y;
+            scaledVertices[i].x -= this.center.x;
+            scaledVertices[i].y -= this.center.y;
             
             // Multiply x and y coords by scale factor
-            this.vertices[i].x *= scaleFactor;
-            this.vertices[i].y *= scaleFactor;
+            scaledVertices[i].x *= scaleFactor;
+            scaledVertices[i].y *= scaleFactor;
             
             // Translate quad back to its location
-            this.vertices[i].x += this.center.x;
-            this.vertices[i].y += this.center.y;
+            scaledVertices[i].x += this.center.x;
+            scaledVertices[i].y += this.center.y;
         }
         //this.currentScale = scaleFactor;
         // Update distances of each vertex to center for drawing
-        computeDistToCenter();
-        printVertices(this.vertices);
+        //computeDistToCenter();
+        printVertices(scaledVertices);
         
-        //return pointsDifferent(tempVertices, this.vertices);
+        return scaledVertices;
     }
     
     /**
@@ -108,30 +110,18 @@ public class Quadrilateral {
     }
     
     /**
-     * Determines whether two point sets are the same or not
-     * 
-     * @param pSet1 First point set
-     * @param pSet2 Second point set
-     * @return True if point sets are different, false otherwise
-     */
-    /*private boolean pointsDifferent(Point[] ptSet1, Point[] ptSet2) {
-        for (int i = 0; i < 4; i ++) {
-            if (ptSet1[i].x != ptSet2[i].x || ptSet1[i].y != ptSet2[i].y) {
-                return true;
-            }
-        }
-        return false;
-    }*/
-    
-    /**
      * Scale quad to minimum size
      * Scales just below min but scaling back up by a small amount doesn't do anything because of integer coordinates (doubles rounded)
      */
     private void minimizeQuad() {
         System.out.println("Minimizing quad");
-        // Actual min is 3 but due to integer rounding this ensures min will be 3
-        while (edgeLengthsLargerThanMin(8.0)) {
-            scaleQuad(0.9);
+        
+        double curScale = 1.0;
+        Point[] tempVertices = deepCopyPointSet(this.vertices);
+        while (edgeLengthsLargerThanMin(tempVertices, 8.0)) {
+            this.vertices = deepCopyPointSet(tempVertices);
+            curScale -= 0.1;
+            tempVertices = scaleQuad(curScale);
         }
         System.out.println();
     }
@@ -139,15 +129,16 @@ public class Quadrilateral {
     /**
      * Check that area of quad is less than 1
      * 
+     * @param vertices Set of vertices defining a quad
      * @param min Minimum allowed length of an edge in the quad
      * @return True if area is larger than 1, false otherwise
      */
-    private boolean edgeLengthsLargerThanMin(double min) {
+    private boolean edgeLengthsLargerThanMin(Point[] vertices, double min) {
         int j = 1;
         for (int i = 0; i < 4; i ++) 
         {
             j = (j==3) ? 0 : i+1;
-            if (euclideanDistance(this.vertices[i], this.vertices[j]) < min){
+            if (euclideanDistance(vertices[i], vertices[j]) < min){
                 return false;
             }
         }
@@ -167,13 +158,25 @@ public class Quadrilateral {
     }
     
     /**
+     * Returns pixel coordinates of quad at current scaling for a given point
+     * 
+     * @param p Reference point
+     * @return Pixel coordinates
+     */
+    //public Point[] getPixelVertsForPoint(Point p) {
+        
+    //}
+    
+    /**
      * Draw quad around a point
      * 
      * @param g2d Graphics 2D object used to draw to the screen
      * @param p Point to draw quad around
+     * @param scale Amount to scale quad by
      * @param pixelFactor Factor to scale pixels by
      */
-    public void drawQuad(Graphics2D g2d, Point p, int pixelFactor) {
+    public void drawQuad(Graphics2D g2d, Point p, double scale, int pixelFactor) {
+        Point[] distToCenter = computeDistToCenter(scaleQuad(scale));
         System.out.println("---Drawing quad---");
         System.out.println("Center: (" + p.x + ", " + p.y + ")");
         int j = 1;

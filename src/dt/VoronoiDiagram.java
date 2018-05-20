@@ -23,6 +23,7 @@ public class VoronoiDiagram extends JPanel{
     private final ArrayList<Point> points;
     private final Quadrilateral quad;
     private ArrayList<VoronoiBisector> voronoiEdges;
+    private double curScale = 1.0;
     
     /**
      * Construct Voronoi diagram for point set using a Quadrilateral
@@ -44,10 +45,10 @@ public class VoronoiDiagram extends JPanel{
      */
     private void constructVoronoi() {
         
-        for (int iterations = 0; iterations < 40; iterations ++) {
-            double scale = 1.1;
+        for (int iterations = 0; iterations < 340; iterations ++) {
             
-            this.quad.scaleQuad(scale);
+            this.curScale += 0.1;
+            this.quad.scaleQuad(this.curScale);
             
             // for each pair of points, check for quad intersection
             for (int i = 0; i < points.size(); i ++) 
@@ -100,10 +101,6 @@ public class VoronoiDiagram extends JPanel{
         window.setLocationRelativeTo(null);
         window.pack();
         window.setVisible(true);
-        
-        
-        //quad.minimizeQuad();      
-        //quad.scaleQuad(3);
     }
     
     private Color randomColour() {
@@ -124,8 +121,7 @@ public class VoronoiDiagram extends JPanel{
         int pointRadius = 3;
         
         Graphics2D g2d = (Graphics2D) g;
-        
-        g2d.setStroke(new BasicStroke(1.5f));
+        //g2d.setStroke(new BasicStroke(1.5f));
         
         // Draw points and quads
         for (Point p : this.points) 
@@ -133,13 +129,13 @@ public class VoronoiDiagram extends JPanel{
             g2d.setColor(randomColour());
             // Subtract pointRadius because points are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(p.x * pixelFactor - pointRadius, p.y * pixelFactor - pointRadius, pointRadius*2, pointRadius*2)); // x, y, width, height
-            quad.drawQuad(g2d, p, pixelFactor);
+            quad.drawQuad(g2d, p, this.curScale, pixelFactor);
         }
         
         // Draw bisectors
         /*for (VoronoiBisector bisector : voronoiEdges)
         {
-            g2.drawLine(bisector.startPoint.x * scaleFactor, bisector.startPoint.y * scaleFactor, bisector.endPoint.x * scaleFactor, bisector.endPoint.y * scaleFactor);
+            g2d.drawLine(bisector.startPoint.x * scaleFactor, bisector.startPoint.y * scaleFactor, bisector.endPoint.x * scaleFactor, bisector.endPoint.y * scaleFactor);
         }*/
         
         System.out.println("***********************");
