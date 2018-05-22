@@ -68,29 +68,6 @@ public class Quadrilateral {
         return distToCenter;
     }
     
-     /**
-     * Compute and store the slope of each edge of the quad
-     */
-    /*private void computeSlopes() {
-        System.out.print("slopes: ");
-        int j = 1;
-        for (int i = 0; i < 4; i ++) {
-            j = (j==3) ? 0 : i+1;
-            this.slopes[i] = (vertices[i].y - vertices[j].y) / (vertices[i].x - vertices[j].x);
-            System.out.print(this.slopes[i] + " ");
-        }
-        System.out.println();
-    }
-    
-    private void computeYIntercepts() {
-        System.out.print("Y Intercepts: ");
-        for (int i = 0; i < 4; i ++) {
-            this.yIntercepts[i] = this.vertices[i].y - (this.vertices[i].x * this.slopes[i]);
-            System.out.print(this.yIntercepts[i] + " ");
-        }
-        System.out.println();
-    }*/
-    
     /**
      * Scale quad by a scaling factor
      * 
