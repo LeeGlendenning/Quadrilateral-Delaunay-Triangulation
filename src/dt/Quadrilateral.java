@@ -1,6 +1,5 @@
 package dt;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 
 /**
@@ -13,6 +12,7 @@ public class Quadrilateral {
     private Point[] vertices = new Point[4];
     //private Point[] distToCenter;
     private Point center;
+    private double[] slopes, yIntercepts;
 
     /**
      * Create quad using array of vertices
@@ -23,6 +23,10 @@ public class Quadrilateral {
         //this.distToCenter = new Point[4];
         this.vertices = vertices;
         this.center = new Point();
+        this.slopes = new double[4];
+        this.yIntercepts = new double[4];
+        //computeSlopes();
+        //computeYIntercepts();
         computeCenter();
         minimizeQuad();
     }
@@ -64,6 +68,29 @@ public class Quadrilateral {
         return distToCenter;
     }
     
+     /**
+     * Compute and store the slope of each edge of the quad
+     */
+    /*private void computeSlopes() {
+        System.out.print("slopes: ");
+        int j = 1;
+        for (int i = 0; i < 4; i ++) {
+            j = (j==3) ? 0 : i+1;
+            this.slopes[i] = (vertices[i].y - vertices[j].y) / (vertices[i].x - vertices[j].x);
+            System.out.print(this.slopes[i] + " ");
+        }
+        System.out.println();
+    }
+    
+    private void computeYIntercepts() {
+        System.out.print("Y Intercepts: ");
+        for (int i = 0; i < 4; i ++) {
+            this.yIntercepts[i] = this.vertices[i].y - (this.vertices[i].x * this.slopes[i]);
+            System.out.print(this.yIntercepts[i] + " ");
+        }
+        System.out.println();
+    }*/
+    
     /**
      * Scale quad by a scaling factor
      * 
@@ -85,10 +112,9 @@ public class Quadrilateral {
             scaledVertices[i].x += this.center.x;
             scaledVertices[i].y += this.center.y;
         }
-        //this.currentScale = scaleFactor;
+        
         // Update distances of each vertex to center for drawing
-        //computeDistToCenter();
-        printVertices(scaledVertices);
+        //printVertices(scaledVertices);
         
         return scaledVertices;
     }
@@ -118,7 +144,7 @@ public class Quadrilateral {
         
         double curScale = 1.0;
         Point[] tempVertices = deepCopyPointSet(this.vertices);
-        while (edgeLengthsLargerThanMin(tempVertices, 8.0)) {
+        while (edgeLengthsLargerThanMin(tempVertices, 3.0)) {
             this.vertices = deepCopyPointSet(tempVertices);
             curScale -= 0.1;
             tempVertices = scaleQuad(curScale);
@@ -138,6 +164,7 @@ public class Quadrilateral {
         for (int i = 0; i < 4; i ++) 
         {
             j = (j==3) ? 0 : i+1;
+            //System.out.println("edge length: " + euclideanDistance(vertices[i], vertices[j]));
             if (euclideanDistance(vertices[i], vertices[j]) < min){
                 return false;
             }
@@ -161,11 +188,18 @@ public class Quadrilateral {
      * Returns pixel coordinates of quad at current scaling for a given point
      * 
      * @param p Reference point
+     * @param scale Amount to scale quad by
+     * @param pixelFactor Factor to scale pixels by
      * @return Pixel coordinates
      */
-    //public Point[] getPixelVertsForPoint(Point p) {
-        
-    //}
+    public Point[] getPixelVertsForPoint(Point p, double scale, int pixelFactor) {
+        Point[] distToCenter = computeDistToCenter(scaleQuad(scale));
+        Point[] verts = new Point[4];
+        for (int i = 0; i < 4; i ++) {
+            verts[i] = new Point( (p.x + distToCenter[i].x)*pixelFactor, (p.y + distToCenter[i].y)*pixelFactor);
+        }
+        return verts;
+    }
     
     /**
      * Draw quad around a point
@@ -177,17 +211,17 @@ public class Quadrilateral {
      */
     public void drawQuad(Graphics2D g2d, Point p, double scale, int pixelFactor) {
         Point[] distToCenter = computeDistToCenter(scaleQuad(scale));
-        System.out.println("---Drawing quad---");
-        System.out.println("Center: (" + p.x + ", " + p.y + ")");
+        //System.out.println("---Drawing quad---");
+        //System.out.println("Center: (" + p.x + ", " + p.y + ")");
         int j = 1;
         for (int i = 0; i < 4; i ++) {
             j = (j==3) ? 0 : i+1; // Wrap around to draw edge from vertices[3] to vertices[0]
             g2d.drawLine(((int)Math.round(p.x + distToCenter[i].x))*pixelFactor, ((int)Math.round(p.y + distToCenter[i].y))*pixelFactor, 
                     ((int)Math.round(p.x + distToCenter[j].x))*pixelFactor, ((int)Math.round(p.y + distToCenter[j].y))*pixelFactor); // x1, y1, x2, y2
-            System.out.print("(" + (p.x + distToCenter[i].x) + ", " + (p.y + distToCenter[i].y) + ") ");
-            System.out.println("(" + (p.x + distToCenter[j].x) + ", " + (p.y + distToCenter[j].y) + ")");
+            //System.out.print("(" + (p.x + distToCenter[i].x) + ", " + (p.y + distToCenter[i].y) + ") ");
+            //System.out.println("(" + (p.x + distToCenter[j].x) + ", " + (p.y + distToCenter[j].y) + ")");
         }
-        System.out.println();
+        //System.out.println();
     }
     
 }
