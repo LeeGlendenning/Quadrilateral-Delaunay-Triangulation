@@ -7,6 +7,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Toolkit;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Random;
@@ -272,6 +273,7 @@ public class VoronoiDiagram extends JPanel {
         super.paintComponent(g);
 
         int pointRadius = 3, voronoiPointRadius = 1;
+        int yMax = this.getBounds().getSize().height;
 
         Graphics2D g2d = (Graphics2D) g;
 
@@ -279,15 +281,15 @@ public class VoronoiDiagram extends JPanel {
         for (Point p : this.points) {
             g2d.setColor(randomColour());
             // Subtract pointRadius because points are drawn at coordinates from top left
-            g2d.fill(new Ellipse2D.Double(p.x * this.pixelFactor - pointRadius, p.y * this.pixelFactor - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-            quad.drawQuad(g2d, p, this.curScale, this.pixelFactor);
+            g2d.fill(new Ellipse2D.Double(p.x * this.pixelFactor - pointRadius, yMax - (p.y * this.pixelFactor - pointRadius), pointRadius * 2, pointRadius * 2)); // x, y, width, height
+            quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax);
         }
 
         g2d.setColor(Color.black);
 
         // Draw bisectors
         for (Point bisector : this.voronoiPoints) {
-            g2d.fill(new Ellipse2D.Double(bisector.x * this.pixelFactor - voronoiPointRadius, bisector.y * this.pixelFactor - voronoiPointRadius, voronoiPointRadius * 2, voronoiPointRadius * 2)); // x, y, width, height
+            g2d.fill(new Ellipse2D.Double(bisector.x * this.pixelFactor - voronoiPointRadius, yMax - (bisector.y * this.pixelFactor - voronoiPointRadius), voronoiPointRadius * 2, voronoiPointRadius * 2)); // x, y, width, height
             //g2d.drawLine(bisector.startPoint.x * scaleFactor, bisector.startPoint.y * scaleFactor, bisector.endPoint.x * scaleFactor, bisector.endPoint.y * scaleFactor);
         }
 

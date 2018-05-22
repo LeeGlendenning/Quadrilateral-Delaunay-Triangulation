@@ -52,7 +52,7 @@ public class Quadrilateral {
         double x = (vertices[0].x + vertices[1].x + vertices[2].x + vertices[3].x) / 4;
         double y = (vertices[0].y + vertices[1].y + vertices[2].y + vertices[3].y) / 4;
         center = new Point(x, y);
-        System.out.println("Center of quad: (" + center.x + ", " + center.y + ")");
+        //System.out.println("Center of quad: (" + center.x + ", " + center.y + ")");
     }
     
     /**
@@ -184,15 +184,16 @@ public class Quadrilateral {
      * @param p Point to draw quad around
      * @param scale Amount to scale quad by
      * @param pixelFactor Factor to scale pixels by
+     * @param yMax Height of screen. Used to draw from bottom left corner
      */
-    public void drawQuad(Graphics2D g2d, Point p, double scale, int pixelFactor) {
+    public void drawQuad(Graphics2D g2d, Point p, double scale, int pixelFactor, int yMax) {
         Point[] distToCenter = computeDistToCenter(scaleQuad(scale));
         
         int j = 1;
         for (int i = 0; i < 4; i ++) {
             j = (j==3) ? 0 : i+1; // Wrap around to draw edge from vertices[3] to vertices[0]
-            g2d.drawLine(((int)Math.round(p.x + distToCenter[i].x))*pixelFactor, ((int)Math.round(p.y + distToCenter[i].y))*pixelFactor, 
-                    ((int)Math.round(p.x + distToCenter[j].x))*pixelFactor, ((int)Math.round(p.y + distToCenter[j].y))*pixelFactor); // x1, y1, x2, y2
+            g2d.drawLine(((int)Math.round(p.x + distToCenter[i].x))*pixelFactor, yMax - ((int)Math.round(p.y + distToCenter[i].y))*pixelFactor, 
+                    ((int)Math.round(p.x + distToCenter[j].x))*pixelFactor, yMax - ((int)Math.round(p.y + distToCenter[j].y))*pixelFactor); // x1, y1, x2, y2
         }
         
     }
