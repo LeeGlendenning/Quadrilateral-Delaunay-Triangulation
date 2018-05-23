@@ -1,18 +1,19 @@
 package dt;
 
-import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Random;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 /**
  * Constructs a Voronoi diagram from a point set using a Quadrilateral
@@ -27,6 +28,9 @@ public class VoronoiDiagram extends JPanel {
     private ArrayList<Point> voronoiPoints; // Temporary until bisector points are grouped as edges
     private double curScale = 1.0;
     private final int pixelFactor = 1;
+    private Timer timer; 
+    private boolean timerOn;   // for starting and stoping animation
+    int iterations;
 
     /**
      * Construct Voronoi diagram for point set using a Quadrilateral
@@ -37,19 +41,37 @@ public class VoronoiDiagram extends JPanel {
     public VoronoiDiagram(Quadrilateral q, ArrayList<Point> p) {
         this.points = p;
         this.quad = q;
-        voronoiEdges = new ArrayList();
-        voronoiPoints = new ArrayList();
-
-        constructVoronoi();
-        drawVoronoi();
+        this.voronoiEdges = new ArrayList();
+        this.voronoiPoints = new ArrayList();
+        this.timerOn = true;
+        this.iterations = 0;
+        //constructVoronoi();
+        createJFrame();
+        
+        // Animation for finding quad intersections
+        timer = new Timer(10, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                constructVoronoiStep();
+                repaint();
+                iterations ++;
+                // Limit iterations such that only intersections are found within the window area
+                if (iterations > 1000) {
+                    timer.stop();
+                }
+            }
+        });
+        timer.start();
     }
 
     /**
      * Construct Voronoi diagram for the point set using the quad
+     * 
+     * Note: can replace animation by uncommenting the for loop. Consider renaming this method to constructVoronoi() then
      */
-    private void constructVoronoi() {
-        // Limit iterations such that only intersections are found within the window area
-        for (int iterations = 0; iterations < 1000; iterations++) {
+    private void constructVoronoiStep() {
+        
+        //for (int iterations = 0; iterations < 1000; iterations++) {
             this.curScale += 0.1;
             this.quad.scaleQuad(this.curScale);
 
@@ -61,7 +83,7 @@ public class VoronoiDiagram extends JPanel {
                 }
             }
 
-        }
+        //}
     }
 
     /**
@@ -236,9 +258,9 @@ public class VoronoiDiagram extends JPanel {
     }
 
     /**
-     * Create a window and draw the Voronoi diagram to the screen
+     * Create a window to draw the Voronoi diagram to the screen
      */
-    private void drawVoronoi() {
+    private void createJFrame() {
         System.out.println("Drawing Voronoi diagram\n");
 
         // Set up display window
@@ -258,10 +280,7 @@ public class VoronoiDiagram extends JPanel {
         window.setVisible(true);
     }
 
-    private Color randomColour() {
-        Random rand = new Random();
-        return new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
-    }
+    
 
     /**
      * Draws the Voronoi diagram to the window
@@ -279,7 +298,7 @@ public class VoronoiDiagram extends JPanel {
 
         // Draw points and quads
         for (Point p : this.points) {
-            g2d.setColor(randomColour());
+            g2d.setColor(p.getColour());
             // Subtract pointRadius because points are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(p.x * this.pixelFactor - pointRadius, yMax - (p.y * this.pixelFactor - pointRadius), pointRadius * 2, pointRadius * 2)); // x, y, width, height
             quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax);
