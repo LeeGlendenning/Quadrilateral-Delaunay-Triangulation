@@ -30,7 +30,7 @@ public class VoronoiDiagram extends JPanel {
     private final int pixelFactor = 1;
     private Timer timer; 
     private boolean timerOn;   // for starting and stoping animation
-    int iterations;
+    private int scaleIterations;
 
     /**
      * Construct Voronoi diagram for point set using a Quadrilateral
@@ -44,19 +44,25 @@ public class VoronoiDiagram extends JPanel {
         this.voronoiEdges = new ArrayList();
         this.voronoiPoints = new ArrayList();
         this.timerOn = true;
-        this.iterations = 0;
-        //constructVoronoi();
+        this.scaleIterations = 0;
         createJFrame();
-        
-        // Animation for finding quad intersections
-        timer = new Timer(10, new ActionListener() {
+        //constructVoronoi();
+        doVoronoiAnimation(5, 1000);
+    }
+    
+    /**
+     * Animate quad scaling and intersection discovery
+     */
+    private void doVoronoiAnimation(int delay, int maxScaleIterations) {
+        // Consider having a method which checks whether all quad segments are off the screen and stop animation only if true
+        timer = new Timer(delay, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
                 constructVoronoiStep();
                 repaint();
-                iterations ++;
+                scaleIterations ++;
                 // Limit iterations such that only intersections are found within the window area
-                if (iterations > 1000) {
+                if (scaleIterations > maxScaleIterations) {
                     timer.stop();
                 }
             }
@@ -300,7 +306,7 @@ public class VoronoiDiagram extends JPanel {
         for (Point p : this.points) {
             g2d.setColor(p.getColour());
             // Subtract pointRadius because points are drawn at coordinates from top left
-            g2d.fill(new Ellipse2D.Double(p.x * this.pixelFactor - pointRadius, yMax - (p.y * this.pixelFactor - pointRadius), pointRadius * 2, pointRadius * 2)); // x, y, width, height
+            g2d.fill(new Ellipse2D.Double(p.x * this.pixelFactor - pointRadius, yMax - (p.y * this.pixelFactor + pointRadius), pointRadius * 2, pointRadius * 2)); // x, y, width, height
             quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax);
         }
 
@@ -308,7 +314,7 @@ public class VoronoiDiagram extends JPanel {
 
         // Draw bisectors
         for (Point bisector : this.voronoiPoints) {
-            g2d.fill(new Ellipse2D.Double(bisector.x * this.pixelFactor - voronoiPointRadius, yMax - (bisector.y * this.pixelFactor - voronoiPointRadius), voronoiPointRadius * 2, voronoiPointRadius * 2)); // x, y, width, height
+            g2d.fill(new Ellipse2D.Double(bisector.x * this.pixelFactor + voronoiPointRadius, yMax - (bisector.y * this.pixelFactor + voronoiPointRadius), voronoiPointRadius * 2, voronoiPointRadius * 2)); // x, y, width, height
             //g2d.drawLine(bisector.startPoint.x * scaleFactor, bisector.startPoint.y * scaleFactor, bisector.endPoint.x * scaleFactor, bisector.endPoint.y * scaleFactor);
         }
 
