@@ -10,6 +10,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Random;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -86,13 +89,17 @@ public class VoronoiDiagram extends JPanel {
      * @param p2 A point in the point set
      */
     private void findBisectorOfTwoSites(Quadrilateral q, Point p1, Point p2) {
-        
-        //double normalSlope = - (p2.x - p1.x) / (p2.y - p1.y);
+        double angle;
+        if (p1.x == p2.x) {
+            angle = 0;
+        } else {
+            angle = Math.atan((p1.y - p2.y) / (p2.x - p1.x));
+        }
         
         Point a1 = new Point(), a2 = new Point();
-        setLeftAndRightPoint(p1, p2, a1, a2);
+        setLeftAndRightPoint(p1, p2, a1, a2, angle);
         
-        Point[] innerVertices = findInnerVertices(q, slope(a1, a2));
+        Point[] innerVertices = findInnerVertices(q, angle);
         
         Point h1 = new Point(), h2 = new Point(), g1 = new Point(), g2 = new Point();
         findh1g1(h1, g1, q, slope(a1, a2));
@@ -127,17 +134,12 @@ public class VoronoiDiagram extends JPanel {
      * @param right Point object to assign as right point
      * @param axisRotation Angle of slope p1p2
      */
-    private void setLeftAndRightPoint(Point p1, Point p2, Point left, Point right) {
-        double angle;
-        if (p1.x == p2.x) {
-            angle = 0;
-        } else {
-            angle = Math.atan((p1.y - p2.y) / (p2.x - p1.x));
-        }
-        System.out.println("Rotating " + p1 + " and " + p2 + " by " + angle + " rads");
+    private void setLeftAndRightPoint(Point p1, Point p2, Point left, Point right, double angle) {
+        
+        //System.out.println("Rotating " + p1 + " and " + p2 + " by " + angle + " rads");
         Point r1 = rotatePoint(p1, midpoint(p1, p2), angle);
         Point r2 = rotatePoint(p2, midpoint(p1, p2), angle);
-        System.out.println("Rotated points: " + r1 + ", " + r2);
+        //System.out.println("Rotated points: " + r1 + ", " + r2);
         
         if (Math.min(r1.x, r2.x) == r1.x) {
             left = p1;
@@ -146,7 +148,7 @@ public class VoronoiDiagram extends JPanel {
             left = p2;
             right = p1;
         }
-        System.out.println("left point : " + left + ", right point: " + right);
+        //System.out.println("left point : " + left + ", right point: " + right);
     }
     
     /**
@@ -174,17 +176,18 @@ public class VoronoiDiagram extends JPanel {
         double s = Math.sin(angle);
         double c = Math.cos(angle);
 
-        // translate point back to origin:
+        // Translate point to origin (pivot point)
         r.x -= pivot.x;
         r.y -= pivot.y;
 
-        // rotate point
+        // Rotate point
         double xnew = r.x * c - r.y * s;
         double ynew = r.x * s + r.y * c;
 
-        // translate point back:
+        // Translate point back
         r.x = xnew + pivot.x;
         r.y = ynew + pivot.y;
+        
         return r;
     }
     
@@ -196,10 +199,71 @@ public class VoronoiDiagram extends JPanel {
      * @param normalSlope Slope of a normal defining the coordinate system
      * @return Array of inner vertices of size 2
      */
-    private Point[] findInnerVertices(Quadrilateral q, double normalSlope) {
-        Point[] innerVerts = new Point[2];
+    private Point[] findInnerVertices(Quadrilateral q, double angle) {
+        Point[] innerVerts = new Point[2], rVerts = new Point[4];
+        //System.out.print("Rotated quad: ");
+        // Rotate all quad vertices
+        for (int i = 0; i < 4; i ++) {
+            rVerts[i] = rotatePoint(q.getVertices()[i], q.getCenter(), angle);
+            //System.out.print(rVerts[i] + " ");
+        }
+        //System.out.println();
         
+        // Sort rotated quad vertices by ascending y value (more or less sweep line)
+        Arrays.sort(rVerts, new Comparator<Point>() {
+            @Override
+            public int compare(Point p1, Point p2) {
+                if (p1.y > p2.y) {
+                    return +1;
+                } else if (p1.y < p2.y) {
+                     return -1;
+                } else {
+                    return 0;
+                }
+            }
+        });
+        
+        innerVerts[0] = rVerts[1];
+        innerVerts[1] = rVerts[2];
+        
+        //System.out.println("Inner verts: " + innerVerts[0] + " " + innerVerts[1]);
         return innerVerts;
+    }
+    
+    /**
+     * Determine maximum double in arrays
+     * 
+     * @param d Array of doubles
+     * @return Maximum value in array
+     */
+    private double maxy(Point[] d) {
+        double max = d[0].y;
+        
+        for (int i = 1; i < d.length; i ++) {
+            if (d[i].y > max) {
+                max = d[i].y;
+            }
+        }
+        
+        return max;
+    }
+    
+    /**
+     * Determine minimum double in arrays
+     * 
+     * @param d Array of doubles
+     * @return minimum value in array
+     */
+    private double miny(Point[] d) {
+        double min = d[0].y;
+        
+        for (int i = 1; i < d.length; i ++) {
+            if (d[i].y < min) {
+                min = d[i].y;
+            }
+        }
+        
+        return min;
     }
     
     /**

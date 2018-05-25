@@ -178,6 +178,22 @@ public class Quadrilateral {
     }
     
     /**
+     * 
+     * @return Cloned list of vertices defining the quad
+     */
+    public Point[] getVertices() {
+        return this.vertices.clone();
+    }
+    
+    /**
+     * 
+     * @return Center point of quad
+     */
+    public Point getCenter() {
+        return new Point(this.center.x, this.center.y);
+    }
+    
+    /**
      * Draw quad around a point
      * 
      * @param g2d Graphics 2D object used to draw to the screen
