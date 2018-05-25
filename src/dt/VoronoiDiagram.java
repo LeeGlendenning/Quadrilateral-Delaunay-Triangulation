@@ -54,6 +54,14 @@ public class VoronoiDiagram extends JPanel {
      * Animate quad scaling and intersection discovery
      */
     private void doVoronoiAnimation(int delay, int maxScaleIterations) {
+        
+        // for each pair of points, find main bisector
+        for (int i = 0; i < points.size(); i++) {
+            for (int j = i + 1; j < points.size(); j++) {
+                findBisectorOfTwoSites(this.quad, this.points.get(i), this.points.get(j));
+            }
+        }
+        
         // Consider having a method which checks whether all quad segments are off the screen and stop animation only if true
         timer = new Timer(delay, new ActionListener() {
             @Override
@@ -69,25 +77,152 @@ public class VoronoiDiagram extends JPanel {
         });
         timer.start();
     }
+    
+    /**
+     * Find main bisector between all pairs of points
+     * 
+     * @param q Quadrilateral to iterate over
+     * @param p1 A point in the point set
+     * @param p2 A point in the point set
+     */
+    private void findBisectorOfTwoSites(Quadrilateral q, Point p1, Point p2) {
+        double normalSlope = findNormalSlope(p1, p2);
+        Point a1 = leftPoint(p1, p2, normalSlope), a2 = rightPoint(p1, p2, normalSlope);
+        
+        
+        
+        Point[] innerVertices = findInnerVertices(q, normalSlope);
+        
+        Point h1 = new Point(), h2 = new Point(), g1 = new Point(), g2 = new Point();
+        findh1g1(h1, g1, q, -1/normalSlope);
+        findh2g2(h2, g2, q, -1/normalSlope);
+        
+        double hSlope = 0.0, gSlope = 0.0;
+        
+        // Endpoints of main bisector between p1 and p2
+        // Not line segments, rather
+        Point h = doRaysIntersect(a1, hSlope, a2, -1/hSlope);
+        Point g = doRaysIntersect(a1, gSlope, a2, -1/gSlope);
+        
+    }
+    
+    /**
+     * Determine which point is "left" based on normal
+     * 
+     * @param p1 First point to consider
+     * @param p2 Second  point to consider
+     * @return Point that is on the left wrt the normal
+     */
+    private Point leftPoint(Point p1, Point p2, double normalSlope) {
+        Point leftP = new Point();
+        
+        return leftP;      
+    }
+    
+    /**
+     * Determine which point is "right" based on normal
+     * 
+     * @param p1 First point to consider
+     * @param p2 Second  point to consider
+     * @return Point that is on the right wrt the normal
+     */
+    private Point rightPoint(Point p1, Point p2, double normalSlope) {
+        Point rightP = new Point();
+        
+        return rightP;      
+    }
+    
+    /**
+     * Compute the slope of the normal to a line segment
+     * 
+     * @param p1 An endpoint of the line segment
+     * @param p2 An endpoint of the line segment
+     * @return Slope of the normal
+     */
+    private double findNormalSlope(Point p1, Point p2) {
+        double slope = 0.0;
+        
+        return slope;
+    }
+    
+    /**
+     * Find the two vertices of a quad that do not have max or min y values wrt a normal
+     * 
+     * @param q A quadrilateral to iterate over
+     * @param normalSlope Slope of a normal defining the coordinate system
+     * @return Array of inner vertices of size 2
+     */
+    private Point[] findInnerVertices(Quadrilateral q, double normalSlope) {
+        Point[] innerVerts = new Point[2];
+        
+        return innerVerts;
+    }
+    
+    /**
+     * Find intersection points of lines through inner vertices with the right side of the quad around the left point a1
+     * 
+     * @param h1 Will be assigned. Intersection point of line through upper inner vertex with right side of quad
+     * @param g1 Will be assigned. Intersection point of line through lower inner vertex with right side of quad
+     * @param q Quadrilateral to iterate over
+     * @param slope Slope of the lines through inner vertices
+     */
+    private void findh1g1(Point h1, Point g1, Quadrilateral q, double slope) {
+        
+    }
+    
+    /**
+     * Find intersection points of lines through inner vertices with the left side of the quad around the right point a2
+     * 
+     * @param h1 Will be assigned. Intersection point of line through upper inner vertex with left side of quad
+     * @param g1 Will be assigned. Intersection point of line through lower inner vertex with left side of quad
+     * @param q Quadrilateral to iterate over
+     * @param slope Slope of the lines through inner vertices
+     */
+    private void findh2g2(Point h2, Point g2, Quadrilateral q, double slope) {
+        
+    }
+    
+    private Point doRaysIntersect(Point p1, double slopeP1, Point p2, double slopeP2) {
+        Point intersection = new Point();
+        
+        return intersection;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /**
+     * **Consider renaming method**
+     * 
      * Construct Voronoi diagram for the point set using the quad
+     * Find bisector rays on either side of previously found main bisector
+     * 
      * 
      * Note: can replace animation by uncommenting the for loop. Consider renaming this method to constructVoronoi() then
      */
     private void constructVoronoiStep() {
         
         //for (int iterations = 0; iterations < 1000; iterations++) {
-            this.curScale += 0.1;
-            this.quad.scaleQuad(this.curScale);
+        this.curScale += 0.1;
+        this.quad.scaleQuad(this.curScale);
 
-            // for each pair of points, check for quad intersection
-            for (int i = 0; i < points.size(); i++) {
-                for (int j = i + 1; j < points.size(); j++) {
-                    // Find and store intersections for current quad scaling
-                    findQuadIntersections(this.quad, this.points.get(i), this.points.get(j));
-                }
+        // for each pair of points, check for quad intersection
+        for (int i = 0; i < points.size(); i++) {
+            for (int j = i + 1; j < points.size(); j++) {
+                // Find and store intersections for current quad scaling
+                findQuadIntersections(this.quad, this.points.get(i), this.points.get(j));
             }
+        }
 
         //}
     }
@@ -144,7 +279,8 @@ public class VoronoiDiagram extends JPanel {
 
         double numerator = crossProduct(subtractPoints(q1, p1), r);
         double denominator = crossProduct(r, s);
-
+        
+        // Lines are collinear
         if (numerator == 0 && denominator == 0) {
 
             // If line segments share an endpoint, line segments intersect
@@ -159,17 +295,14 @@ public class VoronoiDiagram extends JPanel {
                 return intersection;
             }
 
-            // Line segments overlap if all point differences in either direction have the same sign
-            // Otherwise they do not, return false
-            if (!allEqual(new boolean[]{(q1.x - p1.x < 0),
-                (q1.x - p2.x < 0),
-                (q2.x - p1.x < 0),
-                (q2.x - p2.x < 0)})
-                    || !allEqual(new boolean[]{(q1.y - p1.y < 0),
-                (q1.y - p2.y < 0),
-                (q2.y - p1.y < 0),
-                (q2.y - p2.y < 0)}
-                    )) {
+            // Line segments overlap if all point differences in either direction do not have the same sign
+            if (!allEqual(new boolean[]{(q1.x - p1.x < 0), (q1.x - p2.x < 0),
+                (q2.x - p1.x < 0), (q2.x - p2.x < 0)}) || !allEqual(new boolean[]{(q1.y - p1.y < 0),
+                (q1.y - p2.y < 0), (q2.y - p1.y < 0), (q2.y - p2.y < 0)})) 
+            {
+                // Need to return multiple points or a line segment?
+                return null;
+            } else {
                 return null;
             }
         }
@@ -181,7 +314,8 @@ public class VoronoiDiagram extends JPanel {
 
         double u = numerator / denominator;
         double t = crossProduct(subtractPoints(q1, p1), s) / denominator;
-
+        
+        // Lines are not parallel but intersect
         if ((t >= 0) && (t <= 1) && (u >= 0) && (u <= 1)) {
             Point intersection;
             r.x *= t;
