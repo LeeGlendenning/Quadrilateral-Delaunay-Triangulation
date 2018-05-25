@@ -86,16 +86,17 @@ public class VoronoiDiagram extends JPanel {
      * @param p2 A point in the point set
      */
     private void findBisectorOfTwoSites(Quadrilateral q, Point p1, Point p2) {
-        double normalSlope = findNormalSlope(p1, p2);
-        Point a1 = leftPoint(p1, p2, normalSlope), a2 = rightPoint(p1, p2, normalSlope);
         
+        //double normalSlope = - (p2.x - p1.x) / (p2.y - p1.y);
         
+        Point a1 = new Point(), a2 = new Point();
+        setLeftAndRightPoint(p1, p2, a1, a2);
         
-        Point[] innerVertices = findInnerVertices(q, normalSlope);
+        Point[] innerVertices = findInnerVertices(q, slope(a1, a2));
         
         Point h1 = new Point(), h2 = new Point(), g1 = new Point(), g2 = new Point();
-        findh1g1(h1, g1, q, -1/normalSlope);
-        findh2g2(h2, g2, q, -1/normalSlope);
+        findh1g1(h1, g1, q, slope(a1, a2));
+        findh2g2(h2, g2, q, slope(a1, a2));
         
         double hSlope = 0.0, gSlope = 0.0;
         
@@ -107,43 +108,86 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
-     * Determine which point is "left" based on normal
+     * Compute the midpoint of two points
      * 
-     * @param p1 First point to consider
-     * @param p2 Second  point to consider
-     * @return Point that is on the left wrt the normal
+     * @param p1 First point
+     * @param p2 Second point
+     * @return Midpoint of p1 and p2
      */
-    private Point leftPoint(Point p1, Point p2, double normalSlope) {
-        Point leftP = new Point();
-        
-        return leftP;      
+    private Point midpoint(Point p1, Point p2) {
+        return new Point((p1.x + p2.x)/2, (p1.y + p2.y)/2);
     }
     
     /**
-     * Determine which point is "right" based on normal
+     * Determine which point is left and right based on normal
      * 
      * @param p1 First point to consider
      * @param p2 Second  point to consider
-     * @return Point that is on the right wrt the normal
+     * @param left Point object to assign as left point
+     * @param right Point object to assign as right point
+     * @param axisRotation Angle of slope p1p2
      */
-    private Point rightPoint(Point p1, Point p2, double normalSlope) {
-        Point rightP = new Point();
+    private void setLeftAndRightPoint(Point p1, Point p2, Point left, Point right) {
+        double angle;
+        if (p1.x == p2.x) {
+            angle = 0;
+        } else {
+            angle = Math.atan((p1.y - p2.y) / (p2.x - p1.x));
+        }
+        System.out.println("Rotating " + p1 + " and " + p2 + " by " + angle + " rads");
+        Point r1 = rotatePoint(p1, midpoint(p1, p2), angle);
+        Point r2 = rotatePoint(p2, midpoint(p1, p2), angle);
+        System.out.println("Rotated points: " + r1 + ", " + r2);
         
-        return rightP;      
+        if (Math.min(r1.x, r2.x) == r1.x) {
+            left = p1;
+            right = p2;
+        } else {
+            left = p2;
+            right = p1;
+        }
+        System.out.println("left point : " + left + ", right point: " + right);
     }
     
     /**
-     * Compute the slope of the normal to a line segment
+     * Compute slope of line segment
      * 
-     * @param p1 An endpoint of the line segment
-     * @param p2 An endpoint of the line segment
-     * @return Slope of the normal
+     * @param p1 Endpoint of line segment
+     * @param p2 Endpoint of line segment
+     * @return Slope of p1p2
      */
-    private double findNormalSlope(Point p1, Point p2) {
-        double slope = 0.0;
-        
-        return slope;
+    private double slope(Point p1, Point p2) {
+        return (p2.y - p1.y) / (p2.x - p1.x);
     }
+    
+    /**
+     * Rotate a point around a pivot point by an angle
+     * 
+     * @param pivotx X coordinate of pivot point
+     * @param pivoty Y coordinate of pivot point
+     * @param angle Rotation angle
+     * @param p Point to rotate
+     * @return New location of rotated point
+     */
+    private Point rotatePoint(Point p, Point pivot, double angle) {
+        Point r = new Point(p.x, p.y);
+        double s = Math.sin(angle);
+        double c = Math.cos(angle);
+
+        // translate point back to origin:
+        r.x -= pivot.x;
+        r.y -= pivot.y;
+
+        // rotate point
+        double xnew = r.x * c - r.y * s;
+        double ynew = r.x * s + r.y * c;
+
+        // translate point back:
+        r.x = xnew + pivot.x;
+        r.y = ynew + pivot.y;
+        return r;
+    }
+    
     
     /**
      * Find the two vertices of a quad that do not have max or min y values wrt a normal

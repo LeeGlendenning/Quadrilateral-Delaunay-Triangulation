@@ -33,4 +33,9 @@ public class Point {
         return new Color(rand.nextFloat(), rand.nextFloat(), rand.nextFloat());
     }
     
+    @Override
+    public String toString() {
+        return "(" + x + ", " + y + ")";
+    }
+    
 }
