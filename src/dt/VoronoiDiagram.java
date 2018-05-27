@@ -32,8 +32,10 @@ public class VoronoiDiagram extends JPanel {
     private double curScale = 1.0;
     private final int pixelFactor = 1;
     private Timer timer; 
-    private boolean timerOn;   // for starting and stoping animation
+    private final boolean timerOn;   // for starting and stopping animation
     private int scaleIterations;
+    
+    Point h1 = new Point(), h2 = new Point(), g1 = new Point(), g2 = new Point();
 
     /**
      * Construct Voronoi diagram for point set using a Quadrilateral
@@ -50,7 +52,7 @@ public class VoronoiDiagram extends JPanel {
         this.scaleIterations = 0;
         createJFrame();
         //constructVoronoi();
-        doVoronoiAnimation(5, 1000);
+        doVoronoiAnimation(5, 0);
     }
     
     /**
@@ -104,8 +106,8 @@ public class VoronoiDiagram extends JPanel {
         // Two "middle" vertices of quad wrt y value and angle
         Point[] innerVertices = findInnerVertices(q, angle);
         
-        Point h1 = new Point(), h2 = new Point(), g1 = new Point(), g2 = new Point();
-        findh12g12(h1, h2, g1, g2, q, innerVertices, angle);
+        //Point h1 = new Point(), h2 = new Point(), g1 = new Point(), g2 = new Point();
+        findh12g12(h1, h2, g1, g2, a1, a2, q, innerVertices, angle);
         System.out.println("h1 = " + h1 + ", h2 = " + h2);
         System.out.println("g1 = " + g1 + ", g2 = " + g2);
         
@@ -247,11 +249,13 @@ public class VoronoiDiagram extends JPanel {
      * @param g1 Will be assigned. Intersection point of line through lower inner vertex with right side of quad
      * @param h2 Will be assigned. Intersection point of line through upper inner vertex with left side of quad
      * @param g2 Will be assigned. Intersection point of line through lower inner vertex with left side of quad
+     * @param a1 Left point
+     * @param a1 Right point
      * @param q Quadrilateral to iterate over
      * @param innerVerts Array of size two holding the inner vertices on the quad
      * @param slope Slope of the lines through inner vertices
      */
-    private void findh12g12(Point h1, Point h2, Point g1, Point g2, Quadrilateral q, Point[] innerVerts, double angle) {
+    private void findh12g12(Point h1, Point h2, Point g1, Point g2, Point a1, Point a2, Quadrilateral q, Point[] innerVerts, double angle) {
         Point temph1 = null, temph2 = null, tempg1 = null, tempg2 = null;
         
         if (slope(q.getCenter(), innerVerts[0]) < 0) {
@@ -259,7 +263,7 @@ public class VoronoiDiagram extends JPanel {
         } else if (slope(q.getCenter(), innerVerts[0]) > 0) {
             temph2 = innerVerts[0];
         } else {
-            System.err.println("!!! Violation of regular position !!!");
+            System.err.println("!!! Slope of quad edge cannot be equal to slope a1a2 !!!");
             System.exit(1);
         }
         
@@ -268,7 +272,7 @@ public class VoronoiDiagram extends JPanel {
         } else if (slope(q.getCenter(), innerVerts[1]) < 0) {
             tempg2 = innerVerts[1];
         } else {
-            System.err.println("!!! Violation of regular position !!!");
+            System.err.println("!!! Slope of quad edge cannot be equal to slope a1a2 !!!");
             System.exit(1);
         }
         
@@ -314,22 +318,23 @@ public class VoronoiDiagram extends JPanel {
             }
         }
         
-        // Rotate points back to original coordinate system
+        // Rotate points back to original coordinate system and translate to a1 and a2
         temph1 = rotatePoint(temph1, q.getCenter(), -angle);
         temph2 = rotatePoint(temph2, q.getCenter(), -angle);
         tempg1 = rotatePoint(tempg1, q.getCenter(), -angle);
         tempg2 = rotatePoint(tempg2, q.getCenter(), -angle);
         //System.out.println("h1 = " + h1 + ", h2 = " + h2);
         //System.out.println("g1 = " + g1 + ", g2 = " + g2);
-        h1.x = temph1.x;
-        h1.y = temph1.y;
-        h2.x = temph2.x;
-        h2.y = temph2.y;
+        h1.x = a1.x + temph1.x - q.getCenter().x;
+        h1.y = a1.y + temph1.y - q.getCenter().y;
+        g1.x = a1.x + tempg1.x - q.getCenter().x;
+        g1.y = a1.y + tempg1.y - q.getCenter().y;
         
-        g1.x = tempg1.x;
-        g1.y = tempg1.y;
-        g2.x = tempg2.x;
-        g2.y = tempg2.y;
+        h2.x = a2.x + temph2.x - q.getCenter().x;
+        h2.y = a2.y + temph2.y - q.getCenter().y;
+        g2.x = a2.x + tempg2.x - q.getCenter().x;
+        g2.y = a2.y + tempg2.y - q.getCenter().y;
+        
     }
     
     private Point doRaysIntersect(Point p1, double slopeP1, Point p2, double slopeP2) {
@@ -601,6 +606,12 @@ public class VoronoiDiagram extends JPanel {
             g2d.fill(new Ellipse2D.Double(bisector.x * this.pixelFactor + voronoiPointRadius, yMax - (bisector.y * this.pixelFactor + voronoiPointRadius), voronoiPointRadius * 2, voronoiPointRadius * 2)); // x, y, width, height
             //g2d.drawLine(bisector.startPoint.x * scaleFactor, bisector.startPoint.y * scaleFactor, bisector.endPoint.x * scaleFactor, bisector.endPoint.y * scaleFactor);
         }
+        
+        g2d.setColor(Color.red);
+        g2d.fill(new Ellipse2D.Double(h1.x - pointRadius, yMax - h1.y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+        g2d.fill(new Ellipse2D.Double(h2.x - pointRadius, yMax - h2.y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+        g2d.fill(new Ellipse2D.Double(g1.x - pointRadius, yMax - g1.y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+        g2d.fill(new Ellipse2D.Double(g2.x - pointRadius, yMax - g2.y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
 
         //System.out.println("***********************");
     }

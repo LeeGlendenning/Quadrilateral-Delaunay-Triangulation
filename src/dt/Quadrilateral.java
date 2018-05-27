@@ -21,7 +21,7 @@ public class Quadrilateral {
         this.vertices = vertices;
         this.center = new Point();
         computeCenter();
-        minimizeQuad();
+        //minimizeQuad();
     }
     
     /**

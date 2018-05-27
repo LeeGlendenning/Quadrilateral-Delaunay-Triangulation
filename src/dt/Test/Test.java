@@ -22,7 +22,7 @@ public class Test {
         pts.add(new Point(500, 300));
         pts.add(new Point(200, 300));
         
-        Point[] quad = {new Point(0,0), new Point(20,0), new Point(40,20), new Point(0,20)};
+        Point[] quad = {new Point(0,0), new Point(40,10), new Point(30,40), new Point(10,30)};
         Quadrilateral q = new Quadrilateral(quad);
         
         DelaunayTriangulation dt = new DelaunayTriangulation(q, pts);
