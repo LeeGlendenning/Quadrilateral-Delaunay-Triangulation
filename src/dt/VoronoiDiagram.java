@@ -89,21 +89,21 @@ public class VoronoiDiagram extends JPanel {
      * @param p2 A point in the point set
      */
     private void findBisectorOfTwoSites(Quadrilateral q, Point p1, Point p2) {
-        double angle;
+        double angle; // Angle that slope(p1p2) makes with x axis
         if (p1.x == p2.x) {
             angle = 0;
         } else {
             angle = Math.atan((p1.y - p2.y) / (p2.x - p1.x));
         }
-        
+        System.out.println("Angle = " + angle);
         Point a1 = new Point(), a2 = new Point();
         setLeftAndRightPoint(p1, p2, a1, a2, angle);
         
+        // Two "middle" vertices of quad wrt y value and angle
         Point[] innerVertices = findInnerVertices(q, angle);
         
-        Point h1 = new Point(), h2 = new Point(), g1 = new Point(), g2 = new Point();
-        findh1g1(h1, g1, q, slope(a1, a2));
-        findh2g2(h2, g2, q, slope(a1, a2));
+        Point h1 = null, h2 = null, g1 = null, g2 = null;
+        findh12g12(h1, h2, g1, g2, q, innerVertices, angle);
         
         double hSlope = 0.0, gSlope = 0.0;
         
@@ -201,13 +201,15 @@ public class VoronoiDiagram extends JPanel {
      */
     private Point[] findInnerVertices(Quadrilateral q, double angle) {
         Point[] innerVerts = new Point[2], rVerts = new Point[4];
-        //System.out.print("Rotated quad: ");
+        System.out.print("Rotated quad: ");
         // Rotate all quad vertices
         for (int i = 0; i < 4; i ++) {
             rVerts[i] = rotatePoint(q.getVertices()[i], q.getCenter(), angle);
-            //System.out.print(rVerts[i] + " ");
+            System.out.print(rVerts[i] + " ");
         }
-        //System.out.println();
+        System.out.println();
+        System.out.print("Original quad: ");
+        q.printVertices(q.getVertices());
         
         // Sort rotated quad vertices by ascending y value (more or less sweep line)
         Arrays.sort(rVerts, new Comparator<Point>() {
@@ -226,44 +228,8 @@ public class VoronoiDiagram extends JPanel {
         innerVerts[0] = rVerts[1];
         innerVerts[1] = rVerts[2];
         
-        //System.out.println("Inner verts: " + innerVerts[0] + " " + innerVerts[1]);
+        System.out.println("Inner verts: " + innerVerts[0] + " " + innerVerts[1]);
         return innerVerts;
-    }
-    
-    /**
-     * Determine maximum double in arrays
-     * 
-     * @param d Array of doubles
-     * @return Maximum value in array
-     */
-    private double maxy(Point[] d) {
-        double max = d[0].y;
-        
-        for (int i = 1; i < d.length; i ++) {
-            if (d[i].y > max) {
-                max = d[i].y;
-            }
-        }
-        
-        return max;
-    }
-    
-    /**
-     * Determine minimum double in arrays
-     * 
-     * @param d Array of doubles
-     * @return minimum value in array
-     */
-    private double miny(Point[] d) {
-        double min = d[0].y;
-        
-        for (int i = 1; i < d.length; i ++) {
-            if (d[i].y < min) {
-                min = d[i].y;
-            }
-        }
-        
-        return min;
     }
     
     /**
@@ -271,23 +237,74 @@ public class VoronoiDiagram extends JPanel {
      * 
      * @param h1 Will be assigned. Intersection point of line through upper inner vertex with right side of quad
      * @param g1 Will be assigned. Intersection point of line through lower inner vertex with right side of quad
+     * @param h2 Will be assigned. Intersection point of line through upper inner vertex with left side of quad
+     * @param g2 Will be assigned. Intersection point of line through lower inner vertex with left side of quad
      * @param q Quadrilateral to iterate over
+     * @param innerVerts Array of size two holding the inner vertices on the quad
      * @param slope Slope of the lines through inner vertices
      */
-    private void findh1g1(Point h1, Point g1, Quadrilateral q, double slope) {
+    private void findh12g12(Point h1, Point h2, Point g1, Point g2, Quadrilateral q, Point[] innerVerts, double angle) {
+        if (slope(q.getCenter(), innerVerts[0]) > 0) {
+            h1 = innerVerts[0];
+        } else if (slope(q.getCenter(), innerVerts[0]) < 0) {
+            h2 = innerVerts[0];
+        } else {
+            System.err.println("!!! Violation of regular position !!!");
+            System.exit(1);
+        }
         
-    }
-    
-    /**
-     * Find intersection points of lines through inner vertices with the left side of the quad around the right point a2
-     * 
-     * @param h1 Will be assigned. Intersection point of line through upper inner vertex with left side of quad
-     * @param g1 Will be assigned. Intersection point of line through lower inner vertex with left side of quad
-     * @param q Quadrilateral to iterate over
-     * @param slope Slope of the lines through inner vertices
-     */
-    private void findh2g2(Point h2, Point g2, Quadrilateral q, double slope) {
+        if (slope(q.getCenter(), innerVerts[1]) < 0) {
+            g1 = innerVerts[1];
+        } else if (slope(q.getCenter(), innerVerts[1]) > 0) {
+            g2 = innerVerts[1];
+        } else {
+            System.err.println("!!! Violation of regular position !!!");
+            System.exit(1);
+        }
         
+        //System.out.println("h1 = " + h1 + ", h2 = " + h2);
+        //System.out.println("g1 = " + g1 + ", g2 = " + g2);
+        
+        Point[] rVerts = new Point[4];
+        // Rotate all quad vertices
+        for (int i = 0; i < 4; i ++) {
+            rVerts[i] = rotatePoint(q.getVertices()[i], q.getCenter(), angle);
+        }
+        
+        // Horizontal lines going through the inner vertices
+        Point[] l1 = {new Point(-1000000, innerVerts[0].y), new Point(1000000, innerVerts[0].y)};
+        Point[] l2 = {new Point(-1000000, innerVerts[1].y), new Point(1000000, innerVerts[1].y)};
+        
+        int j;
+        for (int i = 0; i < 3; i ++) {
+            if (i == 0) {
+                j = 3;
+            } else {
+                j = i + 1;
+            }
+            Point intersectionPoint1;
+            //found an h
+            if ((intersectionPoint1 = doLineSegmentsIntersect(l1[0], l1[1], q.getVertices()[i], q.getVertices()[j])) != null && !intersectionPoint1.equals(innerVerts[0])) {
+                if (h1 == null) {
+                    h1 = rotatePoint(intersectionPoint1, q.getCenter(), -angle);
+                } else {
+                    h2 = rotatePoint(intersectionPoint1, q.getCenter(), -angle);
+                }
+            }
+            
+            Point intersectionPoint2;
+            // found a g
+            if ((intersectionPoint2 = doLineSegmentsIntersect(l2[0], l2[1], q.getVertices()[i], q.getVertices()[j])) != null && !intersectionPoint2.equals(innerVerts[1])) {
+                if (g1 == null) {
+                    g1 = rotatePoint(intersectionPoint2, q.getCenter(), -angle);
+                } else {
+                    g2 = rotatePoint(intersectionPoint2, q.getCenter(), -angle);
+                }
+            }
+        }
+        // g values sometimes backwards, one case where h2 == g2
+        System.out.println("h1 = " + h1 + ", h2 = " + h2);
+        System.out.println("g1 = " + g1 + ", g2 = " + g2);
     }
     
     private Point doRaysIntersect(Point p1, double slopeP1, Point p2, double slopeP2) {

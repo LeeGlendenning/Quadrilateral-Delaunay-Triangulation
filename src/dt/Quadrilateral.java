@@ -29,7 +29,7 @@ public class Quadrilateral {
      * 
      * @param verts Point array of vertices
      */
-    private void printVertices(Point[] verts) {
+    public void printVertices(Point[] verts) {
         for (int i = 0; i < 4; i ++) {
             System.out.print("(" + verts[i].x + ", " + verts[i].y + ") ");
         }

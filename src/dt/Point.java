@@ -38,4 +38,13 @@ public class Point {
         return "(" + x + ", " + y + ")";
     }
     
+    @Override
+    public boolean equals(Object other) {
+        if (other.getClass() == this.getClass() && Math.round(this.x) == Math.round(((Point) other).x) && Math.round(this.y) == Math.round(((Point) other).y)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
 }
