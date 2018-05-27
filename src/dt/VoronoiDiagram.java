@@ -95,15 +95,19 @@ public class VoronoiDiagram extends JPanel {
         } else {
             angle = Math.atan((p1.y - p2.y) / (p2.x - p1.x));
         }
-        System.out.println("Angle = " + angle);
+        
+        System.out.println("Angle = " + Math.toDegrees(angle));
         Point a1 = new Point(), a2 = new Point();
         setLeftAndRightPoint(p1, p2, a1, a2, angle);
+        System.out.println("left point : " + a1 + ", right point: " + a2);
         
         // Two "middle" vertices of quad wrt y value and angle
         Point[] innerVertices = findInnerVertices(q, angle);
         
-        Point h1 = null, h2 = null, g1 = null, g2 = null;
+        Point h1 = new Point(), h2 = new Point(), g1 = new Point(), g2 = new Point();
         findh12g12(h1, h2, g1, g2, q, innerVertices, angle);
+        System.out.println("h1 = " + h1 + ", h2 = " + h2);
+        System.out.println("g1 = " + g1 + ", g2 = " + g2);
         
         double hSlope = 0.0, gSlope = 0.0;
         
@@ -136,19 +140,23 @@ public class VoronoiDiagram extends JPanel {
      */
     private void setLeftAndRightPoint(Point p1, Point p2, Point left, Point right, double angle) {
         
-        //System.out.println("Rotating " + p1 + " and " + p2 + " by " + angle + " rads");
+        //System.out.println("Rotating " + p1 + " and " + p2 + " by " + Math.toDegrees(angle) + " degrees");
         Point r1 = rotatePoint(p1, midpoint(p1, p2), angle);
         Point r2 = rotatePoint(p2, midpoint(p1, p2), angle);
         //System.out.println("Rotated points: " + r1 + ", " + r2);
         
         if (Math.min(r1.x, r2.x) == r1.x) {
-            left = p1;
-            right = p2;
+            left.x = p1.x;
+            left.y = p1.y;
+            right.x = p2.x;
+            right.y = p2.y;
         } else {
-            left = p2;
-            right = p1;
+            left.x = p2.x;
+            left.y = p2.y;
+            right.x = p1.x;
+            right.y = p1.y;
         }
-        //System.out.println("left point : " + left + ", right point: " + right);
+        
     }
     
     /**
@@ -244,19 +252,21 @@ public class VoronoiDiagram extends JPanel {
      * @param slope Slope of the lines through inner vertices
      */
     private void findh12g12(Point h1, Point h2, Point g1, Point g2, Quadrilateral q, Point[] innerVerts, double angle) {
-        if (slope(q.getCenter(), innerVerts[0]) > 0) {
-            h1 = innerVerts[0];
-        } else if (slope(q.getCenter(), innerVerts[0]) < 0) {
-            h2 = innerVerts[0];
+        Point temph1 = null, temph2 = null, tempg1 = null, tempg2 = null;
+        
+        if (slope(q.getCenter(), innerVerts[0]) < 0) {
+            temph1 = innerVerts[0];
+        } else if (slope(q.getCenter(), innerVerts[0]) > 0) {
+            temph2 = innerVerts[0];
         } else {
             System.err.println("!!! Violation of regular position !!!");
             System.exit(1);
         }
         
-        if (slope(q.getCenter(), innerVerts[1]) < 0) {
-            g1 = innerVerts[1];
-        } else if (slope(q.getCenter(), innerVerts[1]) > 0) {
-            g2 = innerVerts[1];
+        if (slope(q.getCenter(), innerVerts[1]) > 0) {
+            tempg1 = innerVerts[1];
+        } else if (slope(q.getCenter(), innerVerts[1]) < 0) {
+            tempg2 = innerVerts[1];
         } else {
             System.err.println("!!! Violation of regular position !!!");
             System.exit(1);
@@ -275,6 +285,7 @@ public class VoronoiDiagram extends JPanel {
         Point[] l1 = {new Point(-1000000, innerVerts[0].y), new Point(1000000, innerVerts[0].y)};
         Point[] l2 = {new Point(-1000000, innerVerts[1].y), new Point(1000000, innerVerts[1].y)};
         
+        // Find other h and g points and rotate quad back to its original place
         int j;
         for (int i = 0; i < 3; i ++) {
             if (i == 0) {
@@ -284,27 +295,41 @@ public class VoronoiDiagram extends JPanel {
             }
             Point intersectionPoint1;
             //found an h
-            if ((intersectionPoint1 = doLineSegmentsIntersect(l1[0], l1[1], q.getVertices()[i], q.getVertices()[j])) != null && !intersectionPoint1.equals(innerVerts[0])) {
-                if (h1 == null) {
-                    h1 = rotatePoint(intersectionPoint1, q.getCenter(), -angle);
+            if ((intersectionPoint1 = doLineSegmentsIntersect(l1[0], l1[1], rVerts[i], rVerts[j])) != null && !intersectionPoint1.equals(innerVerts[0])) {
+                if (temph1 == null) {
+                    temph1 = intersectionPoint1;
                 } else {
-                    h2 = rotatePoint(intersectionPoint1, q.getCenter(), -angle);
+                    temph2 = intersectionPoint1;
                 }
             }
             
             Point intersectionPoint2;
             // found a g
-            if ((intersectionPoint2 = doLineSegmentsIntersect(l2[0], l2[1], q.getVertices()[i], q.getVertices()[j])) != null && !intersectionPoint2.equals(innerVerts[1])) {
-                if (g1 == null) {
-                    g1 = rotatePoint(intersectionPoint2, q.getCenter(), -angle);
+            if ((intersectionPoint2 = doLineSegmentsIntersect(l2[0], l2[1], rVerts[i], rVerts[j])) != null && !intersectionPoint2.equals(innerVerts[1])) {
+                if (tempg1 == null) {
+                    tempg1 = intersectionPoint2;
                 } else {
-                    g2 = rotatePoint(intersectionPoint2, q.getCenter(), -angle);
+                    tempg2 = intersectionPoint2;
                 }
             }
         }
-        // g values sometimes backwards, one case where h2 == g2
-        System.out.println("h1 = " + h1 + ", h2 = " + h2);
-        System.out.println("g1 = " + g1 + ", g2 = " + g2);
+        
+        // Rotate points back to original coordinate system
+        temph1 = rotatePoint(temph1, q.getCenter(), -angle);
+        temph2 = rotatePoint(temph2, q.getCenter(), -angle);
+        tempg1 = rotatePoint(tempg1, q.getCenter(), -angle);
+        tempg2 = rotatePoint(tempg2, q.getCenter(), -angle);
+        //System.out.println("h1 = " + h1 + ", h2 = " + h2);
+        //System.out.println("g1 = " + g1 + ", g2 = " + g2);
+        h1.x = temph1.x;
+        h1.y = temph1.y;
+        h2.x = temph2.x;
+        h2.y = temph2.y;
+        
+        g1.x = tempg1.x;
+        g1.y = tempg1.y;
+        g2.x = tempg2.x;
+        g2.y = tempg2.y;
     }
     
     private Point doRaysIntersect(Point p1, double slopeP1, Point p2, double slopeP2) {

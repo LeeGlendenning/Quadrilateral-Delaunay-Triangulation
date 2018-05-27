@@ -18,7 +18,7 @@ public class Test {
     public static void main(String[] args) {
         
         ArrayList<Point> pts = new ArrayList();
-        pts.add(new Point(100, 100));
+        //pts.add(new Point(100, 100));
         pts.add(new Point(500, 300));
         pts.add(new Point(200, 300));
         
