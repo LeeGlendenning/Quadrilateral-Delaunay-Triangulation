@@ -1,6 +1,5 @@
 package dt;
 
-import java.awt.Point;
 import java.util.ArrayList;
 
 /**
@@ -21,8 +20,8 @@ public class VoronoiBisector {
      * @param startPt An endpoint of the bisector
      * @param endPt An endpoint of the bisector
      */
-    public VoronoiBisector(ArrayList<Point> adjacentPts, Point startPt, Point endPt) {
-        this.adjacentPoints = adjacentPts;
+    public VoronoiBisector(/*ArrayList<Point> adjacentPts,*/ Point startPt, Point endPt) {
+        //this.adjacentPoints = adjacentPts;
         //bisectorSegments = new ArrayList();
         this.startPoint = startPt;
         this.endPoint = endPt;

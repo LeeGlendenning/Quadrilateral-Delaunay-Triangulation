@@ -35,7 +35,7 @@ public class VoronoiDiagram extends JPanel {
     private final boolean timerOn;   // for starting and stopping animation
     private int scaleIterations;
     
-    Point h1 = new Point(), h2 = new Point(), g1 = new Point(), g2 = new Point();
+    ArrayList<Point> h1, h2, g1, g2;
 
     /**
      * Construct Voronoi diagram for point set using a Quadrilateral
@@ -50,6 +50,10 @@ public class VoronoiDiagram extends JPanel {
         this.voronoiPoints = new ArrayList();
         this.timerOn = true;
         this.scaleIterations = 0;
+        this.h1 = new ArrayList();
+        this.h2 = new ArrayList();
+        this.g1 = new ArrayList();
+        this.g2 = new ArrayList();
         createJFrame();
         //constructVoronoi();
         doVoronoiAnimation(5, 0);
@@ -106,18 +110,20 @@ public class VoronoiDiagram extends JPanel {
         // Two "middle" vertices of quad wrt y value and angle
         Point[] innerVertices = findInnerVertices(q, angle);
         
-        //Point h1 = new Point(), h2 = new Point(), g1 = new Point(), g2 = new Point();
-        findh12g12(h1, h2, g1, g2, a1, a2, q, innerVertices, angle);
+        h1.add(new Point());
+        h2.add(new Point());
+        g1.add(new Point());
+        g2.add(new Point());
+        findh12g12(h1.get(h1.size()-1), h2.get(h1.size()-1), g1.get(h1.size()-1), g2.get(h1.size()-1), a1, a2, q, innerVertices, angle);
         System.out.println("h1 = " + h1 + ", h2 = " + h2);
         System.out.println("g1 = " + g1 + ", g2 = " + g2);
         
-        double hSlope = 0.0, gSlope = 0.0;
-        
         // Endpoints of main bisector between p1 and p2
-        // Not line segments, rather
-        Point h = doRaysIntersect(a1, hSlope, a2, -1/hSlope);
-        Point g = doRaysIntersect(a1, gSlope, a2, -1/gSlope);
+        Point h = doRaysIntersect(a1, h1.get(h1.size()-1), a2, h2.get(h2.size()-1));
+        Point g = doRaysIntersect(a1, g1.get(g1.size()-1), a2, g2.get(g2.size()-1));
         
+        System.out.println("Endpoints: " + h + ", " + g);
+        this.voronoiEdges.add(new VoronoiBisector(h, g));
     }
     
     /**
@@ -276,8 +282,8 @@ public class VoronoiDiagram extends JPanel {
             System.exit(1);
         }
         
-        //System.out.println("h1 = " + h1 + ", h2 = " + h2);
-        //System.out.println("g1 = " + g1 + ", g2 = " + g2);
+        //System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
+        //System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
         
         Point[] rVerts = new Point[4];
         // Rotate all quad vertices
@@ -300,6 +306,7 @@ public class VoronoiDiagram extends JPanel {
             Point intersectionPoint1;
             //found an h
             if ((intersectionPoint1 = doLineSegmentsIntersect(l1[0], l1[1], rVerts[i], rVerts[j])) != null && !intersectionPoint1.equals(innerVerts[0])) {
+                //System.out.println("Found intersection for h");
                 if (temph1 == null) {
                     temph1 = intersectionPoint1;
                 } else {
@@ -337,10 +344,57 @@ public class VoronoiDiagram extends JPanel {
         
     }
     
-    private Point doRaysIntersect(Point p1, double slopeP1, Point p2, double slopeP2) {
-        Point intersection = new Point();
+    /**
+     * Determine point where rays through h1 and h2 and through g1 and g2 intersect
+     * 
+     * @param a1 Enpoint of new ray
+     * @param h1 Point on new ray
+     * @param a2 Enpoint of new ray
+     * @param h2 Point on new ray
+     * @return 
+     */
+    private Point doRaysIntersect(Point a1, Point h1, Point a2, Point h2) {
         
-        return intersection;
+        // Rotate a1h1 to be horizontal with x axis
+        double angle; // Angle that slope(a1h1) makes with x axis
+        if (a1.x == h1.x) {
+            angle = 0;
+        } else {
+            angle = Math.atan((a1.y - h1.y) / (h1.x - a1.x));
+        }
+        
+        Point ra1 = rotatePoint(a1, midpoint(a1, h1), angle);
+        Point rh1 = rotatePoint(h1, midpoint(a1, h1), angle);
+        
+        // Define the ray a1h1 and rotate back to original position
+        Point[] raya1h1 = {new Point(ra1.x, ra1.y), new Point(1000000, rh1.y)};
+        raya1h1[0] = rotatePoint(raya1h1[0], midpoint(a1, h1), -angle);
+        raya1h1[1] = rotatePoint(raya1h1[1], midpoint(a1, h1), -angle);
+        
+        this.voronoiEdges.add(new VoronoiBisector(raya1h1[0], raya1h1[1]));
+        
+        
+        
+        
+        
+        // Rotate a2h2 to be horizontal with x axis
+        if (a2.x == h2.x) {
+            angle = 0;
+        } else {
+            angle = Math.atan((a2.y - h2.y) / (h2.x - a2.x));
+        }
+        
+        Point ra2 = rotatePoint(a2, midpoint(a2, h2), angle);
+        Point rh2 = rotatePoint(h2, midpoint(a2, h2), angle);
+        
+        // Define the ray a1h1 and rotate back to original position
+        Point[] raya2h2 = {new Point(ra2.x, ra2.y), new Point(-1000000, rh2.y)};
+        raya2h2[0] = rotatePoint(raya2h2[0], midpoint(a2, h2), -angle);
+        raya2h2[1] = rotatePoint(raya2h2[1], midpoint(a2, h2), -angle);
+        
+        this.voronoiEdges.add(new VoronoiBisector(raya2h2[0], raya2h2[1]));
+        
+        return doLineSegmentsIntersect(raya1h1[0], raya1h1[1], raya2h2[0], raya2h2[1]);
     }
     
     
@@ -601,18 +655,25 @@ public class VoronoiDiagram extends JPanel {
 
         g2d.setColor(Color.black);
 
-        // Draw bisectors
+        // Draw bisector ray points
         for (Point bisector : this.voronoiPoints) {
             g2d.fill(new Ellipse2D.Double(bisector.x * this.pixelFactor + voronoiPointRadius, yMax - (bisector.y * this.pixelFactor + voronoiPointRadius), voronoiPointRadius * 2, voronoiPointRadius * 2)); // x, y, width, height
-            //g2d.drawLine(bisector.startPoint.x * scaleFactor, bisector.startPoint.y * scaleFactor, bisector.endPoint.x * scaleFactor, bisector.endPoint.y * scaleFactor);
+            
         }
         
+        // Draw main bisectors
+        for (VoronoiBisector bisector : this.voronoiEdges) {
+            g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
+        }
+        
+        // Draw h12, g12 points on quads
         g2d.setColor(Color.red);
-        g2d.fill(new Ellipse2D.Double(h1.x - pointRadius, yMax - h1.y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-        g2d.fill(new Ellipse2D.Double(h2.x - pointRadius, yMax - h2.y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-        g2d.fill(new Ellipse2D.Double(g1.x - pointRadius, yMax - g1.y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-        g2d.fill(new Ellipse2D.Double(g2.x - pointRadius, yMax - g2.y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-
+        for(int i = 0; i < h1.size(); i ++) {
+            g2d.fill(new Ellipse2D.Double(h1.get(i).x - pointRadius, yMax - h1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+            g2d.fill(new Ellipse2D.Double(h2.get(i).x - pointRadius, yMax - h2.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+            g2d.fill(new Ellipse2D.Double(g1.get(i).x - pointRadius, yMax - g1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+            g2d.fill(new Ellipse2D.Double(g2.get(i).x - pointRadius, yMax - g2.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+        }
         //System.out.println("***********************");
     }
 
