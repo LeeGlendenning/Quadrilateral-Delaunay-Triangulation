@@ -373,7 +373,7 @@ public class VoronoiDiagram extends JPanel {
         
         // Define the ray a1h1 and rotate back to original position
         int rayEnd1 = 1000000;
-        if (slope(a1, h1) < 0) {
+        if (a1. x > h1.x) {
             rayEnd1 = -1000000;
         }
         Point[] raya1h1 = {new Point(ra1.x, ra1.y), new Point(rayEnd1, rh1.y)};
@@ -394,9 +394,9 @@ public class VoronoiDiagram extends JPanel {
         Point rh2 = rotatePoint(h2, midpoint(a2, h2), angle);
         
         // Define the ray a1h1 and rotate back to original position
-        int rayEnd2 = -1000000;
-        if (slope(a2, h2) < 0) {
-            rayEnd2 = 1000000;
+        int rayEnd2 = 1000000;
+        if (a2.x > h2.x) {
+            rayEnd2 = -1000000;
         }
         Point[] raya2h2 = {new Point(ra2.x, ra2.y), new Point(rayEnd2, rh2.y)};
         raya2h2[0] = rotatePoint(raya2h2[0], midpoint(a2, h2), -angle);
@@ -677,7 +677,8 @@ public class VoronoiDiagram extends JPanel {
         
         // Draw main bisectors
         for (VoronoiBisector bisector : this.voronoiEdges) {
-            g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
+            if (bisector.startPoint != null && bisector.endPoint != null)
+                g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
         }
         
         // Draw h12, g12 points on quads
