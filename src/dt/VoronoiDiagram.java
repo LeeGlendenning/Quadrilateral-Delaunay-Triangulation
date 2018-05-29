@@ -35,6 +35,8 @@ public class VoronoiDiagram extends JPanel {
     private final boolean timerOn;   // for starting and stopping animation
     private int scaleIterations;
     
+    private boolean onlyShowMainBisectors = false;
+    
     ArrayList<Point> h1, h2, g1, g2;
 
     /**
@@ -56,7 +58,7 @@ public class VoronoiDiagram extends JPanel {
         this.g2 = new ArrayList();
         createJFrame();
         //constructVoronoi();
-        doVoronoiAnimation(20, 0);
+        doVoronoiAnimation(20, 2000);
     }
     
     /**
@@ -264,23 +266,25 @@ public class VoronoiDiagram extends JPanel {
     private void findh12g12(Point h1, Point h2, Point g1, Point g2, Point a1, Point a2, Quadrilateral q, Point[] innerVerts, double angle) {
         Point temph1 = null, temph2 = null, tempg1 = null, tempg2 = null;
         
-        if (slope(q.getCenter(), innerVerts[0]) < 0) {
+        // If inner vertex is to the right of center of quad
+        if (innerVerts[0].x > q.getCenter().x) {
             temph1 = innerVerts[0];
-        } else if (slope(q.getCenter(), innerVerts[0]) > 0) {
+        } else /*if (slope(q.getCenter(), innerVerts[0]) > 0)*/ {
             temph2 = innerVerts[0];
-        } else {
+        } /*else {
             System.err.println("!!! Slope of quad edge cannot be equal to slope a1a2 !!!");
             System.exit(1);
-        }
+        }*/
         
-        if (slope(q.getCenter(), innerVerts[1]) > 0) {
+        // If inner vertex is to the right of center of quad
+        if (innerVerts[1].x > q.getCenter().x) {
             tempg1 = innerVerts[1];
-        } else if (slope(q.getCenter(), innerVerts[1]) < 0) {
+        } else /*if (slope(q.getCenter(), innerVerts[1]) < 0)*/ {
             tempg2 = innerVerts[1];
-        } else {
+        } /*else {
             System.err.println("!!! Slope of quad edge cannot be equal to slope a1a2 !!!");
             System.exit(1);
-        }
+        }*/
         
         //System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
         //System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
@@ -380,8 +384,9 @@ public class VoronoiDiagram extends JPanel {
         raya1h1[0] = rotatePoint(raya1h1[0], midpoint(a1, h1), -angle);
         raya1h1[1] = rotatePoint(raya1h1[1], midpoint(a1, h1), -angle);
         
-        this.voronoiEdges.add(new VoronoiBisector(raya1h1[0], raya1h1[1]));
-        
+        if (!onlyShowMainBisectors) {
+            this.voronoiEdges.add(new VoronoiBisector(raya1h1[0], raya1h1[1]));
+        }
         
         // Rotate a2h2 to be horizontal with x axis
         if (a2.x == h2.x) {
@@ -402,12 +407,21 @@ public class VoronoiDiagram extends JPanel {
         raya2h2[0] = rotatePoint(raya2h2[0], midpoint(a2, h2), -angle);
         raya2h2[1] = rotatePoint(raya2h2[1], midpoint(a2, h2), -angle);
         
-        this.voronoiEdges.add(new VoronoiBisector(raya2h2[0], raya2h2[1]));
+        if (!onlyShowMainBisectors) {
+            this.voronoiEdges.add(new VoronoiBisector(raya2h2[0], raya2h2[1]));
+        }
         
         System.out.println("comparing " + raya1h1[0] + ", " + raya1h1[1] + " and " + raya2h2[0] + ", " + raya2h2[1]);
         System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
-        
-        return doLineSegmentsIntersect(raya1h1[0], raya1h1[1], raya2h2[0], raya2h2[1]);
+        if (slope(a1, h1) == slope(a2, h2)) {
+            /**
+             * TODO: this is not correct
+             */
+            System.out.println("!!Rays are collinear because slope(a1, a2) = slope(a quad edge). Not sure where to put bisector endpoint !!!");
+            return midpoint(h1, h2);
+        } else {
+            return doLineSegmentsIntersect(raya1h1[0], raya1h1[1], raya2h2[0], raya2h2[1]);
+        }
     }
     
     
@@ -677,6 +691,9 @@ public class VoronoiDiagram extends JPanel {
         
         // Draw main bisectors
         for (VoronoiBisector bisector : this.voronoiEdges) {
+            /**
+             * TODO: this if statement should not be here! Only for debugging
+             */
             if (bisector.startPoint != null && bisector.endPoint != null)
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
         }
