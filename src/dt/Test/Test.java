@@ -19,8 +19,8 @@ public class Test {
         
         ArrayList<Point> pts = new ArrayList();
         pts.add(new Point(100, 100));
-        pts.add(new Point(500, 300));
-        //pts.add(new Point(200, 300));
+        //pts.add(new Point(500, 300));
+        pts.add(new Point(150, 300));
         
         Point[] quad = {new Point(0,0), new Point(40,10), new Point(30,40), new Point(10,31)};
         Quadrilateral q = new Quadrilateral(quad);

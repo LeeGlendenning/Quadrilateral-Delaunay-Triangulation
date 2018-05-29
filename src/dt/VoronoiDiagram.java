@@ -56,7 +56,7 @@ public class VoronoiDiagram extends JPanel {
         this.g2 = new ArrayList();
         createJFrame();
         //constructVoronoi();
-        doVoronoiAnimation(5, 0);
+        doVoronoiAnimation(20, 0);
     }
     
     /**
@@ -297,14 +297,16 @@ public class VoronoiDiagram extends JPanel {
         
         // Find other h and g points and rotate quad back to its original place
         int j;
-        for (int i = 0; i < 3; i ++) {
-            if (i == 0) {
-                j = 3;
+        for (int i = 0; i < 4; i ++) {
+            if (i == 3) {
+                j = 0;
             } else {
                 j = i + 1;
             }
             Point intersectionPoint1;
             //found an h
+            //System.out.println("i = " + i + ", j = " + j);
+            //System.out.println("Looking for h intersection between " + l1[0] + ", " + l1[1] + " and " + rVerts[i] + ", " + rVerts[j]);
             if ((intersectionPoint1 = doLineSegmentsIntersect(l1[0], l1[1], rVerts[i], rVerts[j])) != null && !intersectionPoint1.equals(innerVerts[0])) {
                 //System.out.println("Found intersection for h");
                 if (temph1 == null) {
@@ -324,6 +326,9 @@ public class VoronoiDiagram extends JPanel {
                 }
             }
         }
+        
+        //System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
+        //System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
         
         // Rotate points back to original coordinate system and translate to a1 and a2
         temph1 = rotatePoint(temph1, q.getCenter(), -angle);
@@ -367,14 +372,15 @@ public class VoronoiDiagram extends JPanel {
         Point rh1 = rotatePoint(h1, midpoint(a1, h1), angle);
         
         // Define the ray a1h1 and rotate back to original position
-        Point[] raya1h1 = {new Point(ra1.x, ra1.y), new Point(1000000, rh1.y)};
+        int rayEnd1 = 1000000;
+        if (slope(a1, h1) < 0) {
+            rayEnd1 = -1000000;
+        }
+        Point[] raya1h1 = {new Point(ra1.x, ra1.y), new Point(rayEnd1, rh1.y)};
         raya1h1[0] = rotatePoint(raya1h1[0], midpoint(a1, h1), -angle);
         raya1h1[1] = rotatePoint(raya1h1[1], midpoint(a1, h1), -angle);
         
         this.voronoiEdges.add(new VoronoiBisector(raya1h1[0], raya1h1[1]));
-        
-        
-        
         
         
         // Rotate a2h2 to be horizontal with x axis
@@ -388,11 +394,18 @@ public class VoronoiDiagram extends JPanel {
         Point rh2 = rotatePoint(h2, midpoint(a2, h2), angle);
         
         // Define the ray a1h1 and rotate back to original position
-        Point[] raya2h2 = {new Point(ra2.x, ra2.y), new Point(-1000000, rh2.y)};
+        int rayEnd2 = -1000000;
+        if (slope(a2, h2) < 0) {
+            rayEnd2 = 1000000;
+        }
+        Point[] raya2h2 = {new Point(ra2.x, ra2.y), new Point(rayEnd2, rh2.y)};
         raya2h2[0] = rotatePoint(raya2h2[0], midpoint(a2, h2), -angle);
         raya2h2[1] = rotatePoint(raya2h2[1], midpoint(a2, h2), -angle);
         
         this.voronoiEdges.add(new VoronoiBisector(raya2h2[0], raya2h2[1]));
+        
+        System.out.println("comparing " + raya1h1[0] + ", " + raya1h1[1] + " and " + raya2h2[0] + ", " + raya2h2[1]);
+        System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
         
         return doLineSegmentsIntersect(raya1h1[0], raya1h1[1], raya2h2[0], raya2h2[1]);
     }
@@ -449,18 +462,19 @@ public class VoronoiDiagram extends JPanel {
         Point[] quad2 = q.getPixelVertsForPoint(p2, this.curScale, this.pixelFactor);
 
         int k, l;
-        for (int i = 0; i < 3; i++) {
-            if (i == 0) {
-                k = 3;
+        for (int i = 0; i < 4; i++) {
+            if (i == 3) {
+                k = 0;
             } else {
                 k = i + 1;
             }
-            for (int j = 0; j < 3; j++) {
-                if (j == 0) {
-                    l = 3;
+            for (int j = 0; j < 4; j++) {
+                if (j == 3) {
+                    l = 0;
                 } else {
                     l = j + 1;
                 }
+                //System.out.println("i = " + i + ", k = " + k + ", j = " + j + ", l = " + l);
                 //System.out.println("Comparing line segments: (" + quad1[i].x + ", " + quad1[i].y + ") ("+ quad1[k].x + ", " + quad1[k].y + ") and (" + quad2[j].x + ", " + quad2[j].y + ") ("+ quad2[l].x + ", " + quad2[l].y + ")");
                 Point intersectionPoint;
                 if ((intersectionPoint = doLineSegmentsIntersect(quad1[i], quad1[k], quad2[j], quad2[l])) != null) {
