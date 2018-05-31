@@ -35,7 +35,7 @@ public class VoronoiDiagram extends JPanel {
     private final boolean timerOn;   // for starting and stopping animation
     private int scaleIterations;
     
-    private boolean onlyShowMainBisectors = false;
+    private boolean onlyShowMainBisectors = true;
     
     ArrayList<Point> h1, h2, g1, g2;
 
@@ -58,7 +58,7 @@ public class VoronoiDiagram extends JPanel {
         this.g2 = new ArrayList();
         createJFrame();
         //constructVoronoi();
-        doVoronoiAnimation(20, 2000);
+        doVoronoiAnimation(40, 2000);
     }
     
     /**
@@ -98,6 +98,9 @@ public class VoronoiDiagram extends JPanel {
      */
     private void findBisectorOfTwoSites(Quadrilateral q, Point p1, Point p2) {
         double angle; // Angle that slope(p1p2) makes with x axis
+        /**
+         * TODO: i think this should be p1.y == p2.y
+         */
         if (p1.x == p2.x) {
             angle = 0;
         } else {
@@ -126,6 +129,12 @@ public class VoronoiDiagram extends JPanel {
         
         System.out.println("Endpoints: " + h + ", " + g);
         this.voronoiEdges.add(new VoronoiBisector(h, g));
+        
+        // Find intersections between non-inner vertices
+        Point[] nonInnerVertices = findNonInnerVertices(q, angle);
+        
+        findBisectorRay(h, a1, nonInnerVertices[0]);
+        findBisectorRay(g, a2, nonInnerVertices[1]);
     }
     
     /**
@@ -209,12 +218,11 @@ public class VoronoiDiagram extends JPanel {
         return r;
     }
     
-    
     /**
-     * Find the two vertices of a quad that do not have max or min y values wrt a normal
+     * Find the two vertices of a quad that do not have max or min y values wrt an angle
      * 
      * @param q A quadrilateral to iterate over
-     * @param normalSlope Slope of a normal defining the coordinate system
+     * @param angle Angle to rotate quad by such that a1a2 is parallel to x axis
      * @return Array of inner vertices of size 2
      */
     private Point[] findInnerVertices(Quadrilateral q, double angle) {
@@ -248,6 +256,42 @@ public class VoronoiDiagram extends JPanel {
         
         System.out.println("Inner verts: " + innerVerts[0] + " " + innerVerts[1]);
         return innerVerts;
+    }
+    
+    /**
+     * Find the two vertices of a quad that have max and min y values wrt an angle
+     * 
+     * @param q A quadrilateral to iterate over
+     * @param angle Angle to rotate quad by such that a1a2 is parallel to x axis
+     * @return Array of nonInner vertices of size 2
+     */
+    private Point[] findNonInnerVertices(Quadrilateral q, double angle) {
+        Point[] nonInnerVerts = new Point[2], rVerts = new Point[4];
+        // Rotate all quad vertices
+        for (int i = 0; i < 4; i ++) {
+            rVerts[i] = rotatePoint(q.getVertices()[i], q.getCenter(), angle);
+        }
+        q.printVertices(q.getVertices());
+        
+        // Sort rotated quad vertices by ascending y value (more or less sweep line)
+        Arrays.sort(rVerts, new Comparator<Point>() {
+            @Override
+            public int compare(Point p1, Point p2) {
+                if (p1.y > p2.y) {
+                    return +1;
+                } else if (p1.y < p2.y) {
+                     return -1;
+                } else {
+                    return 0;
+                }
+            }
+        });
+        
+        nonInnerVerts[0] = rotatePoint(rVerts[0], q.getCenter(), -angle);
+        nonInnerVerts[1] = rotatePoint(rVerts[3], q.getCenter(), -angle);
+        
+        System.out.println("nonInner verts: " + nonInnerVerts[0] + " " + nonInnerVerts[1]);
+        return nonInnerVerts;
     }
     
     /**
@@ -411,23 +455,63 @@ public class VoronoiDiagram extends JPanel {
             this.voronoiEdges.add(new VoronoiBisector(raya2h2[0], raya2h2[1]));
         }
         
-        System.out.println("comparing " + raya1h1[0] + ", " + raya1h1[1] + " and " + raya2h2[0] + ", " + raya2h2[1]);
-        System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
+        //System.out.println("comparing " + raya1h1[0] + ", " + raya1h1[1] + " and " + raya2h2[0] + ", " + raya2h2[1]);
+        //System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
         if (slope(a1, h1) == slope(a2, h2)) {
             /**
              * TODO: this is not correct
              */
             System.out.println("!!Rays are collinear because slope(a1, a2) = slope(a quad edge). Not sure where to put bisector endpoint !!!");
-            return midpoint(h1, h2);
+            
+            System.out.println(new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y) + ", x(a1) = " + ra1.x + ", x(a1') = " + rh1.x + "x(a2) = " + ra2.x + ", x(a2') = " + rh2.x);
+            System.out.println(rotatePoint(new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y), midpoint(a2, h2), -angle));
+            Point temp = rotatePoint(new Point(0, ra2.y), midpoint(a2, h2), -angle);
+            return new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), temp.y);
         } else {
             return doLineSegmentsIntersect(raya1h1[0], raya1h1[1], raya2h2[0], raya2h2[1]);
         }
     }
     
-    
-    
-    
-    
+    /**
+     * Find a bisector ray from given bisector endpoint
+     * 
+     * @param endPt Endpoint of main bisector
+     * @param nonInnerVertex A vertex of the quad with an extreme y value
+     */
+    private void findBisectorRay(Point endPt, Point a, Point nonInnerVertex) {
+        // NonInnerVertex is relative to Quadrilateral. Translate relative to a
+        nonInnerVertex.x += a.x +  - this.quad.getCenter().x;
+        nonInnerVertex.y += a.y +  - this.quad.getCenter().y;
+        
+        System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
+        
+        // Define the direction of the ray starting at a
+        int rayEndx = 1000000;
+        if (a. x > nonInnerVertex.x) {
+            rayEndx = -1000000;
+        }
+        Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
+        
+        double angle; // Angle that slope(a, nonInnerVertex) makes with x axis
+        if (a.x == nonInnerVertex.x) {
+            angle = 0;
+        } else {
+            angle = Math.atan((a.y - nonInnerVertex.y) / (nonInnerVertex.x - a.x));
+        }
+        
+        // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
+        Point[] ray = {new Point(a.x, a.y), rotatePoint(rayEnd, new Point(0,0), -angle)};
+        
+        System.out.println("ray = " + ray[0] + ", " + ray[1]);
+        
+        //Translate ray so that it starts at endPt
+        ray[0].x += endPt.x - a.x;
+        ray[0].y += endPt.y - a.y;
+        ray[1].x += endPt.x - a.x;
+        ray[1].y += endPt.y - a.y;
+        
+        this.voronoiEdges.add(new VoronoiBisector(ray[0], ray[1]));
+    }
     
     
     
@@ -657,8 +741,6 @@ public class VoronoiDiagram extends JPanel {
         window.setVisible(true);
     }
 
-    
-
     /**
      * Draws the Voronoi diagram to the window
      *
@@ -678,7 +760,8 @@ public class VoronoiDiagram extends JPanel {
             g2d.setColor(p.getColour());
             // Subtract pointRadius because points are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(p.x * this.pixelFactor - pointRadius, yMax - (p.y * this.pixelFactor + pointRadius), pointRadius * 2, pointRadius * 2)); // x, y, width, height
-            quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax);
+            quad.drawQuad(g2d, p, 1.0, this.pixelFactor, yMax); // Original quad
+            quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax); // Scaled quad
         }
 
         g2d.setColor(Color.black);
