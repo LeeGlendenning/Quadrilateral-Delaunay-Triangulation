@@ -21,6 +21,10 @@ public class Quadrilateral {
         this.vertices = vertices;
         this.center = new Point();
         computeCenter();
+        
+        System.out.print("Original quad: ");
+        printVertices(this.vertices);
+        System.out.println("Center of quad: (" + center.x + ", " + center.y + ")");
         //minimizeQuad();
     }
     
@@ -51,8 +55,7 @@ public class Quadrilateral {
     private void computeCenter() {
         double x = (vertices[0].x + vertices[1].x + vertices[2].x + vertices[3].x) / 4;
         double y = (vertices[0].y + vertices[1].y + vertices[2].y + vertices[3].y) / 4;
-        center = new Point(x, y);
-        //System.out.println("Center of quad: (" + center.x + ", " + center.y + ")");
+        this.center = new Point(x, y);
     }
     
     /**

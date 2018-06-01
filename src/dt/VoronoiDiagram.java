@@ -35,7 +35,7 @@ public class VoronoiDiagram extends JPanel {
     private final boolean timerOn;   // for starting and stopping animation
     private int scaleIterations;
     
-    private boolean onlyShowMainBisectors = true;
+    private boolean onlyShowMainBisectors = false;
     
     ArrayList<Point> h1, h2, g1, g2;
 
@@ -98,11 +98,8 @@ public class VoronoiDiagram extends JPanel {
      */
     private void findBisectorOfTwoSites(Quadrilateral q, Point p1, Point p2) {
         double angle; // Angle that slope(p1p2) makes with x axis
-        /**
-         * TODO: i think this should be p1.y == p2.y
-         */
         if (p1.x == p2.x) {
-            angle = 0;
+            angle = Math.toRadians(90);
         } else {
             angle = Math.atan((p1.y - p2.y) / (p2.x - p1.x));
         }
@@ -234,8 +231,6 @@ public class VoronoiDiagram extends JPanel {
             System.out.print(rVerts[i] + " ");
         }
         System.out.println();
-        System.out.print("Original quad: ");
-        q.printVertices(q.getVertices());
         
         // Sort rotated quad vertices by ascending y value (more or less sweep line)
         Arrays.sort(rVerts, new Comparator<Point>() {
@@ -254,7 +249,7 @@ public class VoronoiDiagram extends JPanel {
         innerVerts[0] = rVerts[1];
         innerVerts[1] = rVerts[2];
         
-        System.out.println("Inner verts: " + innerVerts[0] + " " + innerVerts[1]);
+        //System.out.println("Inner verts: " + innerVerts[0] + " " + innerVerts[1]);
         return innerVerts;
     }
     
@@ -271,7 +266,6 @@ public class VoronoiDiagram extends JPanel {
         for (int i = 0; i < 4; i ++) {
             rVerts[i] = rotatePoint(q.getVertices()[i], q.getCenter(), angle);
         }
-        q.printVertices(q.getVertices());
         
         // Sort rotated quad vertices by ascending y value (more or less sweep line)
         Arrays.sort(rVerts, new Comparator<Point>() {
@@ -290,7 +284,7 @@ public class VoronoiDiagram extends JPanel {
         nonInnerVerts[0] = rotatePoint(rVerts[0], q.getCenter(), -angle);
         nonInnerVerts[1] = rotatePoint(rVerts[3], q.getCenter(), -angle);
         
-        System.out.println("nonInner verts: " + nonInnerVerts[0] + " " + nonInnerVerts[1]);
+        //System.out.println("nonInner verts: " + nonInnerVerts[0] + " " + nonInnerVerts[1]);
         return nonInnerVerts;
     }
     
@@ -411,7 +405,7 @@ public class VoronoiDiagram extends JPanel {
         // Rotate a1h1 to be horizontal with x axis
         double angle; // Angle that slope(a1h1) makes with x axis
         if (a1.x == h1.x) {
-            angle = 0;
+            angle = Math.toRadians(90);
         } else {
             angle = Math.atan((a1.y - h1.y) / (h1.x - a1.x));
         }
@@ -461,12 +455,18 @@ public class VoronoiDiagram extends JPanel {
             /**
              * TODO: this is not correct
              */
-            System.out.println("!!Rays are collinear because slope(a1, a2) = slope(a quad edge). Not sure where to put bisector endpoint !!!");
+            System.out.println("\n!!Rays are collinear because slope(a1, a2) = slope(a quad edge). Not sure where to put bisector endpoint !!!");
+            ra1 = rotatePoint(a1, midpoint(a1, a2), angle);
+            ra2 = rotatePoint(a2, midpoint(a1, a2), angle);
+            rh1 = rotatePoint(h1, midpoint(a1, a2), angle);
+            rh2 = rotatePoint(h2, midpoint(a1, a2), angle);
             
-            System.out.println(new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y) + ", x(a1) = " + ra1.x + ", x(a1') = " + rh1.x + "x(a2) = " + ra2.x + ", x(a2') = " + rh2.x);
-            System.out.println(rotatePoint(new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y), midpoint(a2, h2), -angle));
-            Point temp = rotatePoint(new Point(0, ra2.y), midpoint(a2, h2), -angle);
-            return new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), temp.y);
+            System.out.println("Points before 1st rotation: a1.x = " + a1.x + ", h1.x = " + h1.x + " a2.x = " + a2.x + ", h2.x = " + h2.x);
+            System.out.println("Points before 2nd rotation: a1.x = " + ra1.x + ", h1.x = " + rh1.x + " a2.x = " + ra2.x + ", h2.x = " + rh2.x);
+            System.out.println("Point before 2nd rotation: " + new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y));
+            System.out.println(rotatePoint(new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y), midpoint(a1, a2), -angle));
+            
+            return rotatePoint(new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y), midpoint(a1, a2), -angle);
         } else {
             return doLineSegmentsIntersect(raya1h1[0], raya1h1[1], raya2h2[0], raya2h2[1]);
         }
@@ -476,6 +476,7 @@ public class VoronoiDiagram extends JPanel {
      * Find a bisector ray from given bisector endpoint
      * 
      * @param endPt Endpoint of main bisector
+     * @param a Point in a quad
      * @param nonInnerVertex A vertex of the quad with an extreme y value
      */
     private void findBisectorRay(Point endPt, Point a, Point nonInnerVertex) {
@@ -483,7 +484,7 @@ public class VoronoiDiagram extends JPanel {
         nonInnerVertex.x += a.x +  - this.quad.getCenter().x;
         nonInnerVertex.y += a.y +  - this.quad.getCenter().y;
         
-        System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
+        //System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
         
         // Define the direction of the ray starting at a
         int rayEndx = 1000000;
@@ -494,7 +495,7 @@ public class VoronoiDiagram extends JPanel {
         
         double angle; // Angle that slope(a, nonInnerVertex) makes with x axis
         if (a.x == nonInnerVertex.x) {
-            angle = 0;
+            angle = Math.toRadians(90);
         } else {
             angle = Math.atan((a.y - nonInnerVertex.y) / (nonInnerVertex.x - a.x));
         }
@@ -502,7 +503,7 @@ public class VoronoiDiagram extends JPanel {
         // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
         Point[] ray = {new Point(a.x, a.y), rotatePoint(rayEnd, new Point(0,0), -angle)};
         
-        System.out.println("ray = " + ray[0] + ", " + ray[1]);
+        //System.out.println("ray = " + ray[0] + ", " + ray[1]);
         
         //Translate ray so that it starts at endPt
         ray[0].x += endPt.x - a.x;
