@@ -35,7 +35,7 @@ public class VoronoiDiagram extends JPanel {
     private final boolean timerOn;   // for starting and stopping animation
     private int scaleIterations;
     
-    private boolean onlyShowMainBisectors = false;
+    private boolean onlyShowMainBisectors = true;
     
     ArrayList<Point> h1, h2, g1, g2;
 
@@ -309,23 +309,17 @@ public class VoronoiDiagram extends JPanel {
             temph1 = innerVerts[0];
         } else /*if (slope(q.getCenter(), innerVerts[0]) > 0)*/ {
             temph2 = innerVerts[0];
-        } /*else {
-            System.err.println("!!! Slope of quad edge cannot be equal to slope a1a2 !!!");
-            System.exit(1);
-        }*/
+        }
         
         // If inner vertex is to the right of center of quad
         if (innerVerts[1].x > q.getCenter().x) {
             tempg1 = innerVerts[1];
         } else /*if (slope(q.getCenter(), innerVerts[1]) < 0)*/ {
             tempg2 = innerVerts[1];
-        } /*else {
-            System.err.println("!!! Slope of quad edge cannot be equal to slope a1a2 !!!");
-            System.exit(1);
-        }*/
+        }
         
-        //System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
-        //System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
+        System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
+        System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
         
         Point[] rVerts = new Point[4];
         // Rotate all quad vertices
@@ -350,10 +344,9 @@ public class VoronoiDiagram extends JPanel {
             //System.out.println("i = " + i + ", j = " + j);
             //System.out.println("Looking for h intersection between " + l1[0] + ", " + l1[1] + " and " + rVerts[i] + ", " + rVerts[j]);
             if ((intersectionPoint1 = doLineSegmentsIntersect(l1[0], l1[1], rVerts[i], rVerts[j])) != null && !intersectionPoint1.equals(innerVerts[0])) {
-                //System.out.println("Found intersection for h");
-                if (temph1 == null) {
+                if (temph1 == null && intersectionPoint1.x > this.quad.getCenter().x) {
                     temph1 = intersectionPoint1;
-                } else {
+                } else if (intersectionPoint1.x < this.quad.getCenter().x){
                     temph2 = intersectionPoint1;
                 }
             }
@@ -361,9 +354,9 @@ public class VoronoiDiagram extends JPanel {
             Point intersectionPoint2;
             // found a g
             if ((intersectionPoint2 = doLineSegmentsIntersect(l2[0], l2[1], rVerts[i], rVerts[j])) != null && !intersectionPoint2.equals(innerVerts[1])) {
-                if (tempg1 == null) {
+                if (tempg1 == null && intersectionPoint2.x > this.quad.getCenter().x) {
                     tempg1 = intersectionPoint2;
-                } else {
+                } else if (intersectionPoint2.x < this.quad.getCenter().x){
                     tempg2 = intersectionPoint2;
                 }
             }
