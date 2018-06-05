@@ -11,9 +11,7 @@ import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.Random;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -35,7 +33,7 @@ public class VoronoiDiagram extends JPanel {
     private final boolean timerOn;   // for starting and stopping animation
     private int scaleIterations;
     
-    private boolean onlyShowMainBisectors = false;
+    private boolean onlyShowMainBisectors = true;
     
     ArrayList<Point> h1, h2, g1, g2;
 
@@ -287,8 +285,18 @@ public class VoronoiDiagram extends JPanel {
             }
         });
         
-        nonInnerVerts[0] = rotatePoint(rVerts[0], q.getCenter(), -angle);
-        nonInnerVerts[1] = rotatePoint(rVerts[3], q.getCenter(), -angle);
+        // Check for SL hitting an edge
+        if (rVerts[0].y == rVerts[1].y && rVerts[0].x < rVerts[1].x) {
+            nonInnerVerts[0] = rotatePoint(rVerts[1], q.getCenter(), -angle);
+        } else {
+            nonInnerVerts[0] = rotatePoint(rVerts[0], q.getCenter(), -angle);
+        }
+        
+        if (rVerts[2].y == rVerts[3].y && rVerts[2].x > rVerts[3].x) {
+            nonInnerVerts[1] = rotatePoint(rVerts[2], q.getCenter(), -angle);
+        } else {
+            nonInnerVerts[1] = rotatePoint(rVerts[3], q.getCenter(), -angle);
+        }
         
         //System.out.println("nonInner verts: " + nonInnerVerts[0] + " " + nonInnerVerts[1]);
         return nonInnerVerts;
@@ -470,7 +478,7 @@ public class VoronoiDiagram extends JPanel {
         }
         
         //System.out.println("comparing " + raya1h1[0] + ", " + raya1h1[1] + " and " + raya2h2[0] + ", " + raya2h2[1]);
-        System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
+        //System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
         if (slope(a1, h1) == slope(a2, h2) || (slope(a1, h1) == Double.POSITIVE_INFINITY && slope(a2, h2) == Double.NEGATIVE_INFINITY) || (slope(a1, h1) == Double.NEGATIVE_INFINITY && slope(a2, h2) == Double.POSITIVE_INFINITY)) {
             System.out.println("\nHandling degenerate case for main bisector segment !!!");
             ra1 = rotatePoint(a1, midpoint(a1, a2), angle);
