@@ -29,11 +29,10 @@ public class VoronoiDiagram extends JPanel {
     private ArrayList<Point> voronoiPoints; // Temporary until bisector points are grouped as edges
     private double curScale = 1.0;
     private final int pixelFactor = 1;
-    private Timer timer; 
-    private final boolean timerOn;   // for starting and stopping animation
+    private Timer timer;
     private int scaleIterations;
     
-    private boolean onlyShowMainBisectors = true;
+    private final boolean onlyShowMainBisectors = true;
     
     ArrayList<Point> h1, h2, g1, g2;
 
@@ -48,7 +47,6 @@ public class VoronoiDiagram extends JPanel {
         this.quad = q;
         this.voronoiEdges = new ArrayList();
         this.voronoiPoints = new ArrayList();
-        this.timerOn = true;
         this.scaleIterations = 0;
         this.h1 = new ArrayList();
         this.h2 = new ArrayList();
@@ -356,19 +354,20 @@ public class VoronoiDiagram extends JPanel {
             Point intersectionPoint1;
             // Found an h
             if ((intersectionPoint1 = doLineSegmentsIntersect(l1[0], l1[1], rVerts[i], rVerts[j])) != null && !intersectionPoint1.equals(innerVerts[0])) {
-                if (temph1 == null && intersectionPoint1.x > this.quad.getCenter().x) {
+                if (temph1 == null && intersectionPoint1.x > temph2.x) {
                     temph1 = intersectionPoint1;
-                } else if (intersectionPoint1.x < this.quad.getCenter().x){
+                } else {
                     temph2 = intersectionPoint1;
                 }
             }
             
             Point intersectionPoint2;
+            
             // found a g
             if ((intersectionPoint2 = doLineSegmentsIntersect(l2[0], l2[1], rVerts[i], rVerts[j])) != null && !intersectionPoint2.equals(innerVerts[1])) {
-                if (tempg1 == null && intersectionPoint2.x > this.quad.getCenter().x) {
+                if (tempg1 == null && intersectionPoint2.x > tempg2.x) {
                     tempg1 = intersectionPoint2;
-                } else if (intersectionPoint2.x < this.quad.getCenter().x){
+                } else {
                     tempg2 = intersectionPoint2;
                 }
             }

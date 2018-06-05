@@ -13,7 +13,7 @@ public class Quadrilateral {
     private Point center;
 
     /**
-     * Create quad using array of vertices
+     * Create quad using array of vertices. Center defined as average of vertices
      * 
      * @param vertices array of Point objects defining vertices
      */
@@ -21,11 +21,31 @@ public class Quadrilateral {
         this.vertices = vertices;
         this.center = new Point();
         computeCenter();
-        
+        printInfo();
+        //minimizeQuad();
+    }
+    
+    /**
+     * Create quad using array of vertices and predefined center
+     * 
+     * @param vertices Array of Point objects defining vertices
+     * @param center Arbitrary Point representing the center of the quad
+     */
+    public Quadrilateral(Point[] vertices, Point center) {
+        this.vertices = vertices;
+        this.center = new Point();
+        this.center = center;
+        printInfo();
+        //minimizeQuad();
+    }
+    
+    /**
+     * Print various details about the defined quadrilateral
+     */
+    private void printInfo() {
         System.out.print("Original quad: ");
         printVertices(this.vertices);
         System.out.println("Center of quad: (" + center.x + ", " + center.y + ")");
-        //minimizeQuad();
     }
     
     /**
