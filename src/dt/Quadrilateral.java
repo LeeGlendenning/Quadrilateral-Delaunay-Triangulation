@@ -205,7 +205,7 @@ public class Quadrilateral {
      * @return Cloned list of vertices defining the quad
      */
     public Point[] getVertices() {
-        return this.vertices.clone();
+        return deepCopyPointSet(this.vertices);
     }
     
     /**

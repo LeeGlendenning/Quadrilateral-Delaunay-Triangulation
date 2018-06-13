@@ -296,7 +296,43 @@ public class VoronoiDiagram extends JPanel {
             nonInnerVerts[1] = rotatePoint(rVerts[3], q.getCenter(), -angle);
         }
         
-        //System.out.println("nonInner verts: " + nonInnerVerts[0] + " " + nonInnerVerts[1]);
+        /**
+         * Handle degenerate case where SL hits an edge and a1.x = a2.x
+         */
+        /*Point[] origVerts = q.getVertices();
+        // Sort original quad vertices by ascending x value (more or less sweep line)
+        Arrays.sort(origVerts, new Comparator<Point>() {
+            @Override
+            public int compare(Point p1, Point p2) {
+                if (p1.x > p2.x) {
+                    return +1;
+                } else if (p1.x < p2.x) {
+                     return -1;
+                } else {
+                    return 0;
+                }
+            }
+        });
+        System.out.println("origVerts[0] = " + origVerts[0] + ", origVerts[1] = " + origVerts[1]);
+        System.out.println("origVerts[2] = " + origVerts[2] + ", origVerts[3] = " + origVerts[3]);
+        // Adjust nonInnerVerts[0]
+        if (origVerts[0].x == origVerts[1].x) {
+            if (origVerts[0].y > origVerts[1].y) {
+                nonInnerVerts[0] = origVerts[0];
+            } else {
+                nonInnerVerts[0] = origVerts[1];
+            }
+        }
+        // Adjust nonInnerVerts[1]
+        if (origVerts[2].x == origVerts[3].x) {
+            if (origVerts[2].y > origVerts[3].y) {
+                nonInnerVerts[1] = origVerts[2];
+            } else {
+                nonInnerVerts[1] = origVerts[3];
+            }
+        }*/
+        
+        System.out.println("nonInner verts: " + nonInnerVerts[0] + " " + nonInnerVerts[1]);
         return nonInnerVerts;
     }
     
@@ -356,7 +392,7 @@ public class VoronoiDiagram extends JPanel {
             if ((intersectionPoint1 = doLineSegmentsIntersect(l1[0], l1[1], rVerts[i], rVerts[j])) != null && !intersectionPoint1.equals(innerVerts[0])) {
                 if (temph1 == null && intersectionPoint1.x > temph2.x) {
                     temph1 = intersectionPoint1;
-                } else {
+                } else if (temph2 == null) {
                     temph2 = intersectionPoint1;
                 }
             }
@@ -367,11 +403,14 @@ public class VoronoiDiagram extends JPanel {
             if ((intersectionPoint2 = doLineSegmentsIntersect(l2[0], l2[1], rVerts[i], rVerts[j])) != null && !intersectionPoint2.equals(innerVerts[1])) {
                 if (tempg1 == null && intersectionPoint2.x > tempg2.x) {
                     tempg1 = intersectionPoint2;
-                } else {
+                } else if (tempg2 == null) {
                     tempg2 = intersectionPoint2;
                 }
             }
         }
+        
+        //System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
+        //System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
         
         // Rotate points back to original coordinate system and translate to a1 and a2
         temph1 = rotatePoint(temph1, q.getCenter(), -angle);
@@ -505,13 +544,14 @@ public class VoronoiDiagram extends JPanel {
      */
     private void findBisectorRay(Point endPt, Point a, Point nonInnerVertex) {
         // NonInnerVertex is relative to Quadrilateral. Translate relative to a
-        nonInnerVertex.x += a.x +  - this.quad.getCenter().x;
-        nonInnerVertex.y += a.y +  - this.quad.getCenter().y;
+        nonInnerVertex.x += a.x - this.quad.getCenter().x;
+        nonInnerVertex.y += a.y - this.quad.getCenter().y;
         
         //System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
         
         // Define the direction of the ray starting at a
         int rayEndx = 1000000;
+        System.out.println(a + " : " + nonInnerVertex);
         if (a.x > nonInnerVertex.x || (a.x == nonInnerVertex.x && a.y < nonInnerVertex.y)) {
             rayEndx = -1000000;
         }
