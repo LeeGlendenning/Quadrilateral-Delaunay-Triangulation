@@ -366,8 +366,8 @@ public class VoronoiDiagram extends JPanel {
             tempg2 = innerVerts[1];
         }
         
-        //System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
-        //System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
+        System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
+        System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
         
         Point[] rVerts = new Point[4];
         // Rotate all quad vertices
@@ -411,6 +411,26 @@ public class VoronoiDiagram extends JPanel {
         
         //System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
         //System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
+        
+        // Assert that temph1.x > temph2.x and tempg1.x > tempg2.x
+        if (temph1.x < temph2.x) {
+            Point temp = new Point(temph1.x, temph1.y);
+            
+            temph1.x = temph2.x;
+            temph1.y = temph2.y;
+            
+            temph2.x = temp.x;
+            temph2.y = temp.y;
+        }
+        if (tempg1.x < tempg2.x) {
+            Point temp = new Point(tempg1.x, tempg1.y);
+            
+            tempg1.x = tempg2.x;
+            tempg1.y = tempg2.y;
+            
+            tempg2.x = temp.x;
+            tempg2.y = temp.y;
+        }
         
         // Rotate points back to original coordinate system and translate to a1 and a2
         temph1 = rotatePoint(temph1, q.getCenter(), -angle);
