@@ -3,7 +3,7 @@ package dt;
 import java.awt.Graphics2D;
 
 /**
- * Maintains a quadrilateral given 4 vertices
+ * Maintains a quadrilateral given 4 vertices. Assumes that vertices are ordered clockwise
  * 
  * @author Lee Glendenning
  */
@@ -206,6 +206,33 @@ public class Quadrilateral {
      */
     public Point[] getVertices() {
         return deepCopyPointSet(this.vertices);
+    }
+    
+    /**
+     * @param v A vertex of the Quadrilateral
+     * @return Next clockwise vertex in the vertex array of the Quadrilateral
+     */
+    public Point nextVertex(Point v) {
+        for (int i = 0; i < this.vertices.length; i ++) {
+            if (v.equals(this.vertices[i])) {
+                
+                return (i != this.vertices.length-1) ? new Point(this.vertices[i+1].x, this.vertices[i+1].y) : new Point(this.vertices[0].x, this.vertices[0].y);
+            }
+        }
+        return null; // v is an invalid vertex
+    }
+    
+    /**
+     * @param v A vertex of the Quadrilateral
+     * @return Previous clockwise vertex in the vertex array of the Quadrilateral
+     */
+    public Point prevVertex(Point v) {
+        for (int i = 0; i < this.vertices.length; i ++) {
+            if (v.equals(this.vertices[i])) {
+                return (i != 0) ? new Point(this.vertices[i-1].x, this.vertices[i-1].y) : new Point(this.vertices[this.vertices.length-1].x, this.vertices[this.vertices.length-1].y);
+            }
+        }
+        return null; // v is an invalid vertex
     }
     
     /**

@@ -55,6 +55,10 @@ public class VoronoiDiagram extends JPanel {
         createJFrame();
         //constructVoronoi();
         doVoronoiAnimation(40, 2000);
+        
+        Point left = new Point(), right = new Point();
+        setLeftAndRightPoint(this.points.get(0), this.points.get(1), left, right, 0/*angle*/);
+        findBisectorOfThreeSites(this.quad, left, right, new Point());
     }
     
     /**
@@ -84,6 +88,11 @@ public class VoronoiDiagram extends JPanel {
         });
         timer.start();
     }
+    
+    
+    
+    
+    
     
     /**
      * Find main bisector between all pairs of points
@@ -131,8 +140,11 @@ public class VoronoiDiagram extends JPanel {
         // Find intersections between non-inner vertices
         Point[] nonInnerVertices = findNonInnerVertices(q, a1, a2, angle);
         
-        findBisectorRay(h, a1, nonInnerVertices[0]);
-        findBisectorRay(g, a2, nonInnerVertices[1]);
+        Point[] hRay = findBisectorRay(h, a1, nonInnerVertices[0]);
+        this.voronoiEdges.add(new VoronoiBisector(hRay[0], hRay[1]));
+        
+        Point[] gRay = findBisectorRay(g, a2, nonInnerVertices[1]);
+        this.voronoiEdges.add(new VoronoiBisector(gRay[0], gRay[1]));
     }
     
     /**
@@ -529,12 +541,12 @@ public class VoronoiDiagram extends JPanel {
      * @param a Point in a quad
      * @param nonInnerVertex A vertex of the quad with an extreme y value
      */
-    private void findBisectorRay(Point endPt, Point a, Point nonInnerVertex) {
+    private Point[] findBisectorRay(Point endPt, Point a, Point nonInnerVertex) {
         // NonInnerVertex is relative to Quadrilateral. Translate relative to a
         nonInnerVertex.x += a.x - this.quad.getCenter().x;
         nonInnerVertex.y += a.y - this.quad.getCenter().y;
         
-        //System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
+        System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
         
         // Define the direction of the ray starting at a
         int rayEndx = 1000000;
@@ -559,7 +571,7 @@ public class VoronoiDiagram extends JPanel {
         // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
         Point[] ray = {new Point(a.x, a.y), rotatePoint(rayEnd, new Point(0,0), -angle)};
         
-        System.out.println("ray = " + ray[0] + ", " + ray[1]);
+        //System.out.println("ray = " + ray[0] + ", " + ray[1]);
         
         //Translate ray so that it starts at endPt
         ray[0].x += endPt.x - a.x;
@@ -567,9 +579,176 @@ public class VoronoiDiagram extends JPanel {
         ray[1].x += endPt.x - a.x;
         ray[1].y += endPt.y - a.y;
         
-        this.voronoiEdges.add(new VoronoiBisector(ray[0], ray[1]));
+        //this.voronoiEdges.add(new VoronoiBisector(ray[0], ray[1]));
+        return new Point[]{ray[0], ray[1]};
     }
     
+    
+    
+    
+    
+    /**
+     * If it exists, find the bisector point between p1, p2, p3
+     * 
+     * @param q Quadrilateral around each point
+     * @param p1 A point to find bisector of
+     * @param p2 A point to find bisector of
+     * @param p3 A point to find bisector of
+     */
+    private void findBisectorOfThreeSites(Quadrilateral q, Point p1, Point p2, Point p3) {
+        caseBisectorBetween3Points(q, p1, p2, p3);
+        /*int bisectorCase = caseBisectorBetween3Points(q, p1, p2, p3);
+        
+        // If case is 1, ignore. Means there is no bisector point
+        if (bisectorCase == 2) {
+            voronoiPoints.add(findIntersectionBisectors3Points(p1, p2, p3));
+        } else if (bisectorCase == 3 && !pointsAreCollinear(p1, p2, p3)) {
+            //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
+        } else if (bisectorCase == 3 && pointsAreCollinear(p1, p2, p3)) {
+            //BC(a1; a2; a3) consists of one or two cones
+        }*/
+    }
+    
+    /**
+     * Case 1. If a3 lies in the interior of FG12 then BC(a1; a2; a3) is empty.
+     * Case 2. If a3 lies in the complement of FG12 then BC(a1; a2; a3) consists of exactly
+     * one point.
+     * Case 3. Otherwise, a3 lies on the boundary of FG12. If a1, a2, a3 are not collinear
+     * then BC(a1; a2; a3) is a polygonal chain completed with one ray at the end, else
+     * BC(a1; a2; a3) consists of one or two cones.
+     * 
+     * @param q Quadrilateral around each point
+     * @param a1 A point
+     * @param a2 A point
+     * @param a3 A point
+     * @return Integer representing the case
+     */
+    private int caseBisectorBetween3Points(Quadrilateral q, Point a1, Point a2, Point a3) {
+        int bisectorCase = 0;
+        
+        Point[] uv = finduv(q, a1, a2); // Point[2] = {u, v}
+        //System.out.println("u = " + uv[0]);
+        //System.out.println("v = " + uv[1]);
+        
+        return bisectorCase;
+    }
+    
+    /**
+     * 
+     * @param q Quadrilateral to find u and v for
+     * @param a1 A center point
+     * @param a2 A center point
+     * @return Point array holding u and v respectively
+     */
+    private Point[] finduv(Quadrilateral q, Point a1, Point a2) {
+        Point[] td =  findNonInnerVertices(q, a1, a2, 0/*angle*/);
+        
+        Point[] u1 = find3PointUVRays(td[0], a1, q.prevVertex(td[0]));
+        //System.out.println("u1: " + td[0] + ", " + q.prevVertex(td[0]));
+        Point[] u2 = find3PointUVRays(td[0], a2, q.nextVertex(td[0]));
+        //System.out.println("u2: " + td[0] + ", " + q.nextVertex(td[0]));
+        Point[] v1 = find3PointUVRays(td[1], a1, q.nextVertex(td[1]));
+        //System.out.println("v1: " + td[1] + ", " + q.nextVertex(td[1]));
+        Point[] v2 = find3PointUVRays(td[1], a2, q.prevVertex(td[1]));
+        //System.out.println("v2: " + td[1] + ", " + q.prevVertex(td[1]));
+        
+        this.voronoiEdges.add(new VoronoiBisector(u1[0], u1[1]));
+        this.voronoiEdges.add(new VoronoiBisector(u1[2], u1[3]));
+        
+        this.voronoiEdges.add(new VoronoiBisector(u2[0], u2[1]));
+        this.voronoiEdges.add(new VoronoiBisector(u2[2], u2[3]));
+        
+        this.voronoiEdges.add(new VoronoiBisector(v1[0], v1[1]));
+        this.voronoiEdges.add(new VoronoiBisector(v1[2], v1[3]));
+        
+        this.voronoiEdges.add(new VoronoiBisector(v2[0], v2[1]));
+        this.voronoiEdges.add(new VoronoiBisector(v2[2], v2[3]));
+        
+        Point u = doLineSegmentsIntersect(u1[0], u1[1], u2[0], u2[1]);
+        Point v = doLineSegmentsIntersect(v1[0], v1[1], v2[0], v2[1]);
+                
+        return new Point[]{u, v};
+    }
+    
+    private Point[] find3PointUVRays(Point endPt, Point a, Point nextPt) {
+        Point p1 = new Point(), p2 = new Point();
+        // EndPt is relative to Quadrilateral. Translate relative to a
+        p1.x = endPt.x + a.x - this.quad.getCenter().x;
+        p1.y = endPt.y + a.y - this.quad.getCenter().y;
+        
+        // NonInnerVertex is relative to Quadrilateral. Translate relative to a
+        p2.x = nextPt.x + a.x - this.quad.getCenter().x;
+        p2.y = nextPt.y + a.y - this.quad.getCenter().y;
+        
+        System.out.println("endPt = " + p1 + ", a = " + a + ", nextPt = " + p2);
+        
+        // Define the direction of the ray starting at a
+        int rayEndx = 1000000;
+        //System.out.println(a + " : " + nonInnerVertex);
+        if (p1.x > p2.x || (p1.x == p2.x && p1.y < p2.y)) {
+            rayEndx = -1000000;
+        }
+        Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
+        Point rayEnd2 = new Point(-rayEndx, a.y);
+        
+        double angle; // Angle that slope(a, nonInnerVertex) makes with x axis
+        if (p1.x == p2.x) {
+            angle = Math.toRadians(-90);
+            /*if (a.y < nonInnerVertex.y) {
+                angle = Math.toRadians(90);
+            } else {
+                angle = Math.toRadians(-90);
+            }*/
+        } else {
+            angle = Math.atan((p1.y - p2.y) / (p2.x - p1.x));
+        }
+        
+        // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
+        Point[] ray = {new Point(p1.x, p1.y), rotatePoint(rayEnd, new Point(0,0), -angle)};
+        Point[] ray2 = {new Point(p1.x, p1.y), rotatePoint(rayEnd2, new Point(0,0), -angle)};
+        
+        //Translate ray so that it starts at a
+        ray[0].x += a.x - p1.x;
+        ray[0].y += a.y - p1.y;
+        ray[1].x += a.x - p1.x;
+        ray[1].y += a.y - p1.x;
+        
+        ray2[0].x += a.x - p1.x;
+        ray2[0].y += a.y - p1.y;
+        ray2[1].x += a.x - p1.x;
+        ray2[1].y += a.y - p1.x;
+        
+        //System.out.println("ray = " + ray[0] + ", " + ray[1]);
+        
+        //this.voronoiEdges.add(new VoronoiBisector(ray[0], ray[1]));
+        return new Point[]{ray[0], ray[1], ray2[0], ray2[1]};
+    }
+    
+    /**
+     * Find intersection points between the bisectors of 3 points
+     * 
+     * @param a1 A point
+     * @param a2 A point
+     * @param a3 A point
+     * @return Intersection points between the 3 bisectors of the given points
+     */
+    private Point findIntersectionBisectors3Points(Point a1, Point a2, Point a3) {
+        
+        
+        return new Point();
+    }
+    
+    /**
+     * Determine whether 3 points are collinear
+     * 
+     * @param p1 A point
+     * @param p2 A point
+     * @param p3 A point
+     * @return True if points are collinear, false otherwise
+     */
+    private boolean pointsAreCollinear(Point p1, Point p2, Point p3) {
+        return false;
+    }
     
     
     
