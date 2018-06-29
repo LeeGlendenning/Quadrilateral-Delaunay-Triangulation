@@ -546,7 +546,7 @@ public class VoronoiDiagram extends JPanel {
         nonInnerVertex.x += a.x - this.quad.getCenter().x;
         nonInnerVertex.y += a.y - this.quad.getCenter().y;
         
-        System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
+        //System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
         
         // Define the direction of the ray starting at a
         int rayEndx = 1000000;
@@ -597,7 +597,7 @@ public class VoronoiDiagram extends JPanel {
      */
     private void findBisectorOfThreeSites(Quadrilateral q, Point p1, Point p2, Point p3) {
         caseBisectorBetween3Points(q, p1, p2, p3);
-        /*int bisectorCase = caseBisectorBetween3Points(q, p1, p2, p3);
+        int bisectorCase = caseBisectorBetween3Points(q, p1, p2, p3);
         
         // If case is 1, ignore. Means there is no bisector point
         if (bisectorCase == 2) {
@@ -606,7 +606,7 @@ public class VoronoiDiagram extends JPanel {
             //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
         } else if (bisectorCase == 3 && pointsAreCollinear(p1, p2, p3)) {
             //BC(a1; a2; a3) consists of one or two cones
-        }*/
+        }
     }
     
     /**
@@ -624,21 +624,103 @@ public class VoronoiDiagram extends JPanel {
      * @return Integer representing the case
      */
     private int caseBisectorBetween3Points(Quadrilateral q, Point a1, Point a2, Point a3) {
-        int bisectorCase = 0;
         
-        Point[] uv = finduv(q, a1, a2); // Point[2] = {u, v}
-        //System.out.println("u = " + uv[0]);
-        //System.out.println("v = " + uv[1]);
+        Point[] uv = finduv(q, a1, a2); // Point[2] = {u, ray1+, ray2-, v, ray1, ray2}
         
-        return bisectorCase;
+        /* DEBUGGING
+        a3 = new Point(uv[0].x,uv[0].y);
+        //F12 U F21:
+        // (a1,uv[0]), (uv[0],a2), (a2,uv[3]), (uv[3],a1)   // true:
+        System.out.println(isLeftOfSegment(a1, uv[0], a3)); // -1
+        System.out.println(isLeftOfSegment(a2, uv[0], a3)); //  1
+        System.out.println(isLeftOfSegment(uv[3], a2, a3)); //  1
+        System.out.println(isLeftOfSegment(uv[3], a1, a3)); // -1
+        //G12:
+        // (a1,uv[1]), (a1,uv[4])
+        System.out.println(isLeftOfSegment(uv[1], a1, a3)); //  1
+        System.out.println(isLeftOfSegment(a1, uv[4], a3)); //  1
+        //G21:
+        // (a2,uv[2]), (a2,uv[5])
+        System.out.println(isLeftOfSegment(uv[2], a2, a3)); // -1
+        System.out.println(isLeftOfSegment(a2, uv[5], a3)); // -1*/
+        
+        // Can replace case 1 being split into 3 parts
+        /*if ((isLeftOfSegment(a1, uv[0], a3) == -1 &&
+                isLeftOfSegment(a2, uv[0], a3) == 1 &&
+                isLeftOfSegment(uv[3], a2, a3) == 1 &&
+                isLeftOfSegment(uv[3],a1, a3) == -1) 
+                ||
+                (isLeftOfSegment(uv[1], a1, a3) == 1 &&
+                isLeftOfSegment(a1,uv[4], a3) == 1) 
+                ||
+                (isLeftOfSegment(uv[2], a2, a3) == -1 &&
+                isLeftOfSegment(a2,uv[5], a3) == -1)) {
+            System.out.println("Point inside FG");
+        }*/
+        
+        // Case 1 split into 3 parts for debugging
+        if (isLeftOfSegment(a1, uv[0], a3) == -1 &&
+                isLeftOfSegment(a2, uv[0], a3) == 1 &&
+                isLeftOfSegment(uv[3], a2, a3) == 1 &&
+                isLeftOfSegment(uv[3],a1, a3) == -1) 
+        {
+            System.out.println("Point inside F");
+            return 1;
+            
+        } else if (isLeftOfSegment(uv[1], a1, a3) == 1 &&
+                isLeftOfSegment(a1,uv[4], a3) == 1) 
+        {
+            System.out.println("Point inside G12");
+            return 1;
+            
+        } else if (isLeftOfSegment(uv[2], a2, a3) == -1 &&
+                isLeftOfSegment(a2,uv[5], a3) == -1) 
+        {
+            System.out.println("Point inside G21");
+            return 1;
+            
+        } else if (isLeftOfSegment(a1, uv[0], a3) == 0 ||
+                isLeftOfSegment(a2, uv[0], a3) == 0 ||
+                isLeftOfSegment(uv[3], a2, a3) == 0 ||
+                isLeftOfSegment(uv[3], a1, a3) == 0 ||
+                isLeftOfSegment(uv[1], a1, a3) == 0 ||
+                isLeftOfSegment(a1, uv[4], a3) == 0 ||
+                isLeftOfSegment(uv[2], a2, a3) == 0 ||
+                isLeftOfSegment(a2, uv[5], a3) == 0) 
+        {
+            System.out.println("Point on boundary");
+            return 3;
+        }
+        
+        return 2;
     }
+    
+    /**
+     * NOTE: Point a should have less or equal x value to point b for sign to be correct
+     * 
+     * @param a Endpoint of line segment
+     * @param b Endpoint of line segment
+     * @param c Query point
+     * @return +1 if point is left of line (ccw order), 0 if point is on line (collinear), -1 otherwise (cw order)
+     */
+    public int isLeftOfSegment(Point a, Point b, Point c){
+        double cross = (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
+        
+        if (cross > 1) {
+            return 1;
+        } else if (cross == 0) {
+            return 0;
+        } else {
+            return -1;
+        }
+   }
     
     /**
      * 
      * @param q Quadrilateral to find u and v for
      * @param a1 A center point
      * @param a2 A center point
-     * @return Point array holding u and v respectively
+     * @return Point array holding u and points representing its 2 rays and v and points representing its 2 rays respectively
      */
     private Point[] finduv(Quadrilateral q, Point a1, Point a2) {
         Point[] td =  findNonInnerVertices(q, a1, a2, 0/*angle*/);
@@ -652,22 +734,16 @@ public class VoronoiDiagram extends JPanel {
         Point[] v2 = find3PointUVRays(td[1], a2, q.prevVertex(td[1]));
         //System.out.println("v2: " + td[1] + ", " + q.prevVertex(td[1]));
         
-        this.voronoiEdges.add(new VoronoiBisector(u1[0], u1[1]));
-        this.voronoiEdges.add(new VoronoiBisector(u1[2], u1[3]));
-        
-        this.voronoiEdges.add(new VoronoiBisector(u2[0], u2[1]));
-        this.voronoiEdges.add(new VoronoiBisector(u2[2], u2[3]));
-        
-        this.voronoiEdges.add(new VoronoiBisector(v1[0], v1[1]));
-        this.voronoiEdges.add(new VoronoiBisector(v1[2], v1[3]));
-        
-        this.voronoiEdges.add(new VoronoiBisector(v2[0], v2[1]));
-        this.voronoiEdges.add(new VoronoiBisector(v2[2], v2[3]));
-        
         Point u = doLineSegmentsIntersect(u1[0], u1[1], u2[0], u2[1]);
         Point v = doLineSegmentsIntersect(v1[0], v1[1], v2[0], v2[1]);
+        
+        // Draw lines for debugging
+        this.voronoiEdges.add(new VoronoiBisector(u, u1[3]));
+        this.voronoiEdges.add(new VoronoiBisector(u, u2[3]));
+        this.voronoiEdges.add(new VoronoiBisector(v, v1[3]));
+        this.voronoiEdges.add(new VoronoiBisector(v, v2[3]));
                 
-        return new Point[]{u, v};
+        return new Point[]{u, u1[3], u2[3], v, v1[3], v2[3]};
     }
     
     private Point[] find3PointUVRays(Point endPt, Point a, Point nextPt) {
@@ -680,7 +756,7 @@ public class VoronoiDiagram extends JPanel {
         p2.x = nextPt.x + a.x - this.quad.getCenter().x;
         p2.y = nextPt.y + a.y - this.quad.getCenter().y;
         
-        System.out.println("endPt = " + p1 + ", a = " + a + ", nextPt = " + p2);
+        //System.out.println("endPt = " + p1 + ", a = " + a + ", nextPt = " + p2);
         
         // Define the direction of the ray starting at a
         int rayEndx = 1000000;
