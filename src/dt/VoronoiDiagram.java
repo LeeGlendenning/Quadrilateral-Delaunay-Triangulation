@@ -57,7 +57,7 @@ public class VoronoiDiagram extends JPanel {
         doVoronoiAnimation(40, 2000);
         
         Point left = new Point(), right = new Point();
-        setLeftAndRightPoint(this.points.get(0), this.points.get(1), left, right, 0/*angle*/);
+        setLeftAndRightPoint(this.points.get(0), this.points.get(1), left, right, calculateAngle(this.points.get(0), this.points.get(1)));
         findBisectorOfThreeSites(this.quad, left, right, new Point());
     }
     
@@ -91,17 +91,13 @@ public class VoronoiDiagram extends JPanel {
     
     
     
-    
-    
-    
     /**
-     * Find main bisector between all pairs of points
      * 
-     * @param q Quadrilateral to iterate over
-     * @param p1 A point in the point set
-     * @param p2 A point in the point set
+     * @param p1 A Point
+     * @param p2 A Point
+     * @return Angle p1,p2 makes with the x axis
      */
-    private void findBisectorOfTwoSites(Quadrilateral q, Point p1, Point p2) {
+    private double calculateAngle(Point p1, Point p2) {
         double angle; // Angle that slope(p1p2) makes with x axis
         if (p1.x == p2.x) {
             angle = Math.toRadians(-90);
@@ -113,6 +109,18 @@ public class VoronoiDiagram extends JPanel {
         } else {
             angle = Math.atan((p1.y - p2.y) / (p2.x - p1.x));
         }
+        return angle;
+    }
+    
+    /**
+     * Find main bisector between all pairs of points
+     * 
+     * @param q Quadrilateral to iterate over
+     * @param p1 A point in the point set
+     * @param p2 A point in the point set
+     */
+    private void findBisectorOfTwoSites(Quadrilateral q, Point p1, Point p2) {
+        double angle = calculateAngle(p1, p2); // Angle that slope(p1p2) makes with x axis
         
         System.out.println("Angle = " + Math.toDegrees(angle));
         Point a1 = new Point(), a2 = new Point();
@@ -441,18 +449,7 @@ public class VoronoiDiagram extends JPanel {
     private Point doRaysIntersect(Point a1, Point h1, Point a2, Point h2) {
         
         // Rotate a1h1 to be horizontal with x axis
-        double angle; // Angle that slope(a1h1) makes with x axis
-        if (a1.x == h1.x) {
-            angle = Math.toRadians(-90);
-            /*if (a1.y < h1.y) {
-                angle = Math.toRadians(90);
-            } else {
-                angle = Math.toRadians(-90);
-            }*/
-            
-        } else {
-            angle = Math.atan((a1.y - h1.y) / (h1.x - a1.x));
-        }
+        double angle = calculateAngle(a1, h1); // Angle that slope(a1h1) makes with x axis
         
         Point ra1 = rotatePoint(a1, midpoint(a1, h1), angle);
         Point rh1 = rotatePoint(h1, midpoint(a1, h1), angle);
@@ -556,17 +553,7 @@ public class VoronoiDiagram extends JPanel {
         }
         Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
         
-        double angle; // Angle that slope(a, nonInnerVertex) makes with x axis
-        if (a.x == nonInnerVertex.x) {
-            angle = Math.toRadians(-90);
-            /*if (a.y < nonInnerVertex.y) {
-                angle = Math.toRadians(90);
-            } else {
-                angle = Math.toRadians(-90);
-            }*/
-        } else {
-            angle = Math.atan((a.y - nonInnerVertex.y) / (nonInnerVertex.x - a.x));
-        }
+        double angle  = calculateAngle(a, nonInnerVertex); // Angle that slope(a, nonInnerVertex) makes with x axis
         
         // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
         Point[] ray = {new Point(a.x, a.y), rotatePoint(rayEnd, new Point(0,0), -angle)};
@@ -723,27 +710,29 @@ public class VoronoiDiagram extends JPanel {
      * @return Point array holding u and points representing its 2 rays and v and points representing its 2 rays respectively
      */
     private Point[] finduv(Quadrilateral q, Point a1, Point a2) {
-        Point[] td =  findNonInnerVertices(q, a1, a2, 0/*angle*/);
+        double angle = calculateAngle(a1, a2);
         
-        Point[] u1 = find3PointUVRays(td[0], a1, q.prevVertex(td[0]));
+        Point[] td =  findNonInnerVertices(q, a1, a2, angle);
+        
+        Point[] u1 = find3PointUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[0]), midpoint(a1, a2), angle));
         //System.out.println("u1: " + td[0] + ", " + q.prevVertex(td[0]));
-        Point[] u2 = find3PointUVRays(td[0], a2, q.nextVertex(td[0]));
+        Point[] u2 = find3PointUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a2, midpoint(a1, a2), angle), rotatePoint(q.nextVertex(td[0]), midpoint(a1, a2), angle));
         //System.out.println("u2: " + td[0] + ", " + q.nextVertex(td[0]));
-        Point[] v1 = find3PointUVRays(td[1], a1, q.nextVertex(td[1]));
+        Point[] v1 = find3PointUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.nextVertex(td[1]), midpoint(a1, a2), angle));
         //System.out.println("v1: " + td[1] + ", " + q.nextVertex(td[1]));
-        Point[] v2 = find3PointUVRays(td[1], a2, q.prevVertex(td[1]));
+        Point[] v2 = find3PointUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a2, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[1]), midpoint(a1, a2), angle));
         //System.out.println("v2: " + td[1] + ", " + q.prevVertex(td[1]));
         
-        Point u = doLineSegmentsIntersect(u1[0], u1[1], u2[0], u2[1]);
-        Point v = doLineSegmentsIntersect(v1[0], v1[1], v2[0], v2[1]);
+        Point u = doLineSegmentsIntersect(rotatePoint(u1[0], midpoint(a1, a2), -angle), rotatePoint(u1[1], midpoint(a1, a2), -angle), rotatePoint(u2[0], midpoint(a1, a2), -angle), rotatePoint(u2[1], midpoint(a1, a2), -angle));
+        Point v = doLineSegmentsIntersect(rotatePoint(v1[0], midpoint(a1, a2), -angle), rotatePoint(v1[1], midpoint(a1, a2), -angle), rotatePoint(v2[0], midpoint(a1, a2), -angle), rotatePoint(v2[1], midpoint(a1, a2), -angle));
         
         // Draw lines for debugging
-        this.voronoiEdges.add(new VoronoiBisector(u, u1[3]));
-        this.voronoiEdges.add(new VoronoiBisector(u, u2[3]));
-        this.voronoiEdges.add(new VoronoiBisector(v, v1[3]));
-        this.voronoiEdges.add(new VoronoiBisector(v, v2[3]));
+        this.voronoiEdges.add(new VoronoiBisector(u, rotatePoint(u1[3], midpoint(a1, a2), -angle)));
+        this.voronoiEdges.add(new VoronoiBisector(u, rotatePoint(u2[3], midpoint(a1, a2), -angle)));
+        this.voronoiEdges.add(new VoronoiBisector(v, rotatePoint(v1[3], midpoint(a1, a2), -angle)));
+        this.voronoiEdges.add(new VoronoiBisector(v, rotatePoint(v2[3], midpoint(a1, a2), -angle)));
                 
-        return new Point[]{u, u1[3], u2[3], v, v1[3], v2[3]};
+        return new Point[]{u, rotatePoint(u1[3], midpoint(a1, a2), -angle), rotatePoint(u2[3], midpoint(a1, a2), -angle), v, rotatePoint(v1[3], midpoint(a1, a2), -angle), rotatePoint(v2[3], midpoint(a1, a2), -angle)};
     }
     
     private Point[] find3PointUVRays(Point endPt, Point a, Point nextPt) {
@@ -767,17 +756,7 @@ public class VoronoiDiagram extends JPanel {
         Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
         Point rayEnd2 = new Point(-rayEndx, a.y);
         
-        double angle; // Angle that slope(a, nonInnerVertex) makes with x axis
-        if (p1.x == p2.x) {
-            angle = Math.toRadians(-90);
-            /*if (a.y < nonInnerVertex.y) {
-                angle = Math.toRadians(90);
-            } else {
-                angle = Math.toRadians(-90);
-            }*/
-        } else {
-            angle = Math.atan((p1.y - p2.y) / (p2.x - p1.x));
-        }
+        double angle = calculateAngle(p1, p2); // Angle that slope(a, nonInnerVertex) makes with x axis
         
         // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
         Point[] ray = {new Point(p1.x, p1.y), rotatePoint(rayEnd, new Point(0,0), -angle)};
