@@ -583,7 +583,6 @@ public class VoronoiDiagram extends JPanel {
      * @param p3 A point to find bisector of
      */
     private void findBisectorOfThreeSites(Quadrilateral q, Point p1, Point p2, Point p3) {
-        caseBisectorBetween3Points(q, p1, p2, p3);
         int bisectorCase = caseBisectorBetween3Points(q, p1, p2, p3);
         
         // If case is 1, ignore. Means there is no bisector point
@@ -612,38 +611,35 @@ public class VoronoiDiagram extends JPanel {
      */
     private int caseBisectorBetween3Points(Quadrilateral q, Point a1, Point a2, Point a3) {
         
-        Point[] uv = finduv(q, a1, a2); // Point[2] = {u, ray1+, ray2-, v, ray1, ray2}
+        //a3 = new Point(a1.x,a1.y);
         
-        /* DEBUGGING
-        a3 = new Point(uv[0].x,uv[0].y);
-        //F12 U F21:
-        // (a1,uv[0]), (uv[0],a2), (a2,uv[3]), (uv[3],a1)   // true:
-        System.out.println(isLeftOfSegment(a1, uv[0], a3)); // -1
-        System.out.println(isLeftOfSegment(a2, uv[0], a3)); //  1
-        System.out.println(isLeftOfSegment(uv[3], a2, a3)); //  1
-        System.out.println(isLeftOfSegment(uv[3], a1, a3)); // -1
-        //G12:
-        // (a1,uv[1]), (a1,uv[4])
-        System.out.println(isLeftOfSegment(uv[1], a1, a3)); //  1
-        System.out.println(isLeftOfSegment(a1, uv[4], a3)); //  1
-        //G21:
-        // (a2,uv[2]), (a2,uv[5])
-        System.out.println(isLeftOfSegment(uv[2], a2, a3)); // -1
-        System.out.println(isLeftOfSegment(a2, uv[5], a3)); // -1*/
+        double angle = calculateAngle(a1, a2);
+        Point[] uv = null;
         
-        // Can replace case 1 being split into 3 parts
-        /*if ((isLeftOfSegment(a1, uv[0], a3) == -1 &&
-                isLeftOfSegment(a2, uv[0], a3) == 1 &&
-                isLeftOfSegment(uv[3], a2, a3) == 1 &&
-                isLeftOfSegment(uv[3],a1, a3) == -1) 
-                ||
-                (isLeftOfSegment(uv[1], a1, a3) == 1 &&
-                isLeftOfSegment(a1,uv[4], a3) == 1) 
-                ||
-                (isLeftOfSegment(uv[2], a2, a3) == -1 &&
-                isLeftOfSegment(a2,uv[5], a3) == -1)) {
-            System.out.println("Point inside FG");
-        }*/
+        // Check for degenerate case. FG consists of a line through a1a2
+        if (twoSegsParallelToa1a2(q, a1, a2, angle)) {
+            System.out.println("Special case");
+            
+            Point[] ray1 = find3PointUVRays(a2, a1, a1); // Ray from a1 to left
+            Point[] ray2 = find3PointUVRays(a1, a2, a2); // Ray from a2 to right
+            
+            this.voronoiEdges.add(new VoronoiBisector(a1, a2));
+            this.voronoiEdges.add(new VoronoiBisector(ray1[0], ray1[1]));
+            this.voronoiEdges.add(new VoronoiBisector(ray2[0], ray2[1]));
+            
+            if (isLeftOfSegment(a1, a2, a3) == 0 ||
+                isLeftOfSegment(ray1[0], ray1[1], a3) == 0 ||
+                isLeftOfSegment(ray2[0], ray2[1], a3) == 0 ) {
+                
+                System.out.println("Point on boundary - degenerate case");
+                return 3;
+            } else {
+                System.out.println("Point not on boundary - degenerate case");
+                return 2;
+            }
+        } else { // Non-degenerate case
+            uv = finduv(q, a1, a2); // Point[2] = {u, ray1+, ray2-, v, ray1+, ray2-}
+        }
         
         // Case 1 split into 3 parts for debugging
         if (isLeftOfSegment(a1, uv[0], a3) == -1 &&
@@ -683,6 +679,45 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
+     * 
+     * @param q Quadrilateral to check parallelism with
+     * @param a1 Point
+     * @param a2 Point
+     * @return True if 2 rotated line segments are parallel (within 10 decimal places) to a1a2, false otherwise
+     */
+    private boolean twoSegsParallelToa1a2(Quadrilateral q, Point a1, Point a2, double angle) {
+        int parallelCount = 0;
+        
+        int j;
+        for (int i = 0; i < q.getVertices().length; i ++) {
+            if (i == q.getVertices().length - 1) {
+                j = 0;
+            } else {
+                j = i + 1;
+            }
+            
+            if (isParallel(rotatePoint(q.getVertices()[i], midpoint(a1, a2), -angle), rotatePoint(q.getVertices()[j], midpoint(a1, a2), -angle), a1, a2)) {
+                parallelCount ++;
+            }
+        }
+        
+        return parallelCount == 2;
+    }
+    
+    /**
+     * 
+     * @param p1 Endpoint of first line segment
+     * @param p2 Endpoint of first line segment
+     * @param p3 Endpoint of second line segment
+     * @param p4 Endpoint of second line segment
+     * @return True if p1p2 is parallel (has same slope within 10 decimal places) to p3p4
+     */
+    private boolean isParallel(Point p1, Point p2, Point p3, Point p4) {
+        //System.out.println("isparallel: " + calculateAngle(p1, p2) + " : " + calculateAngle(p3, p4) + " == " + (Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < 0.00001));
+        return Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < 0.0000000001;
+    }
+    
+    /**
      * NOTE: Point a should have less or equal x value to point b for sign to be correct
      * 
      * @param a Endpoint of line segment
@@ -690,7 +725,7 @@ public class VoronoiDiagram extends JPanel {
      * @param c Query point
      * @return +1 if point is left of line (ccw order), 0 if point is on line (collinear), -1 otherwise (cw order)
      */
-    public int isLeftOfSegment(Point a, Point b, Point c){
+    private int isLeftOfSegment(Point a, Point b, Point c){
         double cross = (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
         
         if (cross > 1) {
@@ -711,7 +746,7 @@ public class VoronoiDiagram extends JPanel {
      */
     private Point[] finduv(Quadrilateral q, Point a1, Point a2) {
         double angle = calculateAngle(a1, a2);
-        
+        System.out.print("finduv(): ");
         Point[] td =  findNonInnerVertices(q, a1, a2, angle);
         
         Point[] u1 = find3PointUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[0]), midpoint(a1, a2), angle));
@@ -735,6 +770,13 @@ public class VoronoiDiagram extends JPanel {
         return new Point[]{u, rotatePoint(u1[3], midpoint(a1, a2), -angle), rotatePoint(u2[3], midpoint(a1, a2), -angle), v, rotatePoint(v1[3], midpoint(a1, a2), -angle), rotatePoint(v2[3], midpoint(a1, a2), -angle)};
     }
     
+    /**
+     * 
+     * @param endPt Initial endPt of ray
+     * @param a Point to translate endPt to
+     * @param nextPt Point initial ray passes through
+     * @return Point array containing ray starting at endPt and passing through nextPt then translated to a
+     */
     private Point[] find3PointUVRays(Point endPt, Point a, Point nextPt) {
         Point p1 = new Point(), p2 = new Point();
         // EndPt is relative to Quadrilateral. Translate relative to a
