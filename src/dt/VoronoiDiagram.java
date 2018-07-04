@@ -1,5 +1,6 @@
 package dt;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
@@ -25,15 +26,16 @@ public class VoronoiDiagram extends JPanel {
 
     private final ArrayList<Point> points;
     private final Quadrilateral quad;
-    private ArrayList<VoronoiBisector> voronoiEdges;
-    private ArrayList<Point> voronoiPoints; // Temporary until bisector points are grouped as edges
+    private final ArrayList<VoronoiBisector> voronoiEdgesB2S, voronoiEdgesB3S;
+    private final ArrayList<VoronoiBisector> displayEdges; // Edges for showing steps in process
+    private final ArrayList<Point> voronoiPoints; // Used for animation
     private double curScale = 1.0;
     private final int pixelFactor = 1;
     private Timer timer;
     private int scaleIterations;
     
     private final boolean showB2S_steps = false, showB3S_steps = false;
-    private final boolean showB2S = true, showB3S = true;
+    private final boolean showB2S = false, showB3S = true;
     private final boolean doAnimation = false;
     
     ArrayList<Point> h1, h2, g1, g2;
@@ -47,7 +49,9 @@ public class VoronoiDiagram extends JPanel {
     public VoronoiDiagram(Quadrilateral q, ArrayList<Point> p) {
         this.points = p;
         this.quad = q;
-        this.voronoiEdges = new ArrayList();
+        this.voronoiEdgesB2S = new ArrayList();
+        this.voronoiEdgesB3S = new ArrayList();
+        this.displayEdges = new ArrayList();
         this.voronoiPoints = new ArrayList();
         this.scaleIterations = 0;
         this.h1 = new ArrayList();
@@ -64,7 +68,7 @@ public class VoronoiDiagram extends JPanel {
         
         Point left = new Point(), right = new Point();
         setLeftAndRightPoint(this.points.get(0), this.points.get(1), left, right, calculateAngle(this.points.get(0), this.points.get(1)));
-        findBisectorOfThreeSites(this.quad, left, right, new Point());
+        findBisectorOfThreeSites(this.quad, left, right, this.points.get(2));
     }
     
     /**
@@ -149,16 +153,16 @@ public class VoronoiDiagram extends JPanel {
         Point g = doRaysIntersect(a1, g1.get(g1.size()-1), a2, g2.get(g2.size()-1));
         
         System.out.println("Endpoints: " + h + ", " + g);
-        this.voronoiEdges.add(new VoronoiBisector(new Point[]{p1, p2}, h, g, "b2s"));
+        this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, h, g, "b2s"));
         
         // Find intersections between non-inner vertices
         Point[] nonInnerVertices = findNonInnerVertices(q, a1, a2, angle);
         
         Point[] hRay = findBisectorRay(h, a1, nonInnerVertices[0]);
-        this.voronoiEdges.add(new VoronoiBisector(new Point[]{p1, p2}, hRay[0], hRay[1], "b2s"));
+        this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, hRay[0], hRay[1], "b2s"));
         
         Point[] gRay = findBisectorRay(g, a2, nonInnerVertices[1]);
-        this.voronoiEdges.add(new VoronoiBisector(new Point[]{p1, p2}, gRay[0], gRay[1], "b2s"));
+        this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, gRay[0], gRay[1], "b2s"));
     }
     
     /**
@@ -477,9 +481,7 @@ public class VoronoiDiagram extends JPanel {
             raya1h1[1] = rotatePoint(new Point(rayEndx1, rayEndy1), midpoint(a1, h1), -angle);
         }
         
-        //if (!onlyShowMainBisectors) {
-            this.voronoiEdges.add(new VoronoiBisector(new Point[]{}, raya1h1[0], raya1h1[1], "b2s_step"));
-        //}
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, raya1h1[0], raya1h1[1], "b2s_step"));
         
         // Rotate a2h2 to be horizontal with x axis
         if (a2.x == h2.x) {
@@ -513,9 +515,7 @@ public class VoronoiDiagram extends JPanel {
             raya2h2[1] = rotatePoint(new Point(rayEndx2, rayEndy2), midpoint(a2, h2), -angle);
         }
         
-        //if (!onlyShowMainBisectors) {
-            this.voronoiEdges.add(new VoronoiBisector(new Point[]{}, raya2h2[0], raya2h2[1], "b2s_step"));
-        //}
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, raya2h2[0], raya2h2[1], "b2s_step"));
         
         //System.out.println("comparing " + raya1h1[0] + ", " + raya1h1[1] + " and " + raya2h2[0] + ", " + raya2h2[1]);
         //System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
@@ -629,9 +629,9 @@ public class VoronoiDiagram extends JPanel {
             Point[] ray1 = find3PointUVRays(a2, a1, a1); // Ray from a1 to left
             Point[] ray2 = find3PointUVRays(a1, a2, a2); // Ray from a2 to right
             
-            this.voronoiEdges.add(new VoronoiBisector(new Point[]{}, a1, a2, "b3s_step"));
-            this.voronoiEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
-            this.voronoiEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "b3s_step"));
+            this.displayEdges.add(new VoronoiBisector(new Point[]{}, a1, a2, "b3s_step"));
+            this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
+            this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "b3s_step"));
             
             if (isLeftOfSegment(a1, a2, a3) == 0 ||
                 isLeftOfSegment(ray1[0], ray1[1], a3) == 0 ||
@@ -769,10 +769,10 @@ public class VoronoiDiagram extends JPanel {
         Point v = doLineSegmentsIntersect(rotatePoint(v1[0], midpoint(a1, a2), -angle), rotatePoint(v1[1], midpoint(a1, a2), -angle), rotatePoint(v2[0], midpoint(a1, a2), -angle), rotatePoint(v2[1], midpoint(a1, a2), -angle));
         
         // Draw lines for debugging
-        this.voronoiEdges.add(new VoronoiBisector(new Point[]{}, u, rotatePoint(u1[3], midpoint(a1, a2), -angle), "b3s_step"));
-        this.voronoiEdges.add(new VoronoiBisector(new Point[]{}, u, rotatePoint(u2[3], midpoint(a1, a2), -angle), "b3s_step"));
-        this.voronoiEdges.add(new VoronoiBisector(new Point[]{}, v, rotatePoint(v1[3], midpoint(a1, a2), -angle), "b3s_step"));
-        this.voronoiEdges.add(new VoronoiBisector(new Point[]{}, v, rotatePoint(v2[3], midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, rotatePoint(u1[3], midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, rotatePoint(u2[3], midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, v, rotatePoint(v1[3], midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, v, rotatePoint(v2[3], midpoint(a1, a2), -angle), "b3s_step"));
                 
         return new Point[]{u, rotatePoint(u1[3], midpoint(a1, a2), -angle), rotatePoint(u2[3], midpoint(a1, a2), -angle), v, rotatePoint(v1[3], midpoint(a1, a2), -angle), rotatePoint(v2[3], midpoint(a1, a2), -angle)};
     }
@@ -829,15 +829,37 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
-     * Find intersection points between the bisectors of 3 points
      * 
      * @param a1 A point
      * @param a2 A point
      * @param a3 A point
-     * @return Intersection points between the 3 bisectors of the given points
+     * @return Intersection point between bisector of a1a3 and a2a3
      */
     private Point findIntersectionBisectors3Points(Point a1, Point a2, Point a3) {
-        
+        System.out.println("a1 = " + a1 + "a2 = " + a2 + "a3 = " + a3);
+        for (int i = 0; i < this.voronoiEdgesB2S.size(); i ++) {
+            
+            // If the voronoi edge segment belongs to a1a3
+            if (this.voronoiEdgesB2S.get(i).getAdjacentPts().contains(a1) &&
+                    this.voronoiEdgesB2S.get(i).getAdjacentPts().contains(a3)) {
+                
+                //System.out.println("Considering " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(1));
+                for (int j = i+1; j < this.voronoiEdgesB2S.size(); j ++) {
+                    // If the voronoi edge segment belongs to a2a3
+                    if (this.voronoiEdgesB2S.get(j).getAdjacentPts().contains(a2) &&
+                            this.voronoiEdgesB2S.get(j).getAdjacentPts().contains(a3)) {
+                        //System.out.println("Comparing " + this.voronoiEdgesB2S.get(i) + " and " + this.voronoiEdgesB2S.get(j));
+                        // Look for intersection between the 2 edge segments
+                        Point b3s = doLineSegmentsIntersect(this.voronoiEdgesB2S.get(i).startPoint, this.voronoiEdgesB2S.get(i).endPoint, 
+                                this.voronoiEdgesB2S.get(j).startPoint, this.voronoiEdgesB2S.get(j).endPoint);
+                        if (b3s != null) {
+                            System.out.println("Found intersection point: " + b3s);
+                            this.voronoiEdgesB3S.add(new VoronoiBisector(new Point[]{a1, a2, a3}, b3s, b3s, "b3s"));
+                        }
+                    }
+                }
+            }
+        }
         
         return new Point();
     }
@@ -1100,17 +1122,32 @@ public class VoronoiDiagram extends JPanel {
             g2d.fill(new Ellipse2D.Double(bisector.x * this.pixelFactor + voronoiPointRadius, yMax - (bisector.y * this.pixelFactor + voronoiPointRadius), voronoiPointRadius * 2, voronoiPointRadius * 2)); // x, y, width, height
         }
         
-        // Draw bisector segments
-        for (VoronoiBisector bisector : this.voronoiEdges) {
-            if (bisector.getTag().equals("b2s_step") && this.showB2S_steps ||
-                    bisector.getTag().equals("b3s_step") && this.showB3S_steps ||
-                    bisector.getTag().equals("b2s") && this.showB2S ||
-                    bisector.getTag().equals("b3s") && this.showB3S ||
-                    !bisector.getTag().equals("b2s_step") && !bisector.getTag().equals("b3s_step") &&
-                    !bisector.getTag().equals("b2s") && !bisector.getTag().equals("b3s")){
+        // Draw bisector segments between 2 sites
+        for (VoronoiBisector bisector : this.voronoiEdgesB2S) {
+            if (bisector.getTag().equals("b2s") && this.showB2S){
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
             }
         }
+        
+        // Draw bisector segments between 3 sites
+        g2d.setColor(Color.blue);
+        g2d.setStroke(new BasicStroke(3));
+        for (VoronoiBisector bisector : this.voronoiEdgesB3S) {
+            if (bisector.getTag().equals("b3s") && this.showB3S){
+                g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
+            }
+        }
+        g2d.setColor(Color.black);
+        g2d.setStroke(new BasicStroke(1));
+        
+        // Draw display edges
+        for (VoronoiBisector bisector : this.displayEdges) {
+            if (bisector.getTag().equals("b2s_step") && this.showB2S_steps ||
+                    bisector.getTag().equals("b3s_step") && this.showB3S_steps) {
+                g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
+            }
+        }
+        
         
         // Draw h12, g12 points on quads
         g2d.setColor(Color.red);
