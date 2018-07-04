@@ -1,6 +1,5 @@
 package dt;
 
-import java.util.ArrayList;
 
 /**
  * Bisector for Voronoi diagram defined by at most 4 segments
@@ -9,9 +8,10 @@ import java.util.ArrayList;
  */
 public class VoronoiBisector {
     
-    ArrayList<Point> adjacentPoints; // Points that this bisector belongs to. Size 2 or 3. Necessary for computing dual of Voronoi
+    Point[] adjacentPoints; // Points that this bisector belongs to. Size 2 or 3. Necessary for computing dual of Voronoi
     //ArrayList<Point[]> bisectorSegments; // List of start and end Points of the bisector segments. start/endpts may be equal, list size <= 4
     Point startPoint, endPoint;
+    private final String tag; // "b2s" = bisector of 2 sites, "b3s" = bisector of 3 sites
     
     /**
      * Create a Bisector having two endpoints and store the points that belong to it
@@ -20,11 +20,19 @@ public class VoronoiBisector {
      * @param startPt An endpoint of the bisector
      * @param endPt An endpoint of the bisector
      */
-    public VoronoiBisector(/*ArrayList<Point> adjacentPts,*/ Point startPt, Point endPt) {
-        //this.adjacentPoints = adjacentPts;
-        //bisectorSegments = new ArrayList();
+    public VoronoiBisector(Point[] adjacentPts, Point startPt, Point endPt, String tag) {
+        this.adjacentPoints = adjacentPts;
         this.startPoint = startPt;
         this.endPoint = endPt;
+        this.tag = tag;
+    }
+    
+    /**
+     * 
+     * @return String tag set for the bisector
+     */
+    public String getTag() {
+        return this.tag;
     }
     
     /**
