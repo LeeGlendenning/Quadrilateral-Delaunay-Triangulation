@@ -35,8 +35,8 @@ public class VoronoiDiagram extends JPanel {
     private int scaleIterations;
     private final double floatTolerance = 0.0000000001;
     
-    private final boolean showB2S_steps = false, showB2S_hg12 = false, showB3S_steps = false;
-    private final boolean showB2S = true, showB3S = true;
+    private final boolean showB2S_steps = false, showB2S_hg12 = false, showB3S_steps = true;
+    private final boolean showB2S = false, showB3S = true;
     private final boolean doAnimation = false;
     
     ArrayList<Point> h1, h2, g1, g2;
@@ -527,7 +527,7 @@ public class VoronoiDiagram extends JPanel {
         //System.out.println("comparing " + raya1h1[0] + ", " + raya1h1[1] + " and " + raya2h2[0] + ", " + raya2h2[1]);
         //System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
         if (Math.abs(slope(a1, h1) - slope(a2, h2)) < this.floatTolerance || (slope(a1, h1) == Double.POSITIVE_INFINITY && slope(a2, h2) == Double.NEGATIVE_INFINITY) || (slope(a1, h1) == Double.NEGATIVE_INFINITY && slope(a2, h2) == Double.POSITIVE_INFINITY)) {
-            System.out.println("\nHandling degenerate case for main bisector segment !!!");
+            System.out.println("Handling degenerate case for main bisector segment !!!");
             ra1 = rotatePoint(a1, midpoint(a1, a2), angle);
             ra2 = rotatePoint(a2, midpoint(a1, a2), angle);
             rh1 = rotatePoint(h1, midpoint(a1, a2), angle);
@@ -596,6 +596,7 @@ public class VoronoiDiagram extends JPanel {
      * @param p3 A point to find bisector of
      */
     private void findBisectorOfThreeSites(Quadrilateral q, Point p1, Point p2, Point p3) {
+        System.out.println("a1 = " + p1 + " a2 = " + p2 + " a3 = " + p3);
         int bisectorCase = caseBisectorBetween3Points(q, p1, p2, p3);
         
         // If case is 1, ignore. Means there is no bisector point
@@ -659,6 +660,8 @@ public class VoronoiDiagram extends JPanel {
             uv = finduv(q, a1, a2); // Point[2] = {u, ray1+, ray2-, v, ray1+, ray2-}
         }
         
+        System.out.println(Arrays.toString(uv));
+        
         // Case 1 split into 3 parts for debugging
         if (isLeftOfSegment(a1, uv[0], a3) == -1 &&
                 isLeftOfSegment(a2, uv[0], a3) == 1 &&
@@ -715,7 +718,7 @@ public class VoronoiDiagram extends JPanel {
                 j = i + 1;
             }
             
-            if (isParallel(rotatePoint(q.getVertices()[i], midpoint(a1, a2), -angle), rotatePoint(q.getVertices()[j], midpoint(a1, a2), -angle), a1, a2)) {
+            if (isParallel(q.getVertices()[i], q.getVertices()[j], a1, a2)) {
                 parallelCount ++;
             }
         }
@@ -732,7 +735,8 @@ public class VoronoiDiagram extends JPanel {
      * @return True if p1p2 is parallel (has same slope within 10 decimal places) to p3p4
      */
     private boolean isParallel(Point p1, Point p2, Point p3, Point p4) {
-        //System.out.println("isparallel: " + calculateAngle(p1, p2) + " : " + calculateAngle(p3, p4) + " == " + (Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < this.floatTolerance));
+        System.out.println("p1 = " + p1 + "p2 = " + p2 + "p3 = " + p3 + "p4 = " + p4);
+        System.out.println("isparallel: " + calculateAngle(p1, p2) + " : " + calculateAngle(p3, p4) + " == " + (Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < this.floatTolerance));
         return Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < this.floatTolerance;
     }
     
@@ -856,7 +860,7 @@ public class VoronoiDiagram extends JPanel {
      * @return VoronoiBisector representing the intersection point between bisector of a1a3 and a2a3. case 2
      */
     private VoronoiBisector findIntersectionBisectors3Points(Point a1, Point a2, Point a3) {
-        System.out.println("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + this.voronoiEdgesB2S.size());
+        //System.out.println("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + this.voronoiEdgesB2S.size());
         //printEdges(this.voronoiEdgesB2S);
         for (int i = 0; i < this.voronoiEdgesB2S.size(); i ++) {
             
