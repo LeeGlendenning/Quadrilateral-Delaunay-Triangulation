@@ -33,10 +33,11 @@ public class VoronoiDiagram extends JPanel {
     private final int pixelFactor = 1;
     private Timer timer;
     private int scaleIterations;
+    private final double floatTolerance = 0.0000000001;
     
-    private final boolean showB2S_steps = false, showB2S_hg12 = true, showB3S_steps = false;
-    private final boolean showB2S = true, showB3S = false;
-    private final boolean doAnimation = true;
+    private final boolean showB2S_steps = false, showB2S_hg12 = false, showB3S_steps = false;
+    private final boolean showB2S = true, showB3S = true;
+    private final boolean doAnimation = false;
     
     ArrayList<Point> h1, h2, g1, g2;
 
@@ -524,8 +525,8 @@ public class VoronoiDiagram extends JPanel {
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, raya2h2[0], raya2h2[1], "b2s_step"));
         
         //System.out.println("comparing " + raya1h1[0] + ", " + raya1h1[1] + " and " + raya2h2[0] + ", " + raya2h2[1]);
-        System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
-        if (Math.abs(slope(a1, h1) - slope(a2, h2)) < 0.0000000001 || (slope(a1, h1) == Double.POSITIVE_INFINITY && slope(a2, h2) == Double.NEGATIVE_INFINITY) || (slope(a1, h1) == Double.NEGATIVE_INFINITY && slope(a2, h2) == Double.POSITIVE_INFINITY)) {
+        //System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
+        if (Math.abs(slope(a1, h1) - slope(a2, h2)) < this.floatTolerance || (slope(a1, h1) == Double.POSITIVE_INFINITY && slope(a2, h2) == Double.NEGATIVE_INFINITY) || (slope(a1, h1) == Double.NEGATIVE_INFINITY && slope(a2, h2) == Double.POSITIVE_INFINITY)) {
             System.out.println("\nHandling degenerate case for main bisector segment !!!");
             ra1 = rotatePoint(a1, midpoint(a1, a2), angle);
             ra2 = rotatePoint(a2, midpoint(a1, a2), angle);
@@ -559,7 +560,7 @@ public class VoronoiDiagram extends JPanel {
         
         // Define the direction of the ray starting at a
         int rayEndx = 1000000;
-        System.out.println(a + " : " + nonInnerVertex);
+        //System.out.println(a + " : " + nonInnerVertex);
         if (a.x > nonInnerVertex.x || (a.x == nonInnerVertex.x && a.y > nonInnerVertex.y)) {
             rayEndx = -1000000;
         }
@@ -627,7 +628,7 @@ public class VoronoiDiagram extends JPanel {
      * @return Integer representing the case
      */
     private int caseBisectorBetween3Points(Quadrilateral q, Point a1, Point a2, Point a3) {
-        
+        //System.out.println("caseBisectorBetween3Points: " + a1 + ", " + a2 + ", " + a3);
         //a3 = new Point(a1.x,a1.y);
         
         double angle = calculateAngle(a1, a2);
@@ -635,7 +636,7 @@ public class VoronoiDiagram extends JPanel {
         
         // Check for degenerate case. FG consists of a line through a1a2
         if (twoSegsParallelToa1a2(q, a1, a2, angle)) {
-            //System.out.println("Special case");
+            System.out.println("B3P Special case");
             
             Point[] ray1 = find3PointUVRays(a2, a1, a1); // Ray from a1 to left
             Point[] ray2 = find3PointUVRays(a1, a2, a2); // Ray from a2 to right
@@ -648,10 +649,10 @@ public class VoronoiDiagram extends JPanel {
                 isLeftOfSegment(ray1[0], ray1[1], a3) == 0 ||
                 isLeftOfSegment(ray2[0], ray2[1], a3) == 0 ) {
                 
-                System.out.println("Point on boundary - degenerate case");
+                System.out.println("Point on boundary - case 3 (degenerate case)");
                 return 3;
             } else {
-                System.out.println("Point not on boundary - degenerate case");
+                System.out.println("Point not on boundary - case 3 (degenerate case)");
                 return 2;
             }
         } else { // Non-degenerate case
@@ -664,19 +665,19 @@ public class VoronoiDiagram extends JPanel {
                 isLeftOfSegment(uv[3], a2, a3) == 1 &&
                 isLeftOfSegment(uv[3],a1, a3) == -1) 
         {
-            System.out.println("Point inside F");
+            System.out.println("Point inside F - case 1 (do nothing)");
             return 1;
             
         } else if (isLeftOfSegment(uv[1], a1, a3) == 1 &&
                 isLeftOfSegment(a1,uv[4], a3) == 1) 
         {
-            System.out.println("Point inside G12");
+            System.out.println("Point inside G12 - case 1 (do nothing)");
             return 1;
             
         } else if (isLeftOfSegment(uv[2], a2, a3) == -1 &&
                 isLeftOfSegment(a2,uv[5], a3) == -1) 
         {
-            System.out.println("Point inside G21");
+            System.out.println("Point inside G21 - case 1 (do nothing)");
             return 1;
             
         } else if (isLeftOfSegment(a1, uv[0], a3) == 0 ||
@@ -688,11 +689,11 @@ public class VoronoiDiagram extends JPanel {
                 isLeftOfSegment(uv[2], a2, a3) == 0 ||
                 isLeftOfSegment(a2, uv[5], a3) == 0) 
         {
-            System.out.println("Point on boundary");
+            System.out.println("Point on boundary - case 3");
             return 3;
         }
         
-        System.out.println("Point outside FG");
+        System.out.println("Point outside FG - case 2");
         return 2;
     }
     
@@ -731,8 +732,8 @@ public class VoronoiDiagram extends JPanel {
      * @return True if p1p2 is parallel (has same slope within 10 decimal places) to p3p4
      */
     private boolean isParallel(Point p1, Point p2, Point p3, Point p4) {
-        //System.out.println("isparallel: " + calculateAngle(p1, p2) + " : " + calculateAngle(p3, p4) + " == " + (Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < 0.00001));
-        return Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < 0.0000000001;
+        //System.out.println("isparallel: " + calculateAngle(p1, p2) + " : " + calculateAngle(p3, p4) + " == " + (Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < this.floatTolerance));
+        return Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < this.floatTolerance;
     }
     
     /**
@@ -745,11 +746,19 @@ public class VoronoiDiagram extends JPanel {
      */
     private int isLeftOfSegment(Point a, Point b, Point c){
         double cross = (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
+        //System.out.println("isLeftOfSegment: cross = " + cross);
         
-        if (cross > 1) {
-            return 1;
-        } else if (cross == 0) {
+        Point ra = rotatePoint(a, midpoint(a, b), calculateAngle(a, b));
+        Point rb = rotatePoint(b, midpoint(a, b), calculateAngle(a, b));
+        Point rc = rotatePoint(c, midpoint(a, b), calculateAngle(a, b));
+        //System.out.println("ra = " + ra + "rb = " + rb + "rc = " + rc);
+        
+        // Test if point c is on segment ab
+        if ((Math.abs(ra.y - rc.y) < 0.01 && Math.abs(rb.y - rc.y) < 0.01 || cross == 0) &&
+                rc.x > Math.min(a.x, b.x) && rc.x < Math.max(a.x, b.x)) {
             return 0;
+        } else if (cross > 1) {
+            return 1;
         } else {
             return -1;
         }
@@ -764,7 +773,7 @@ public class VoronoiDiagram extends JPanel {
      */
     private Point[] finduv(Quadrilateral q, Point a1, Point a2) {
         double angle = calculateAngle(a1, a2);
-        System.out.print("finduv(): ");
+        //System.out.print("finduv(): ");
         Point[] td =  findNonInnerVertices(q, a1, a2, angle);
         
         Point[] u1 = find3PointUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[0]), midpoint(a1, a2), angle));
