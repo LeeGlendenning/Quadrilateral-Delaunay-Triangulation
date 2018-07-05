@@ -26,6 +26,7 @@ public class VoronoiDiagram extends JPanel {
 
     private final ArrayList<Point> points;
     private final Quadrilateral quad;
+    // Consider using synchronized list to avoid concurrent modification...
     private final ArrayList<VoronoiBisector> voronoiEdgesB2S, voronoiEdgesB3S;
     private final ArrayList<VoronoiBisector> displayEdges; // Edges for showing steps in process
     private final ArrayList<Point> voronoiPoints; // Used for animation
@@ -633,32 +634,53 @@ public class VoronoiDiagram extends JPanel {
         //a3 = new Point(a1.x,a1.y);
         
         double angle = calculateAngle(a1, a2);
-        Point[] uv;
+        Point[] uv = null;
         
         // Check for degenerate case. FG consists of a line through a1a2
-        if (twoSegsParallelToa1a2(q, a1, a2, angle)) {
-            System.out.println("B3P Special case");
-            
+        if (segsParallelToa1a2(q, a1, a2, angle) == 2) { // FG12 is a line
+            System.out.println("B3P Special case - two quad edges parallel to a1a2");
+
             Point[] ray1 = find3PointUVRays(a2, a1, a1); // Ray from a1 to left
             Point[] ray2 = find3PointUVRays(a1, a2, a2); // Ray from a2 to right
-            
+
+            this.displayEdges.add(new VoronoiBisector(new Point[]{}, a1, a2, "b3s_step"));
+            this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
+            this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "b3s_step"));
+
+            if (isLeftOfSegment(a1, a2, a3) == 0 ||
+                    isLeftOfSegment(ray1[0], ray1[1], a3) == 0 ||
+                    isLeftOfSegment(ray2[0], ray2[1], a3) == 0 ) {
+
+                System.out.println("Point on boundary - case 3 (degenerate case)");
+                return 3;
+            } else {
+                System.out.println("Point not on boundary - case 2 (degenerate case)");
+                return 2;
+            }
+        }
+                
+        uv = finduv(q, a1, a2); // Point[2] = {u, ray1+, ray2-, v, ray1+, ray2-}
+        
+        if (segsParallelToa1a2(q, a1, a2, angle) == 1) { // FG12 is a triangle
+            System.out.println("B3P Special case - one quad edge parallel to a1a2");
+            Point[] ray1 = find3PointUVRays(a2, a1, a1); // Ray from a1 to left
+            Point[] ray2 = find3PointUVRays(a1, a2, a2); // Ray from a2 to right
+
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, a1, a2, "b3s_step"));
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "b3s_step"));
             
-            if (isLeftOfSegment(a1, a2, a3) == 0 ||
-                isLeftOfSegment(ray1[0], ray1[1], a3) == 0 ||
-                isLeftOfSegment(ray2[0], ray2[1], a3) == 0 ) {
-                
-                System.out.println("Point on boundary - case 3 (degenerate case)");
-                return 3;
-            } else {
-                System.out.println("Point not on boundary - case 3 (degenerate case)");
-                return 2;
+            if (uv[0] == null) {
+                uv[0] = midpoint(a1, a2);
+                uv[1] = ray2[1];
+                uv[2] = ray1[1];
+            } else if (uv[3] == null) {
+                uv[3] = midpoint(a1, a2);
+                uv[4] = ray2[1];
+                uv[5] = ray1[1];
             }
-        } else { // Non-degenerate case
-            uv = finduv(q, a1, a2); // Point[2] = {u, ray1+, ray2-, v, ray1+, ray2-}
         }
+        // Non-degenerate case
         
         System.out.println(Arrays.toString(uv));
         
@@ -707,7 +729,7 @@ public class VoronoiDiagram extends JPanel {
      * @param a2 Point
      * @return True if 2 rotated line segments are parallel (within 10 decimal places) to a1a2, false otherwise
      */
-    private boolean twoSegsParallelToa1a2(Quadrilateral q, Point a1, Point a2, double angle) {
+    private int segsParallelToa1a2(Quadrilateral q, Point a1, Point a2, double angle) {
         int parallelCount = 0;
         
         int j;
@@ -723,7 +745,7 @@ public class VoronoiDiagram extends JPanel {
             }
         }
         
-        return parallelCount == 2;
+        return parallelCount;
     }
     
     /**
@@ -735,8 +757,8 @@ public class VoronoiDiagram extends JPanel {
      * @return True if p1p2 is parallel (has same slope within 10 decimal places) to p3p4
      */
     private boolean isParallel(Point p1, Point p2, Point p3, Point p4) {
-        System.out.println("p1 = " + p1 + "p2 = " + p2 + "p3 = " + p3 + "p4 = " + p4);
-        System.out.println("isparallel: " + calculateAngle(p1, p2) + " : " + calculateAngle(p3, p4) + " == " + (Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < this.floatTolerance));
+        //System.out.println("p1 = " + p1 + "p2 = " + p2 + "p3 = " + p3 + "p4 = " + p4);
+        //System.out.println("isparallel: " + calculateAngle(p1, p2) + " : " + calculateAngle(p3, p4) + " == " + (Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < this.floatTolerance));
         return Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < this.floatTolerance;
     }
     
@@ -791,6 +813,7 @@ public class VoronoiDiagram extends JPanel {
         
         Point u = doLineSegmentsIntersect(rotatePoint(u1[0], midpoint(a1, a2), -angle), rotatePoint(u1[1], midpoint(a1, a2), -angle), rotatePoint(u2[0], midpoint(a1, a2), -angle), rotatePoint(u2[1], midpoint(a1, a2), -angle));
         Point v = doLineSegmentsIntersect(rotatePoint(v1[0], midpoint(a1, a2), -angle), rotatePoint(v1[1], midpoint(a1, a2), -angle), rotatePoint(v2[0], midpoint(a1, a2), -angle), rotatePoint(v2[1], midpoint(a1, a2), -angle));
+        //System.out.println("u = " + u + ", v = " + v);
         
         // Draw lines for debugging
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, rotatePoint(u1[3], midpoint(a1, a2), -angle), "b3s_step"));
