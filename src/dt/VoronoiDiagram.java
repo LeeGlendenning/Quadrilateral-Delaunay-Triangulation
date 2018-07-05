@@ -34,9 +34,9 @@ public class VoronoiDiagram extends JPanel {
     private Timer timer;
     private int scaleIterations;
     
-    private final boolean showB2S_steps = false, showB3S_steps = false;
-    private final boolean showB2S = true, showB3S = true;
-    private final boolean doAnimation = false;
+    private final boolean showB2S_steps = true, showB3S_steps = false;
+    private final boolean showB2S = true, showB3S = false;
+    private final boolean doAnimation = true;
     
     ArrayList<Point> h1, h2, g1, g2;
 
@@ -533,8 +533,8 @@ public class VoronoiDiagram extends JPanel {
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, raya2h2[0], raya2h2[1], "b2s_step"));
         
         //System.out.println("comparing " + raya1h1[0] + ", " + raya1h1[1] + " and " + raya2h2[0] + ", " + raya2h2[1]);
-        //System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
-        if (slope(a1, h1) == slope(a2, h2) || (slope(a1, h1) == Double.POSITIVE_INFINITY && slope(a2, h2) == Double.NEGATIVE_INFINITY) || (slope(a1, h1) == Double.NEGATIVE_INFINITY && slope(a2, h2) == Double.POSITIVE_INFINITY)) {
+        System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
+        if (Math.abs(slope(a1, h1) - slope(a2, h2)) < 0.0000000001 || (slope(a1, h1) == Double.POSITIVE_INFINITY && slope(a2, h2) == Double.NEGATIVE_INFINITY) || (slope(a1, h1) == Double.NEGATIVE_INFINITY && slope(a2, h2) == Double.POSITIVE_INFINITY)) {
             System.out.println("\nHandling degenerate case for main bisector segment !!!");
             ra1 = rotatePoint(a1, midpoint(a1, a2), angle);
             ra2 = rotatePoint(a2, midpoint(a1, a2), angle);
