@@ -35,7 +35,7 @@ public class VoronoiDiagram extends JPanel {
     private int scaleIterations;
     
     private final boolean showB2S_steps = false, showB3S_steps = false;
-    private final boolean showB2S = false, showB3S = true;
+    private final boolean showB2S = true, showB3S = true;
     private final boolean doAnimation = false;
     
     ArrayList<Point> h1, h2, g1, g2;
@@ -66,20 +66,35 @@ public class VoronoiDiagram extends JPanel {
             doVoronoiAnimation(40, 0);
         }
         
-        Point left = new Point(), right = new Point();
+        /*Point left = new Point(), right = new Point();
         setLeftAndRightPoint(this.points.get(0), this.points.get(1), left, right, calculateAngle(this.points.get(0), this.points.get(1)));
-        findBisectorOfThreeSites(this.quad, left, right, this.points.get(2));
+        findBisectorOfThreeSites(this.quad, left, right, this.points.get(2));*/
     }
     
     /**
      * Animate quad scaling and intersection discovery
      */
     private void doVoronoiAnimation(int delay, int maxScaleIterations) {
-        
-        // for each pair of points, find main bisector
-        for (int i = 0; i < points.size(); i++) {
-            for (int j = i + 1; j < points.size(); j++) {
+        System.out.println("Finding Bisectors Between 2 Sites:\n");
+        // For each pair of points, find bisector
+        for (int i = 0; i < this.points.size(); i++) {
+            for (int j = i + 1; j < this.points.size(); j++) {
                 findBisectorOfTwoSites(this.quad, this.points.get(i), this.points.get(j));
+                System.out.println();
+            }
+        }
+        
+        System.out.println("\nFinding Bisectors Between 3 Sites:\n");
+        // For each triplet of points, find bisector
+        for (int i = 0; i < this.points.size(); i ++) {
+            for (int j = i + 1; j < this.points.size(); j++) {
+                for (int k = j + 1; k < this.points.size(); k++) {
+                    //System.out.println("i = " + i + ", j = " + j + ", k = " + k);
+                    Point left = new Point(), right = new Point();
+                    setLeftAndRightPoint(this.points.get(i), this.points.get(j), left, right, calculateAngle(this.points.get(i), this.points.get(j)));
+                    findBisectorOfThreeSites(this.quad, left, right, this.points.get(k));
+                    System.out.println();
+                }
             }
         }
         
@@ -593,7 +608,12 @@ public class VoronoiDiagram extends JPanel {
         
         // If case is 1, ignore. Means there is no bisector point
         if (bisectorCase == 2) { // case 2: single point is bisector of 3 
-            voronoiPoints.add(findIntersectionBisectors3Points(p1, p2, p3));
+            VoronoiBisector bisector = findIntersectionBisectors3Points(p1, p2, p3);
+            if (bisector != null) {
+                this.voronoiEdgesB3S.add(bisector);
+            } else {
+                System.out.println("!!! case 2 bisector null - this shouldn't happen !!!");
+            }
         } else if (bisectorCase == 3 && isLeftOfSegment(p1, p2, p3) != 0) { // if isLeftOfSegment != 0 then points are not collinear
             //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
         } else if (bisectorCase == 3 && isLeftOfSegment(p1, p2, p3) == 0) { // if isLeftOfSegment == 0 then points are collinear
@@ -833,10 +853,11 @@ public class VoronoiDiagram extends JPanel {
      * @param a1 A point
      * @param a2 A point
      * @param a3 A point
-     * @return Intersection point between bisector of a1a3 and a2a3
+     * @return VoronoiBisector representing the intersection point between bisector of a1a3 and a2a3. case 2
      */
-    private Point findIntersectionBisectors3Points(Point a1, Point a2, Point a3) {
-        System.out.println("a1 = " + a1 + "a2 = " + a2 + "a3 = " + a3);
+    private VoronoiBisector findIntersectionBisectors3Points(Point a1, Point a2, Point a3) {
+        System.out.println("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + this.voronoiEdgesB2S.size());
+        //printEdges(this.voronoiEdgesB2S);
         for (int i = 0; i < this.voronoiEdgesB2S.size(); i ++) {
             
             // If the voronoi edge segment belongs to a1a3
@@ -844,27 +865,37 @@ public class VoronoiDiagram extends JPanel {
                     this.voronoiEdgesB2S.get(i).getAdjacentPts().contains(a3)) {
                 
                 //System.out.println("Considering " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(1));
-                for (int j = i+1; j < this.voronoiEdgesB2S.size(); j ++) {
+                for (int j = 0; j < this.voronoiEdgesB2S.size(); j ++) {
+                    //System.out.println("Comparing with " + this.voronoiEdgesB2S.get(j).getAdjacentPts());
+                    
+                    //System.out.println("Considering " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(1));
                     // If the voronoi edge segment belongs to a2a3
                     if (this.voronoiEdgesB2S.get(j).getAdjacentPts().contains(a2) &&
                             this.voronoiEdgesB2S.get(j).getAdjacentPts().contains(a3)) {
-                        //System.out.println("Comparing " + this.voronoiEdgesB2S.get(i) + " and " + this.voronoiEdgesB2S.get(j));
+                        
                         // Look for intersection between the 2 edge segments
                         Point b3s = doLineSegmentsIntersect(this.voronoiEdgesB2S.get(i).startPoint, this.voronoiEdgesB2S.get(i).endPoint, 
                                 this.voronoiEdgesB2S.get(j).startPoint, this.voronoiEdgesB2S.get(j).endPoint);
                         if (b3s != null) {
                             System.out.println("Found intersection point: " + b3s);
-                            this.voronoiEdgesB3S.add(new VoronoiBisector(new Point[]{a1, a2, a3}, b3s, b3s, "b3s"));
+                            return new VoronoiBisector(new Point[]{a1, a2, a3}, b3s, b3s, "b3s");
                         }
                     }
                 }
             }
         }
-        
-        return new Point();
+        return null;
     }
     
-    
+    /**
+     * 
+     * @param edges ArrayList of Voronoi Bisectors to print formatted
+     */
+    private void printEdges(ArrayList<VoronoiBisector> edges) {
+        for (VoronoiBisector vb : edges) {
+            System.out.println(" " + vb.adjacentPoints.get(0) + ", " + vb.adjacentPoints.get(1) + ": " + vb.startPoint + ", " + vb.endPoint);
+        }
+    }
     
     
     
@@ -1130,8 +1161,8 @@ public class VoronoiDiagram extends JPanel {
         }
         
         // Draw bisector segments between 3 sites
-        g2d.setColor(Color.blue);
-        g2d.setStroke(new BasicStroke(3));
+        g2d.setColor(Color.red);
+        g2d.setStroke(new BasicStroke(5));
         for (VoronoiBisector bisector : this.voronoiEdgesB3S) {
             if (bisector.getTag().equals("b3s") && this.showB3S){
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
@@ -1142,20 +1173,24 @@ public class VoronoiDiagram extends JPanel {
         
         // Draw display edges
         for (VoronoiBisector bisector : this.displayEdges) {
-            if (bisector.getTag().equals("b2s_step") && this.showB2S_steps ||
-                    bisector.getTag().equals("b3s_step") && this.showB3S_steps) {
+            // TODO: sometimes the bisector start or end point are null and I don't know why
+            if (bisector.startPoint != null && bisector.endPoint != null &&
+                    (bisector.getTag().equals("b2s_step") && this.showB2S_steps ||
+                    bisector.getTag().equals("b3s_step") && this.showB3S_steps)) {
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
             }
         }
         
         
         // Draw h12, g12 points on quads
-        g2d.setColor(Color.red);
-        for(int i = 0; i < h1.size(); i ++) {
-            g2d.fill(new Ellipse2D.Double(h1.get(i).x - pointRadius, yMax - h1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-            g2d.fill(new Ellipse2D.Double(h2.get(i).x - pointRadius, yMax - h2.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-            g2d.fill(new Ellipse2D.Double(g1.get(i).x - pointRadius, yMax - g1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-            g2d.fill(new Ellipse2D.Double(g2.get(i).x - pointRadius, yMax - g2.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+        if (this.showB2S_steps) {
+            g2d.setColor(Color.red);
+            for(int i = 0; i < h1.size(); i ++) {
+                g2d.fill(new Ellipse2D.Double(h1.get(i).x - pointRadius, yMax - h1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+                g2d.fill(new Ellipse2D.Double(h2.get(i).x - pointRadius, yMax - h2.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+                g2d.fill(new Ellipse2D.Double(g1.get(i).x - pointRadius, yMax - g1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+                g2d.fill(new Ellipse2D.Double(g2.get(i).x - pointRadius, yMax - g2.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+            }
         }
     }
 
