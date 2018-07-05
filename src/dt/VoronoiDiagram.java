@@ -34,7 +34,7 @@ public class VoronoiDiagram extends JPanel {
     private Timer timer;
     private int scaleIterations;
     
-    private final boolean showB2S_steps = true, showB3S_steps = false;
+    private final boolean showB2S_steps = false, showB2S_hg12 = true, showB3S_steps = false;
     private final boolean showB2S = true, showB3S = false;
     private final boolean doAnimation = true;
     
@@ -499,16 +499,7 @@ public class VoronoiDiagram extends JPanel {
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, raya1h1[0], raya1h1[1], "b2s_step"));
         
         // Rotate a2h2 to be horizontal with x axis
-        if (a2.x == h2.x) {
-            angle = Math.toRadians(-90);
-            /*if (a2.y < h2.y) {
-                angle = Math.toRadians(90);
-            } else {
-                angle = Math.toRadians(-90);
-            }*/
-        } else {
-            angle = Math.atan((a2.y - h2.y) / (h2.x - a2.x));
-        }
+        angle = calculateAngle(a2, h2);
         
         Point ra2 = rotatePoint(a2, midpoint(a2, h2), angle);
         Point rh2 = rotatePoint(h2, midpoint(a2, h2), angle);
@@ -568,8 +559,8 @@ public class VoronoiDiagram extends JPanel {
         
         // Define the direction of the ray starting at a
         int rayEndx = 1000000;
-        //System.out.println(a + " : " + nonInnerVertex);
-        if (a.x > nonInnerVertex.x || (a.x == nonInnerVertex.x && a.y < nonInnerVertex.y)) {
+        System.out.println(a + " : " + nonInnerVertex);
+        if (a.x > nonInnerVertex.x || (a.x == nonInnerVertex.x && a.y > nonInnerVertex.y)) {
             rayEndx = -1000000;
         }
         Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
@@ -1183,7 +1174,7 @@ public class VoronoiDiagram extends JPanel {
         
         
         // Draw h12, g12 points on quads
-        if (this.showB2S_steps) {
+        if (this.showB2S_hg12) {
             g2d.setColor(Color.red);
             for(int i = 0; i < h1.size(); i ++) {
                 g2d.fill(new Ellipse2D.Double(h1.get(i).x - pointRadius, yMax - h1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
