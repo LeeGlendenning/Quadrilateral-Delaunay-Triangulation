@@ -640,8 +640,8 @@ public class VoronoiDiagram extends JPanel {
         if (segsParallelToa1a2(q, a1, a2, angle) == 2) { // FG12 is a line
             System.out.println("B3P Special case - two quad edges parallel to a1a2");
 
-            Point[] ray1 = find3PointUVRays(a2, a1, a1); // Ray from a1 to left
-            Point[] ray2 = find3PointUVRays(a1, a2, a2); // Ray from a2 to right
+            Point[] ray1 = findB3SUVRays(a2, a1, a1); // Ray from a1 to left
+            Point[] ray2 = findB3SUVRays(a1, a2, a2); // Ray from a2 to right
 
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, a1, a2, "b3s_step"));
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
@@ -663,8 +663,8 @@ public class VoronoiDiagram extends JPanel {
         
         if (segsParallelToa1a2(q, a1, a2, angle) == 1) { // FG12 is a triangle
             System.out.println("B3P Special case - one quad edge parallel to a1a2");
-            Point[] ray1 = find3PointUVRays(a2, a1, a1); // Ray from a1 to left
-            Point[] ray2 = find3PointUVRays(a1, a2, a2); // Ray from a2 to right
+            Point[] ray1 = findB3SUVRays(a2, a1, a1); // Ray from a1 to left
+            Point[] ray2 = findB3SUVRays(a1, a2, a2); // Ray from a2 to right
 
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, a1, a2, "b3s_step"));
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
@@ -802,18 +802,22 @@ public class VoronoiDiagram extends JPanel {
         //System.out.print("finduv(): ");
         Point[] td =  findNonInnerVertices(q, a1, a2, angle);
         
-        Point[] u1 = find3PointUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[0]), midpoint(a1, a2), angle));
+        Point[] u1 = findB3SUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[0]), midpoint(a1, a2), angle));
         //System.out.println("u1: " + td[0] + ", " + q.prevVertex(td[0]));
-        Point[] u2 = find3PointUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a2, midpoint(a1, a2), angle), rotatePoint(q.nextVertex(td[0]), midpoint(a1, a2), angle));
+        Point[] u2 = findB3SUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a2, midpoint(a1, a2), angle), rotatePoint(q.nextVertex(td[0]), midpoint(a1, a2), angle));
         //System.out.println("u2: " + td[0] + ", " + q.nextVertex(td[0]));
-        Point[] v1 = find3PointUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.nextVertex(td[1]), midpoint(a1, a2), angle));
+        Point[] v1 = findB3SUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.nextVertex(td[1]), midpoint(a1, a2), angle));
         //System.out.println("v1: " + td[1] + ", " + q.nextVertex(td[1]));
-        Point[] v2 = find3PointUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a2, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[1]), midpoint(a1, a2), angle));
+        Point[] v2 = findB3SUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a2, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[1]), midpoint(a1, a2), angle));
         //System.out.println("v2: " + td[1] + ", " + q.prevVertex(td[1]));
         
         Point u = doLineSegmentsIntersect(rotatePoint(u1[0], midpoint(a1, a2), -angle), rotatePoint(u1[1], midpoint(a1, a2), -angle), rotatePoint(u2[0], midpoint(a1, a2), -angle), rotatePoint(u2[1], midpoint(a1, a2), -angle));
         Point v = doLineSegmentsIntersect(rotatePoint(v1[0], midpoint(a1, a2), -angle), rotatePoint(v1[1], midpoint(a1, a2), -angle), rotatePoint(v2[0], midpoint(a1, a2), -angle), rotatePoint(v2[1], midpoint(a1, a2), -angle));
         //System.out.println("u = " + u + ", v = " + v);
+        
+        //TODO: remove these two lines after bug is fixed where one of the rays goes in wrong direction
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(u1[0], midpoint(a1, a2), -angle), rotatePoint(u1[1], midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(u2[0], midpoint(a1, a2), -angle), rotatePoint(u2[1], midpoint(a1, a2), -angle), "b3s_step"));
         
         // Draw lines for debugging
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, rotatePoint(u1[3], midpoint(a1, a2), -angle), "b3s_step"));
@@ -831,7 +835,7 @@ public class VoronoiDiagram extends JPanel {
      * @param nextPt Point initial ray passes through
      * @return Point array containing ray starting at endPt and passing through nextPt then translated to a
      */
-    private Point[] find3PointUVRays(Point endPt, Point a, Point nextPt) {
+    private Point[] findB3SUVRays(Point endPt, Point a, Point nextPt) {
         Point p1 = new Point(), p2 = new Point();
         // EndPt is relative to Quadrilateral. Translate relative to a
         p1.x = endPt.x + a.x - this.quad.getCenter().x;
@@ -846,7 +850,7 @@ public class VoronoiDiagram extends JPanel {
         // Define the direction of the ray starting at a
         int rayEndx = 1000000;
         //System.out.println(a + " : " + nonInnerVertex);
-        if (p1.x > p2.x || (p1.x == p2.x && p1.y < p2.y)) {
+        if (p1.x > p2.x || (p1.x == p2.x && p1.y > p2.y)) {
             rayEndx = -1000000;
         }
         Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
