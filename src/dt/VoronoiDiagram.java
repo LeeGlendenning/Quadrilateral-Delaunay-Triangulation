@@ -36,9 +36,9 @@ public class VoronoiDiagram extends JPanel {
     private int scaleIterations;
     private final double floatTolerance = 0.0000000001;
     
-    private final boolean showB2S_steps = false, showB2S_hg12 = false, showB3S_steps = true;
-    private final boolean showB2S = false, showB3S = true;
-    private final boolean doAnimation = false;
+    private final boolean showB2S_steps = false, showB2S_hg12 = false, showB3S_steps = false;
+    private final boolean showB2S = true, showB3S = true;
+    private final boolean doAnimation = true;
     
     ArrayList<Point> h1, h2, g1, g2;
 
@@ -602,15 +602,25 @@ public class VoronoiDiagram extends JPanel {
         
         // If case is 1, ignore. Means there is no bisector point
         if (bisectorCase == 2) { // case 2: single point is bisector of 3 
-            VoronoiBisector bisector = findIntersectionBisectors3Points(p1, p2, p3);
+            VoronoiBisector bisector = findIntersectionB3S(p1, p2, p3);
             if (bisector != null) {
                 this.voronoiEdgesB3S.add(bisector);
             } else {
                 System.out.println("!!! case 2 bisector null - this shouldn't happen !!!");
             }
-        } else if (bisectorCase == 3 && isLeftOfSegment(p1, p2, p3) != 0) { // if isLeftOfSegment != 0 then points are not collinear
+        } else if (bisectorCase == 3 && !isCollinear(p1, p2, p3)) {
+            System.out.println("Handling case 3 - not collinear");
             //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
-        } else if (bisectorCase == 3 && isLeftOfSegment(p1, p2, p3) == 0) { // if isLeftOfSegment == 0 then points are collinear
+            ArrayList<VoronoiBisector> bisectors = findOverlapsB3S(p1, p2, p3);
+            if (!bisectors.isEmpty()) {
+                for (VoronoiBisector bisector : bisectors) {
+                    this.voronoiEdgesB3S.add(bisector);
+                }
+            } else {
+                System.out.println("!!! case 3 bisector overlaps empty - this shouldn't happen !!!");
+            }
+        } else if (bisectorCase == 3 && isCollinear(p1, p2, p3)) {
+            System.out.println("Handling case 3 - not collinear");
             //BC(a1; a2; a3) consists of one or two cones
         }
     }
@@ -763,6 +773,17 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
+     * 
+     * @param a A Point
+     * @param b A Point
+     * @param c A Point
+     * @return True if a, b, c are collinear. False otherwise
+     */
+    private boolean isCollinear(Point a, Point b, Point c) {
+        return (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x) == 0;
+    }
+    
+    /**
      * NOTE: Point a should have less or equal x value to point b for sign to be correct
      * 
      * @param a Endpoint of line segment
@@ -780,8 +801,10 @@ public class VoronoiDiagram extends JPanel {
         //System.out.println("ra = " + ra + "rb = " + rb + "rc = " + rc);
         
         // Test if point c is on segment ab
+        //System.out.println("isLeft: ra.y - rc.y = " + Math.abs(ra.y - rc.y) + ", rb.y - rc.y = " + Math.abs(rb.y - rc.y));
+        //System.out.println("rc.x = " + rc.x + ", min(a.x, b.x) = " + Math.min(a.x, b.x) + ", max(a.x, b.x) = " + Math.max(a.x, b.x));
         if ((Math.abs(ra.y - rc.y) < 0.01 && Math.abs(rb.y - rc.y) < 0.01 || cross == 0) &&
-                rc.x > Math.min(a.x, b.x) && rc.x < Math.max(a.x, b.x)) {
+                rc.x >= Math.min(a.x, b.x) && rc.x <= Math.max(a.x, b.x)) {
             return 0;
         } else if (cross > 1) {
             return 1;
@@ -815,9 +838,12 @@ public class VoronoiDiagram extends JPanel {
         Point v = doLineSegmentsIntersect(rotatePoint(v1[0], midpoint(a1, a2), -angle), rotatePoint(v1[1], midpoint(a1, a2), -angle), rotatePoint(v2[0], midpoint(a1, a2), -angle), rotatePoint(v2[1], midpoint(a1, a2), -angle));
         //System.out.println("u = " + u + ", v = " + v);
         
-        //TODO: remove these two lines after bug is fixed where one of the rays goes in wrong direction
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(u1[0], midpoint(a1, a2), -angle), rotatePoint(u1[1], midpoint(a1, a2), -angle), "b3s_step"));
+        //below lines only for debugging when u or v is null (shouldn't happen)
+        /*this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(u1[0], midpoint(a1, a2), -angle), rotatePoint(u1[1], midpoint(a1, a2), -angle), "b3s_step"));
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(u2[0], midpoint(a1, a2), -angle), rotatePoint(u2[1], midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(v1[0], midpoint(a1, a2), -angle), rotatePoint(v1[1], midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(v2[0], midpoint(a1, a2), -angle), rotatePoint(v2[1], midpoint(a1, a2), -angle), "b3s_step"));
+        */
         
         // Draw lines for debugging
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, rotatePoint(u1[3], midpoint(a1, a2), -angle), "b3s_step"));
@@ -886,7 +912,7 @@ public class VoronoiDiagram extends JPanel {
      * @param a3 A point
      * @return VoronoiBisector representing the intersection point between bisector of a1a3 and a2a3. case 2
      */
-    private VoronoiBisector findIntersectionBisectors3Points(Point a1, Point a2, Point a3) {
+    private VoronoiBisector findIntersectionB3S(Point a1, Point a2, Point a3) {
         //System.out.println("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + this.voronoiEdgesB2S.size());
         //printEdges(this.voronoiEdgesB2S);
         for (int i = 0; i < this.voronoiEdgesB2S.size(); i ++) {
@@ -920,6 +946,33 @@ public class VoronoiDiagram extends JPanel {
     
     /**
      * 
+     * @param a1 A point
+     * @param a2 A point
+     * @param a3 A point
+     * @return ArrayList of VoronoiBisector representing the overlapping segments between bisector of a1a3 and a2a3. case 3 non-collinear
+     */
+    private ArrayList<VoronoiBisector> findOverlapsB3S(Point a1, Point a2, Point a3) {
+        ArrayList<VoronoiBisector> overlaps = new ArrayList();
+        
+        for (int i = 0; i < this.voronoiEdgesB2S.size(); i ++) {
+            //System.out.println("Considering " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(1));
+            for (int j = i+1; j < this.voronoiEdgesB2S.size(); j ++) {
+                //System.out.println("Considering " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(1));
+                Point[] overlap = doLineSegmentsOverlap(this.voronoiEdgesB2S.get(i).startPoint, this.voronoiEdgesB2S.get(i).endPoint, 
+                        this.voronoiEdgesB2S.get(j).startPoint, this.voronoiEdgesB2S.get(j).endPoint);
+                
+                if (overlap != null) {
+                    System.out.println("Found overlap: " + overlap[0] + ", " + overlap[1]);
+                    overlaps.add(new VoronoiBisector(new Point[]{a1, a2, a3}, overlap[0], overlap[1], "b3s"));
+                }
+            }
+        }
+        return overlaps;
+    }
+    
+    
+    /**
+     * 
      * @param edges ArrayList of Voronoi Bisectors to print formatted
      */
     private void printEdges(ArrayList<VoronoiBisector> edges) {
@@ -928,7 +981,61 @@ public class VoronoiDiagram extends JPanel {
         }
     }
     
-    
+    /**
+     * 
+     * @param p1 Endpoint of first line segment P
+     * @param p2 Endpoint of first line segment Q
+     * @param q1 Endpoint of second line segment
+     * @param q2 Endpoint of second line segment
+     * @return Line segment representing overlap of P and Q
+     */
+    private Point[] doLineSegmentsOverlap(Point p1, Point p2, Point q1, Point q2) {
+        System.out.println("DoLineSegmentsOverlap: " + p1 + ", " + p2 + " : " + q1 + ", " + q2);
+        
+        Point[] overlap = new Point[2];
+        
+        Point pl = new Point(), pr = new Point(), ql = new Point(), qr = new Point();
+        setLeftAndRightPoint(p1, p2, pl, pr, calculateAngle(p1, p2));
+        setLeftAndRightPoint(q1, q2, ql, qr, calculateAngle(q1, q2));
+        
+        double qlOverlap = isLeftOfSegment(pl, pr, ql);
+        double qrOverlap = isLeftOfSegment(pl, pr, qr);
+        
+        // No overlap
+        if (qlOverlap != 0 && qrOverlap != 0) {
+            System.out.println("No overlap");
+            return null;
+        }
+        
+        // Left part of Q overlaps P
+        if (qlOverlap == 0) {
+            overlap[0] = ql;
+        }
+        // Right part of Q overlaps P
+        if (qrOverlap == 0) {
+            overlap[1] = qr;
+        }
+        
+        double plOverlap = isLeftOfSegment(ql, qr, pl);
+        double prOverlap = isLeftOfSegment(ql, qr, pr);
+        
+        // Left part of P overlaps Q
+        if (plOverlap == 0) {
+            overlap[0] = pl;
+        }
+        // Right part of P overlaps Q
+        if (prOverlap == 0) {
+            overlap[1] = pr;
+        }
+        
+        // TODO: confirm this: 
+        // Dont consider single points?
+        if (overlap[0].equals(overlap[1])) {
+            return null;
+        } else {
+            return overlap;
+        }
+    }
     
     
     
