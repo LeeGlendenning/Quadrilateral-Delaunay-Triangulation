@@ -40,6 +40,8 @@ public class VoronoiDiagram extends JPanel {
     private final boolean showB2S = true, showB3S = true;
     private final boolean doAnimation = true;
     
+    private final double raySize = 10000000;
+    
     ArrayList<Point> h1, h2, g1, g2;
 
     /**
@@ -390,8 +392,8 @@ public class VoronoiDiagram extends JPanel {
         }
         
         // Horizontal lines going through the inner vertices
-        Point[] l1 = {new Point(-1000000, innerVerts[0].y), new Point(1000000, innerVerts[0].y)};
-        Point[] l2 = {new Point(-1000000, innerVerts[1].y), new Point(1000000, innerVerts[1].y)};
+        Point[] l1 = {new Point(-this.raySize, innerVerts[0].y), new Point(this.raySize, innerVerts[0].y)};
+        Point[] l2 = {new Point(-this.raySize, innerVerts[1].y), new Point(this.raySize, innerVerts[1].y)};
         
         // Find other h and g points and rotate quad back to its original place
         int j;
@@ -482,17 +484,17 @@ public class VoronoiDiagram extends JPanel {
         Point rh1 = rotatePoint(h1, midpoint(a1, h1), angle);
         
         // Define the ray a1h1 and rotate back to original position
-        double rayEndx1 = 1000000.0;
+        double rayEndx1 = this.raySize;
         double rayEndy1 = rh1.y;
         if (a1.x > h1.x) {
-            rayEndx1 = -1000000.0;
+            rayEndx1 = -this.raySize;
         }
         
         //System.out.println("raya1h1 end = " + new Point(rayEndx1, rayEndy1));
         Point[] raya1h1 = new Point[2];
         if (a1.x == h1.x) {
             raya1h1[0] = new Point(a1.x, a1.y);
-            raya1h1[1] = new Point(a1.x, (a1.y < h1.y) ? 1000000 : -1000000);
+            raya1h1[1] = new Point(a1.x, (a1.y < h1.y) ? this.raySize : -this.raySize);
         } else {
             raya1h1[0] = rotatePoint(new Point(ra1.x, ra1.y), midpoint(a1, h1), -angle);
             raya1h1[1] = rotatePoint(new Point(rayEndx1, rayEndy1), midpoint(a1, h1), -angle);
@@ -507,17 +509,17 @@ public class VoronoiDiagram extends JPanel {
         Point rh2 = rotatePoint(h2, midpoint(a2, h2), angle);
         
         // Define the ray a1h1 and rotate back to original position
-        double rayEndx2 = 1000000.0;
+        double rayEndx2 = this.raySize;
         double rayEndy2 = rh2.y;
         if (a2.x > h2.x) {
-            rayEndx2 = -1000000.0;
+            rayEndx2 = -this.raySize;
         }
         
         //System.out.println("raya2h2 end = " + new Point(rayEndx2, rayEndy2));
         Point[] raya2h2 = new Point[2];
         if (a2.x == h2.x) {
             raya2h2[0] = new Point(a2.x, a2.y);
-            raya2h2[1] = new Point(a2.x, (a2.y < h2.y) ? 1000000 : -1000000);
+            raya2h2[1] = new Point(a2.x, (a2.y < h2.y) ? this.raySize : -this.raySize);
         } else {
             raya2h2[0] = rotatePoint(new Point(ra2.x, ra2.y), midpoint(a2, h2), -angle);
             raya2h2[1] = rotatePoint(new Point(rayEndx2, rayEndy2), midpoint(a2, h2), -angle);
@@ -560,10 +562,10 @@ public class VoronoiDiagram extends JPanel {
         //System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
         
         // Define the direction of the ray starting at a
-        int rayEndx = 1000000;
+        double rayEndx = this.raySize;
         //System.out.println(a + " : " + nonInnerVertex);
         if (a.x > nonInnerVertex.x || (a.x == nonInnerVertex.x && a.y > nonInnerVertex.y)) {
-            rayEndx = -1000000;
+            rayEndx = -this.raySize;
         }
         Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
         
@@ -642,6 +644,7 @@ public class VoronoiDiagram extends JPanel {
     private int caseBisectorBetween3Points(Quadrilateral q, Point a1, Point a2, Point a3) {
         //System.out.println("caseBisectorBetween3Points: " + a1 + ", " + a2 + ", " + a3);
         //a3 = new Point(a1.x,a1.y);
+        double caseTolerance = 0.01;
         
         double angle = calculateAngle(a1, a2);
         Point[] uv = null;
@@ -657,9 +660,9 @@ public class VoronoiDiagram extends JPanel {
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "b3s_step"));
 
-            if (isLeftOfSegment(a1, a2, a3) == 0 ||
-                    isLeftOfSegment(ray1[0], ray1[1], a3) == 0 ||
-                    isLeftOfSegment(ray2[0], ray2[1], a3) == 0 ) {
+            if (isLeftOfSegment(a1, a2, a3, caseTolerance) == 0 ||
+                    isLeftOfSegment(ray1[0], ray1[1], a3, caseTolerance) == 0 ||
+                    isLeftOfSegment(ray2[0], ray2[1], a3, caseTolerance) == 0 ) {
 
                 System.out.println("Point on boundary - case 3 (degenerate case)");
                 return 3;
@@ -695,34 +698,34 @@ public class VoronoiDiagram extends JPanel {
         System.out.println(Arrays.toString(uv));
         
         // Case 1 split into 3 parts for debugging
-        if (isLeftOfSegment(a1, uv[0], a3) == -1 &&
-                isLeftOfSegment(a2, uv[0], a3) == 1 &&
-                isLeftOfSegment(uv[3], a2, a3) == 1 &&
-                isLeftOfSegment(uv[3],a1, a3) == -1) 
+        if (isLeftOfSegment(a1, uv[0], a3, caseTolerance) == -1 &&
+                isLeftOfSegment(a2, uv[0], a3, caseTolerance) == 1 &&
+                isLeftOfSegment(uv[3], a2, a3, caseTolerance) == 1 &&
+                isLeftOfSegment(uv[3],a1, a3, caseTolerance) == -1) 
         {
             System.out.println("Point inside F - case 1 (do nothing)");
             return 1;
             
-        } else if (isLeftOfSegment(uv[1], a1, a3) == 1 &&
-                isLeftOfSegment(a1,uv[4], a3) == 1) 
+        } else if (isLeftOfSegment(uv[1], a1, a3, caseTolerance) == 1 &&
+                isLeftOfSegment(a1,uv[4], a3, caseTolerance) == 1) 
         {
             System.out.println("Point inside G12 - case 1 (do nothing)");
             return 1;
             
-        } else if (isLeftOfSegment(uv[2], a2, a3) == -1 &&
-                isLeftOfSegment(a2,uv[5], a3) == -1) 
+        } else if (isLeftOfSegment(uv[2], a2, a3, caseTolerance) == -1 &&
+                isLeftOfSegment(a2,uv[5], a3, caseTolerance) == -1) 
         {
             System.out.println("Point inside G21 - case 1 (do nothing)");
             return 1;
             
-        } else if (isLeftOfSegment(a1, uv[0], a3) == 0 ||
-                isLeftOfSegment(a2, uv[0], a3) == 0 ||
-                isLeftOfSegment(uv[3], a2, a3) == 0 ||
-                isLeftOfSegment(uv[3], a1, a3) == 0 ||
-                isLeftOfSegment(uv[1], a1, a3) == 0 ||
-                isLeftOfSegment(a1, uv[4], a3) == 0 ||
-                isLeftOfSegment(uv[2], a2, a3) == 0 ||
-                isLeftOfSegment(a2, uv[5], a3) == 0) 
+        } else if (isLeftOfSegment(a1, uv[0], a3, caseTolerance) == 0 ||
+                isLeftOfSegment(a2, uv[0], a3, caseTolerance) == 0 ||
+                isLeftOfSegment(uv[3], a2, a3, caseTolerance) == 0 ||
+                isLeftOfSegment(uv[3], a1, a3, caseTolerance) == 0 ||
+                isLeftOfSegment(uv[1], a1, a3, caseTolerance) == 0 ||
+                isLeftOfSegment(a1, uv[4], a3, caseTolerance) == 0 ||
+                isLeftOfSegment(uv[2], a2, a3, caseTolerance) == 0 ||
+                isLeftOfSegment(a2, uv[5], a3, caseTolerance) == 0) 
         {
             System.out.println("Point on boundary - case 3");
             return 3;
@@ -791,7 +794,8 @@ public class VoronoiDiagram extends JPanel {
      * @param c Query point
      * @return +1 if point is left of line (ccw order), 0 if point is on line (collinear), -1 otherwise (cw order)
      */
-    private int isLeftOfSegment(Point a, Point b, Point c){
+    private int isLeftOfSegment(Point a, Point b, Point c, double tolerance){
+        //System.out.println("a = " + a + ", b = " + b + ", c = " + c);
         double cross = (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
         //System.out.println("isLeftOfSegment: cross = " + cross);
         
@@ -802,9 +806,12 @@ public class VoronoiDiagram extends JPanel {
         
         // Test if point c is on segment ab
         //System.out.println("isLeft: ra.y - rc.y = " + Math.abs(ra.y - rc.y) + ", rb.y - rc.y = " + Math.abs(rb.y - rc.y));
-        //System.out.println("rc.x = " + rc.x + ", min(a.x, b.x) = " + Math.min(a.x, b.x) + ", max(a.x, b.x) = " + Math.max(a.x, b.x));
-        if ((Math.abs(ra.y - rc.y) < 0.01 && Math.abs(rb.y - rc.y) < 0.01 || cross == 0) &&
-                rc.x >= Math.min(a.x, b.x) && rc.x <= Math.max(a.x, b.x)) {
+        //System.out.println(((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0));
+        //System.out.println("c.x = " + c.x + ", min(a.x, b.x) = " + Math.min(a.x, b.x) + ", max(a.x, b.x) = " + Math.max(a.x, b.x));
+        //System.out.println(Math.abs(rc.x - Math.max(ra.x, rb.x)) + ", " + Math.abs(rc.x - Math.min(ra.x, rb.x)));
+        //System.out.println(((rc.x > Math.min(a.x, b.x) && rc.x < Math.max(a.x, b.x)) || Math.abs(rc.x - Math.max(a.x, b.x)) < tolerance || Math.abs(rc.x - Math.min(a.x, b.x)) < tolerance));
+        if (((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0) &&
+                (rc.x > Math.min(ra.x, rb.x) && rc.x < Math.max(ra.x, rb.x)) || Math.abs(rc.x - Math.max(ra.x, rb.x)) < tolerance || Math.abs(rc.x - Math.min(ra.x, rb.x)) < tolerance) {
             return 0;
         } else if (cross > 1) {
             return 1;
@@ -874,10 +881,10 @@ public class VoronoiDiagram extends JPanel {
         //System.out.println("endPt = " + p1 + ", a = " + a + ", nextPt = " + p2);
         
         // Define the direction of the ray starting at a
-        int rayEndx = 1000000;
+        double rayEndx = this.raySize;
         //System.out.println(a + " : " + nonInnerVertex);
         if (p1.x > p2.x || (p1.x == p2.x && p1.y > p2.y)) {
-            rayEndx = -1000000;
+            rayEndx = -this.raySize;
         }
         Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
         Point rayEnd2 = new Point(-rayEndx, a.y);
@@ -990,46 +997,74 @@ public class VoronoiDiagram extends JPanel {
      * @return Line segment representing overlap of P and Q
      */
     private Point[] doLineSegmentsOverlap(Point p1, Point p2, Point q1, Point q2) {
-        System.out.println("DoLineSegmentsOverlap: " + p1 + ", " + p2 + " : " + q1 + ", " + q2);
+        if (p1.equals(p2) || q1.equals(q2)) {
+            return null;
+        }
         
-        Point[] overlap = new Point[2];
+        double overlapTolerane = 0.1;
+        Point[] overlap = null;
         
         Point pl = new Point(), pr = new Point(), ql = new Point(), qr = new Point();
         setLeftAndRightPoint(p1, p2, pl, pr, calculateAngle(p1, p2));
         setLeftAndRightPoint(q1, q2, ql, qr, calculateAngle(q1, q2));
         
-        double qlOverlap = isLeftOfSegment(pl, pr, ql);
-        double qrOverlap = isLeftOfSegment(pl, pr, qr);
-        
-        // No overlap
-        if (qlOverlap != 0 && qrOverlap != 0) {
-            System.out.println("No overlap");
+        // If the line segments intersect then they might overlap
+        // Otherwise they definitely don't overlap
+        if (doLineSegmentsIntersect(ql, qr, pl, pr) != null) {
+            overlap = new Point[2];
+            
+            // Adjust ray endpoints to be at screen boundary
+            if (pointIsInfinite(pl)) {
+                pl = findBoundaryPointOnRay(pl, pr);
+            }
+            if (pointIsInfinite(pr)) {
+                pr = findBoundaryPointOnRay(pl, pr);
+            }
+            if (pointIsInfinite(ql)) {
+                ql = findBoundaryPointOnRay(ql, qr);
+            }
+            if (pointIsInfinite(qr)) {
+                qr = findBoundaryPointOnRay(ql, qr);
+            }
+            
+            System.out.println("DoLineSegmentsOverlap: " + pl + ", " + pr + " : " + ql + ", " + qr);
+
+            double qlOverlap = isLeftOfSegment(pl, ql, pr, overlapTolerane);
+            double qrOverlap = isLeftOfSegment(pl, qr, pr, overlapTolerane);
+
+            //System.out.println("qlOverlap = " + qlOverlap);
+            //System.out.println("qrOverlap = " + qrOverlap);
+
+            // No overlap
+            if (qlOverlap != 0 && qrOverlap != 0) {
+                System.out.println("No overlap");
+                return null;
+            }
+
+            // Left part of Q overlaps P
+            if (qlOverlap == 0) {
+                overlap[0] = ql;
+            }
+            // Right part of Q overlaps P
+            if (qrOverlap == 0) {
+                overlap[1] = qr;
+            }
+
+            double plOverlap = isLeftOfSegment(ql, qr, pl, overlapTolerane);
+            double prOverlap = isLeftOfSegment(ql, qr, pr, overlapTolerane);
+
+            // Left part of P overlaps Q
+            if (plOverlap == 0) {
+                overlap[0] = pl;
+            }
+            // Right part of P overlaps Q
+            if (prOverlap == 0) {
+                overlap[1] = pr;
+            }
+        } else {
             return null;
         }
         
-        // Left part of Q overlaps P
-        if (qlOverlap == 0) {
-            overlap[0] = ql;
-        }
-        // Right part of Q overlaps P
-        if (qrOverlap == 0) {
-            overlap[1] = qr;
-        }
-        
-        double plOverlap = isLeftOfSegment(ql, qr, pl);
-        double prOverlap = isLeftOfSegment(ql, qr, pr);
-        
-        // Left part of P overlaps Q
-        if (plOverlap == 0) {
-            overlap[0] = pl;
-        }
-        // Right part of P overlaps Q
-        if (prOverlap == 0) {
-            overlap[1] = pr;
-        }
-        
-        // TODO: confirm this: 
-        // Dont consider single points?
         if (overlap[0].equals(overlap[1])) {
             return null;
         } else {
@@ -1037,7 +1072,48 @@ public class VoronoiDiagram extends JPanel {
         }
     }
     
+    /**
+     * 
+     * @param p A point
+     * @return True if x or y of point is infinite or -infinite wrt screen size
+     */
+    private boolean pointIsInfinite(Point p) {
+        double inf = 10000;
+        return p.x > inf || p.y > inf || p.x < -inf || p.y < -inf;
+    }
     
+    /**
+     * 
+     * @param p1 Endpoint of ray represented as line segment
+     * @param p2 Endpoint of ray represented as line segment
+     * @return Point on line segment at boundary of screen
+     */
+    private Point findBoundaryPointOnRay(Point p1, Point p2) {
+        Point[] leftScreen = {new Point(0, 0), new Point(0, this.getBounds().getSize().height)};
+        Point[] rightScreen = {new Point(this.getBounds().getSize().width, 0), new Point(this.getBounds().getSize().width, this.getBounds().getSize().height)};
+        Point[] topScreen = {new Point(0, this.getBounds().getSize().height), new Point(this.getBounds().getSize().width, this.getBounds().getSize().height)};
+        Point[] bottomScreen = {new Point(0, 0), new Point(this.getBounds().getSize().width, 0)};
+        
+        Point boundary;
+        // Left side of screen will intersect ray
+        if ((boundary = doLineSegmentsIntersect(p1, p2, leftScreen[0], leftScreen[1])) != null) {
+            //System.out.println("boundary point: " + boundary);
+            return boundary;
+        } else if ((boundary = doLineSegmentsIntersect(p1, p2, rightScreen[0], rightScreen[1])) != null) { // Right side of screen will intersect ray
+            //System.out.println("boundary point: " + boundary);
+            return boundary;        
+        } else if ((boundary = doLineSegmentsIntersect(p1, p2, topScreen[0], topScreen[1])) != null) { // Right side of screen will intersect ray
+            //System.out.println("boundary point: " + boundary);
+            return boundary;        
+        } else if ((boundary = doLineSegmentsIntersect(p1, p2, bottomScreen[0], bottomScreen[1])) != null) { // Right side of screen will intersect ray
+            //System.out.println("boundary point: " + boundary);
+            return boundary;        
+        } else {
+            System.out.println("!!! Could not find intersection of ray with screen boundary !!!");
+            return null;
+        }
+    }        
+            
     
     
 
@@ -1302,7 +1378,7 @@ public class VoronoiDiagram extends JPanel {
         g2d.setColor(Color.red);
         g2d.setStroke(new BasicStroke(5));
         for (VoronoiBisector bisector : this.voronoiEdgesB3S) {
-            if (bisector.getTag().equals("b3s") && this.showB3S){
+            if (bisector.getTag().equals("b3s") && this.showB3S && bisector.startPoint != null && bisector.endPoint != null/*TODO: remove once bug is gone*/){
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
             }
         }

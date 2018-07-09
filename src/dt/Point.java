@@ -40,7 +40,8 @@ public class Point {
     
     @Override
     public boolean equals(Object other) {
-        if (other.getClass() == this.getClass() && Math.round(this.x) == Math.round(((Point) other).x) && Math.round(this.y) == Math.round(((Point) other).y)) {
+        double tolerance = 0.01;
+        if (other.getClass() == this.getClass() && Math.abs(this.x - ((Point) other).x) < tolerance && Math.abs(this.y - ((Point) other).y) < tolerance) {
             return true;
         } else {
             return false;
