@@ -38,7 +38,7 @@ public class VoronoiDiagram extends JPanel {
     
     private final boolean showB2S_steps = false, showB2S_hg12 = false, showB3S_steps = false;
     private final boolean showB2S = true, showB3S = true;
-    private final boolean doAnimation = true;
+    private final boolean doAnimation = false;
     
     private final double raySize = 10000000;
     
@@ -87,6 +87,7 @@ public class VoronoiDiagram extends JPanel {
                 System.out.println();
             }
         }
+        printEdges(this.voronoiEdgesB2S);
         
         System.out.println("\nFinding Bisectors Between 3 Sites:\n");
         // For each triplet of points, find bisector
@@ -805,13 +806,13 @@ public class VoronoiDiagram extends JPanel {
         //System.out.println("ra = " + ra + "rb = " + rb + "rc = " + rc);
         
         // Test if point c is on segment ab
-        //System.out.println("isLeft: ra.y - rc.y = " + Math.abs(ra.y - rc.y) + ", rb.y - rc.y = " + Math.abs(rb.y - rc.y));
-        //System.out.println(((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0));
-        //System.out.println("c.x = " + c.x + ", min(a.x, b.x) = " + Math.min(a.x, b.x) + ", max(a.x, b.x) = " + Math.max(a.x, b.x));
-        //System.out.println(Math.abs(rc.x - Math.max(ra.x, rb.x)) + ", " + Math.abs(rc.x - Math.min(ra.x, rb.x)));
-        //System.out.println(((rc.x > Math.min(a.x, b.x) && rc.x < Math.max(a.x, b.x)) || Math.abs(rc.x - Math.max(a.x, b.x)) < tolerance || Math.abs(rc.x - Math.min(a.x, b.x)) < tolerance));
+        System.out.println("isLeft: ra.y - rc.y = " + Math.abs(ra.y - rc.y) + ", rb.y - rc.y = " + Math.abs(rb.y - rc.y));
+        System.out.println(((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0));
+        System.out.println("rc.x = " + rc.x + ", min(ra.x, rb.x) = " + Math.min(ra.x, rb.x) + ", max(ra.x, rb.x) = " + Math.max(ra.x, rb.x));
+        System.out.println(Math.abs(rc.x - Math.max(ra.x, rb.x)) + ", " + Math.abs(rc.x - Math.min(ra.x, rb.x)));
+        System.out.println(((rc.x > Math.min(a.x, b.x) && rc.x < Math.max(a.x, b.x)) || Math.abs(rc.x - Math.max(a.x, b.x)) < tolerance || Math.abs(rc.x - Math.min(a.x, b.x)) < tolerance));
         if (((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0) &&
-                (rc.x > Math.min(ra.x, rb.x) && rc.x < Math.max(ra.x, rb.x)) || Math.abs(rc.x - Math.max(ra.x, rb.x)) < tolerance || Math.abs(rc.x - Math.min(ra.x, rb.x)) < tolerance) {
+                (rc.x > Math.min(ra.x, rb.x) && rc.x < Math.max(ra.x, rb.x) || Math.abs(rc.x - Math.max(ra.x, rb.x)) < tolerance || Math.abs(rc.x - Math.min(ra.x, rb.x)) < tolerance)) {
             return 0;
         } else if (cross > 1) {
             return 1;
@@ -984,7 +985,7 @@ public class VoronoiDiagram extends JPanel {
      */
     private void printEdges(ArrayList<VoronoiBisector> edges) {
         for (VoronoiBisector vb : edges) {
-            System.out.println(" " + vb.adjacentPoints.get(0) + ", " + vb.adjacentPoints.get(1) + ": " + vb.startPoint + ", " + vb.endPoint);
+            System.out.println(" " + /*vb.adjacentPoints.get(0) + ", " + vb.adjacentPoints.get(1) + ": " +*/ vb.startPoint + ", " + vb.endPoint);
         }
     }
     
@@ -1002,70 +1003,62 @@ public class VoronoiDiagram extends JPanel {
         }
         
         double overlapTolerane = 0.1;
-        Point[] overlap = null;
+        Point[] overlap = {null, null};
         
         Point pl = new Point(), pr = new Point(), ql = new Point(), qr = new Point();
         setLeftAndRightPoint(p1, p2, pl, pr, calculateAngle(p1, p2));
         setLeftAndRightPoint(q1, q2, ql, qr, calculateAngle(q1, q2));
         
-        // If the line segments intersect then they might overlap
-        // Otherwise they definitely don't overlap
-        if (doLineSegmentsIntersect(ql, qr, pl, pr) != null) {
-            overlap = new Point[2];
-            
-            // Adjust ray endpoints to be at screen boundary
-            if (pointIsInfinite(pl)) {
-                pl = findBoundaryPointOnRay(pl, pr);
-            }
-            if (pointIsInfinite(pr)) {
-                pr = findBoundaryPointOnRay(pl, pr);
-            }
-            if (pointIsInfinite(ql)) {
-                ql = findBoundaryPointOnRay(ql, qr);
-            }
-            if (pointIsInfinite(qr)) {
-                qr = findBoundaryPointOnRay(ql, qr);
-            }
-            
-            System.out.println("DoLineSegmentsOverlap: " + pl + ", " + pr + " : " + ql + ", " + qr);
+        // Adjust ray endpoints to be at screen boundary
+        if (pointIsInfinite(pl)) {
+            pl = findBoundaryPointOnRay(pl, pr);
+        }
+        if (pointIsInfinite(pr)) {
+            pr = findBoundaryPointOnRay(pl, pr);
+        }
+        if (pointIsInfinite(ql)) {
+            ql = findBoundaryPointOnRay(ql, qr);
+        }
+        if (pointIsInfinite(qr)) {
+            qr = findBoundaryPointOnRay(ql, qr);
+        }
 
-            double qlOverlap = isLeftOfSegment(pl, ql, pr, overlapTolerane);
-            double qrOverlap = isLeftOfSegment(pl, qr, pr, overlapTolerane);
+        System.out.println("\nDoLineSegmentsOverlap: " + pl + ", " + pr + " : " + ql + ", " + qr);
 
-            //System.out.println("qlOverlap = " + qlOverlap);
-            //System.out.println("qrOverlap = " + qrOverlap);
+        double qlOverlap = isLeftOfSegment(pl, pr, ql, overlapTolerane);
+        double qrOverlap = isLeftOfSegment(pl, pr, qr, overlapTolerane);
 
-            // No overlap
-            if (qlOverlap != 0 && qrOverlap != 0) {
-                System.out.println("No overlap");
-                return null;
-            }
+        //System.out.println("qlOverlap = " + qlOverlap);
+        //System.out.println("qrOverlap = " + qrOverlap);
 
-            // Left part of Q overlaps P
-            if (qlOverlap == 0) {
-                overlap[0] = ql;
-            }
-            // Right part of Q overlaps P
-            if (qrOverlap == 0) {
-                overlap[1] = qr;
-            }
-
-            double plOverlap = isLeftOfSegment(ql, qr, pl, overlapTolerane);
-            double prOverlap = isLeftOfSegment(ql, qr, pr, overlapTolerane);
-
-            // Left part of P overlaps Q
-            if (plOverlap == 0) {
-                overlap[0] = pl;
-            }
-            // Right part of P overlaps Q
-            if (prOverlap == 0) {
-                overlap[1] = pr;
-            }
-        } else {
+        // No overlap
+        if (qlOverlap != 0 && qrOverlap != 0) {
+            System.out.println("No overlap");
             return null;
         }
+
+        // Left part of Q overlaps P
+        if (qlOverlap == 0) {
+            overlap[0] = ql;
+        }
+        // Right part of Q overlaps P
+        if (qrOverlap == 0) {
+            overlap[1] = qr;
+        }
+
+        double plOverlap = isLeftOfSegment(ql, qr, pl, overlapTolerane);
+        double prOverlap = isLeftOfSegment(ql, qr, pr, overlapTolerane);
+
+        // Left part of P overlaps Q
+        if (plOverlap == 0) {
+            overlap[0] = pl;
+        }
+        // Right part of P overlaps Q
+        if (prOverlap == 0) {
+            overlap[1] = pr;
+        }
         
-        if (overlap[0].equals(overlap[1])) {
+        if (overlap[0] == null || overlap[1] == null || overlap[0].equals(overlap[1])) {
             return null;
         } else {
             return overlap;
@@ -1114,6 +1107,12 @@ public class VoronoiDiagram extends JPanel {
         }
     }        
             
+    
+    
+    
+    
+    
+    
     
     
 
@@ -1191,6 +1190,7 @@ public class VoronoiDiagram extends JPanel {
      * @return Intersection point if the line segments intersect, null otherwise
      */
     private Point doLineSegmentsIntersect(Point p1, Point p2, Point q1, Point q2) {
+        //System.out.println("DoLineSegmentsOverlap: " + p1 + ", " + p2 + " : " + q1 + ", " + q2);
         Point r = subtractPoints(p2, p1);
         Point s = subtractPoints(q2, q1);
 
@@ -1199,11 +1199,11 @@ public class VoronoiDiagram extends JPanel {
         
         // Lines are collinear
         if (numerator == 0 && denominator == 0) {
-
+            double tolerance = 0.01;
             // If line segments share an endpoint, line segments intersect
-            if (equalPoints(p1, q1) || equalPoints(p1, q2) || equalPoints(p2, q1) || equalPoints(p2, q2)) {
+            if (equalPoints(p1, q1, tolerance) || equalPoints(p1, q2, tolerance) || equalPoints(p2, q1, tolerance) || equalPoints(p2, q2, tolerance)) {
                 Point intersection;
-                if (equalPoints(p1, q1) || equalPoints(p1, q2)) {
+                if (equalPoints(p1, q1, tolerance) || equalPoints(p1, q2, tolerance)) {
                     intersection = p1;
                 } else {
                     intersection = p2;
@@ -1293,8 +1293,8 @@ public class VoronoiDiagram extends JPanel {
      * @param p2 Second point to compare
      * @return True if point are equal, false otherwise
      */
-    private boolean equalPoints(Point p1, Point p2) {
-        return (Math.round(p1.x) == Math.round(p2.x)) && (Math.round(p1.y) == Math.round(p2.y));
+    private boolean equalPoints(Point p1, Point p2, double tolerance) {
+        return (Math.abs(p1.x - p2.x) < tolerance && Math.abs(p1.y - p2.y) < tolerance);
     }
 
     /**
