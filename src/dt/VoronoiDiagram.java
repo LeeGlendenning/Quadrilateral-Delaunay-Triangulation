@@ -36,9 +36,9 @@ public class VoronoiDiagram extends JPanel {
     private int scaleIterations;
     private final double floatTolerance = 0.0000000001;
     
-    private final boolean showB2S_steps = false, showB2S_hg12 = false, showB3S_steps = false;
-    private final boolean showB2S = true, showB3S = true;
-    private final boolean doAnimation = false;
+    private final boolean showB2S_steps = false, showB2S_hg12 = true, showB3S_steps = false;
+    private final boolean showB2S = true, showB3S = false;
+    private final boolean doAnimation = true;
     
     private final double raySize = 10000000;
     
@@ -69,10 +69,6 @@ public class VoronoiDiagram extends JPanel {
         } else {
             doVoronoiAnimation(40, 0);
         }
-        
-        /*Point left = new Point(), right = new Point();
-        setLeftAndRightPoint(this.points.get(0), this.points.get(1), left, right, calculateAngle(this.points.get(0), this.points.get(1)));
-        findBisectorOfThreeSites(this.quad, left, right, this.points.get(2));*/
     }
     
     /**
@@ -87,7 +83,6 @@ public class VoronoiDiagram extends JPanel {
                 System.out.println();
             }
         }
-        printEdges(this.voronoiEdgesB2S);
         
         System.out.println("\nFinding Bisectors Between 3 Sites:\n");
         // For each triplet of points, find bisector
@@ -158,7 +153,7 @@ public class VoronoiDiagram extends JPanel {
         System.out.println("left point : " + a1 + ", right point: " + a2);
         
         // Two "middle" vertices of quad wrt y value and angle
-        Point[] innerVertices = findInnerVertices(q, angle);
+        ArrayList<Point> innerVertices = findInnerVertices(q, angle);
         
         h1.add(new Point());
         h2.add(new Point());
@@ -174,6 +169,50 @@ public class VoronoiDiagram extends JPanel {
         
         System.out.println("Endpoints: " + h + ", " + g);
         this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, h, g, "b2s"));
+        
+        // Handle degenerate case where SL hit an edge (>2 inner vertices)
+        if (innerVertices.size() > 2) {
+            System.out.println("Handling B2S cone");
+            /*Point minXpt1, maxXpt1, minXpt2, maxXpt2;
+            minXpt1 = maxXpt1 = innerVertsList.get(0);
+            minXpt2 = maxXpt2 = innerVertsList.get(innerVertsList.size()-1);
+            
+            // Handle innerVerts.size = 3 cases
+            if (innerVertsList.get(0).y == innerVertsList.get(1).y) {
+                if (innerVertsList.get(0).x < innerVertsList.get(1).x) {
+                    minXpt1 = innerVertsList.get(0);
+                    maxXpt1 = innerVertsList.get(1);
+                } else {
+                    minXpt1 = innerVertsList.get(1);
+                    maxXpt1 = innerVertsList.get(0);
+                }
+            } else if (innerVertsList.get(1).y == innerVertsList.get(2).y) {
+                if (innerVertsList.get(1).x < innerVertsList.get(2).x) {
+                    minXpt2 = innerVertsList.get(1);
+                    maxXpt2 = innerVertsList.get(2);
+                } else {
+                    minXpt2 = innerVertsList.get(1);
+                    maxXpt2 = innerVertsList.get(2);
+                }
+            }
+            // innerVerts.size = 4 case: innerVerts.get(2).y = innerVerts.get(3).y
+            if (innerVertsList.size() == 4) {
+                if (innerVertsList.get(2).x < innerVertsList.get(3).x) {
+                    minXpt2 = innerVertsList.get(2);
+                    maxXpt2 = innerVertsList.get(3);
+                } else {
+                    minXpt2 = innerVertsList.get(3);
+                    maxXpt2 = innerVertsList.get(2);
+                }
+            }
+            
+            temph1 = maxXpt1;
+            temph2 = minXpt1;
+            tempg1 = maxXpt2;
+            tempg2 = minXpt2;
+            System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
+            System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);*/
+        }
         
         // Find intersections between non-inner vertices
         Point[] nonInnerVertices = findNonInnerVertices(q, a1, a2, angle);
@@ -274,8 +313,9 @@ public class VoronoiDiagram extends JPanel {
      * @param angle Angle to rotate quad by such that a1a2 is parallel to x axis
      * @return Array of inner vertices of size 2
      */
-    private Point[] findInnerVertices(Quadrilateral q, double angle) {
-        Point[] innerVerts = new Point[2], rVerts = new Point[4];
+    private ArrayList<Point> findInnerVertices(Quadrilateral q, double angle) {
+        ArrayList<Point> innerVerts = new ArrayList();
+        Point[] rVerts = new Point[4];
         System.out.print("Rotated quad: ");
         // Rotate all quad vertices
         for (int i = 0; i < 4; i ++) {
@@ -297,11 +337,38 @@ public class VoronoiDiagram extends JPanel {
                 }
             }
         });
+        double tolerance = 0.0001;
+        // Sweep line hit an edge
+        if (Math.abs(rVerts[0].y - rVerts[1].y) < tolerance) {
+            innerVerts.add(rVerts[0]);
+            innerVerts.add(rVerts[1]);
+        }
+        if (Math.abs(rVerts[1].y - rVerts[2].y) < tolerance) {
+            if (!innerVerts.contains(rVerts[1])) {
+                innerVerts.add(rVerts[1]);
+            }
+            innerVerts.add(rVerts[2]);
+        }
+        if (Math.abs(rVerts[2].y - rVerts[3].y) < tolerance) {
+            if (!innerVerts.contains(rVerts[2])) {
+                innerVerts.add(rVerts[2]);
+            }
+            innerVerts.add(rVerts[3]);
+        }
         
-        innerVerts[0] = rVerts[1];
-        innerVerts[1] = rVerts[2];
+        if (!innerVerts.contains(rVerts[1])) {
+            innerVerts.add(rVerts[1]);
+        }
+        if (!innerVerts.contains(rVerts[2])) {
+            innerVerts.add(rVerts[2]);
+        }
         
-        //System.out.println("Inner verts: " + innerVerts[0] + " " + innerVerts[1]);
+        
+        System.out.print("Inner verts: ");
+        for (Point p : innerVerts) {
+            System.out.print(p + ", ");
+        }
+        System.out.println();
         return innerVerts;
     }
     
@@ -366,8 +433,9 @@ public class VoronoiDiagram extends JPanel {
      * @param innerVerts Array of size two holding the inner vertices on the quad
      * @param slope Slope of the lines through inner vertices
      */
-    private void findh12g12(Point h1, Point h2, Point g1, Point g2, Point a1, Point a2, Quadrilateral q, Point[] innerVerts, double angle) {
+    private void findh12g12(Point h1, Point h2, Point g1, Point g2, Point a1, Point a2, Quadrilateral q, ArrayList<Point> innerVertsList, double angle) {
         Point temph1 = null, temph2 = null, tempg1 = null, tempg2 = null;
+        Point[] innerVerts = {innerVertsList.get(0), innerVertsList.get(innerVertsList.size()-1)};
         
         // If inner vertex is to the right of center of quad
         if (innerVerts[0].x > q.getCenter().x) {
@@ -375,27 +443,28 @@ public class VoronoiDiagram extends JPanel {
         } else {
             temph2 = innerVerts[0];
         }
-        
+
         // If inner vertex is to the right of center of quad
         if (innerVerts[1].x > q.getCenter().x) {
             tempg1 = innerVerts[1];
         } else {
             tempg2 = innerVerts[1];
         }
-        
+
+
         //System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
         //System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
-        
+
         Point[] rVerts = new Point[4];
         // Rotate all quad vertices
         for (int i = 0; i < 4; i ++) {
             rVerts[i] = rotatePoint(q.getVertices()[i], q.getCenter(), angle);
         }
-        
+
         // Horizontal lines going through the inner vertices
         Point[] l1 = {new Point(-this.raySize, innerVerts[0].y), new Point(this.raySize, innerVerts[0].y)};
         Point[] l2 = {new Point(-this.raySize, innerVerts[1].y), new Point(this.raySize, innerVerts[1].y)};
-        
+
         // Find other h and g points and rotate quad back to its original place
         int j;
         for (int i = 0; i < 4; i ++) {
@@ -413,9 +482,9 @@ public class VoronoiDiagram extends JPanel {
                     temph2 = intersectionPoint1;
                 }
             }
-            
+
             Point intersectionPoint2;
-            
+
             // found a g
             if ((intersectionPoint2 = doLineSegmentsIntersect(l2[0], l2[1], rVerts[i], rVerts[j])) != null && !intersectionPoint2.equals(innerVerts[1])) {
                 if (tempg1 == null && intersectionPoint2.x > tempg2.x) {
@@ -806,11 +875,11 @@ public class VoronoiDiagram extends JPanel {
         //System.out.println("ra = " + ra + "rb = " + rb + "rc = " + rc);
         
         // Test if point c is on segment ab
-        System.out.println("isLeft: ra.y - rc.y = " + Math.abs(ra.y - rc.y) + ", rb.y - rc.y = " + Math.abs(rb.y - rc.y));
-        System.out.println(((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0));
-        System.out.println("rc.x = " + rc.x + ", min(ra.x, rb.x) = " + Math.min(ra.x, rb.x) + ", max(ra.x, rb.x) = " + Math.max(ra.x, rb.x));
-        System.out.println(Math.abs(rc.x - Math.max(ra.x, rb.x)) + ", " + Math.abs(rc.x - Math.min(ra.x, rb.x)));
-        System.out.println(((rc.x > Math.min(a.x, b.x) && rc.x < Math.max(a.x, b.x)) || Math.abs(rc.x - Math.max(a.x, b.x)) < tolerance || Math.abs(rc.x - Math.min(a.x, b.x)) < tolerance));
+        //System.out.println("isLeft: ra.y - rc.y = " + Math.abs(ra.y - rc.y) + ", rb.y - rc.y = " + Math.abs(rb.y - rc.y));
+        //System.out.println(((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0));
+        //System.out.println("rc.x = " + rc.x + ", min(ra.x, rb.x) = " + Math.min(ra.x, rb.x) + ", max(ra.x, rb.x) = " + Math.max(ra.x, rb.x));
+        //System.out.println(Math.abs(rc.x - Math.max(ra.x, rb.x)) + ", " + Math.abs(rc.x - Math.min(ra.x, rb.x)));
+        //System.out.println(((rc.x > Math.min(a.x, b.x) && rc.x < Math.max(a.x, b.x)) || Math.abs(rc.x - Math.max(a.x, b.x)) < tolerance || Math.abs(rc.x - Math.min(a.x, b.x)) < tolerance));
         if (((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0) &&
                 (rc.x > Math.min(ra.x, rb.x) && rc.x < Math.max(ra.x, rb.x) || Math.abs(rc.x - Math.max(ra.x, rb.x)) < tolerance || Math.abs(rc.x - Math.min(ra.x, rb.x)) < tolerance)) {
             return 0;
@@ -1023,7 +1092,7 @@ public class VoronoiDiagram extends JPanel {
             qr = findBoundaryPointOnRay(ql, qr);
         }
 
-        System.out.println("\nDoLineSegmentsOverlap: " + pl + ", " + pr + " : " + ql + ", " + qr);
+        //System.out.println("\nDoLineSegmentsOverlap: " + pl + ", " + pr + " : " + ql + ", " + qr);
 
         double qlOverlap = isLeftOfSegment(pl, pr, ql, overlapTolerane);
         double qrOverlap = isLeftOfSegment(pl, pr, qr, overlapTolerane);
@@ -1033,7 +1102,7 @@ public class VoronoiDiagram extends JPanel {
 
         // No overlap
         if (qlOverlap != 0 && qrOverlap != 0) {
-            System.out.println("No overlap");
+            //System.out.println("No overlap");
             return null;
         }
 
