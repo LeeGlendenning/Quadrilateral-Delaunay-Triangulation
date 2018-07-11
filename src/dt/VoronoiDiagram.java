@@ -24,25 +24,20 @@ import javax.swing.Timer;
  */
 public class VoronoiDiagram extends JPanel {
 
-    private final ArrayList<Point> points;
+    private final ArrayList<Point> points, voronoiPoints; // voronoiPoints used for animation
     private final Quadrilateral quad;
     // Consider using synchronized list to avoid concurrent modification...
-    private final ArrayList<VoronoiBisector> voronoiEdgesB2S, voronoiEdgesB3S;
-    private final ArrayList<VoronoiBisector> displayEdges; // Edges for showing steps in process
-    private final ArrayList<Point> voronoiPoints; // Used for animation
+    private final ArrayList<VoronoiBisector> voronoiEdgesB2S, voronoiEdgesB3S, displayEdges;
     private double curScale = 1.0;
-    private final int pixelFactor = 1;
+    private int pixelFactor = 1, scaleIterations, coneID = 0;
     private Timer timer;
-    private int scaleIterations;
-    private final double floatTolerance = 0.0000000001;
+    private final double floatTolerance = 0.0000000001, raySize = 10000000;
     
-    private final boolean showB2S_steps = false, showB2S_hg12 = false, showB3S_steps = false;
-    private final boolean showB2S = true, showB3S = true, showB2S_hidden = false;
+    private final boolean showB2S_steps = false, showB2S_hg12 = false, showB2S_hidden = true, showB2S = true;
+    private final boolean showB3S_steps = false, showB3S = true;
     private final boolean doAnimation = false;
     
-    private final double raySize = 10000000;
-    
-    ArrayList<Point> h1, h2, g1, g2;
+    private final ArrayList<Point> h1, h2, g1, g2;
 
     /**
      * Construct Voronoi diagram for point set using a Quadrilateral
@@ -211,18 +206,20 @@ public class VoronoiDiagram extends JPanel {
         if (nonInnerVertices.size() == 3 && rNonInner.get(0).y == rNonInner.get(1).y) {
             if (rNonInner.get(0).x < rNonInner.get(1).x) {
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_" + coneID));
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_" + coneID));
+                this.coneID ++;
             } else{
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_" + coneID));
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_" + coneID));
+                this.coneID ++;
             }
             
             ray = findBisectorRay(g, a1, nonInnerVertices.get(2));
-            this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
+            this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_cone"));
         }
         
         if (nonInnerVertices.size() == 3 && rNonInner.get(1).y == rNonInner.get(2).y) {
@@ -231,40 +228,46 @@ public class VoronoiDiagram extends JPanel {
             
             if (rNonInner.get(1).x < rNonInner.get(2).x) {
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_" + coneID));
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(2));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_" + coneID));
+                this.coneID ++;
             } else{
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_" + coneID));
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(2));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_" + coneID));
+                this.coneID ++;
             }
         }
         
         if (nonInnerVertices.size() == 4) {
             if (rNonInner.get(0).x < rNonInner.get(1).x) {
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_" + coneID));
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_" + coneID));
+                this.coneID ++;
             } else{
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_" + coneID));
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_" + coneID));
+                this.coneID ++;
             }
             
             if (rNonInner.get(2).x < rNonInner.get(3).x) {
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(2));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_" + coneID));
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(3));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_" + coneID));
+                this.coneID ++;
             } else{
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(2));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_" + coneID));
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(3));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden"));
+                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_" + coneID));
+                this.coneID ++;
             }
         }
     }
@@ -1483,8 +1486,8 @@ public class VoronoiDiagram extends JPanel {
         
         // Draw bisector segments between 2 sites
         for (VoronoiBisector bisector : this.voronoiEdgesB2S) {
-            if (bisector.getTag().equals("b2s") && this.showB2S ||
-                    bisector.getTag().equals("b2s_hidden") && this.showB2S_hidden){
+            if (bisector.getTag().startsWith("b2s") && !bisector.getTag().startsWith("b2s_hidden") && this.showB2S ||
+                    bisector.getTag().startsWith("b2s_hidden") && this.showB2S_hidden){
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
             }
         }
@@ -1493,7 +1496,7 @@ public class VoronoiDiagram extends JPanel {
         g2d.setColor(Color.red);
         g2d.setStroke(new BasicStroke(5));
         for (VoronoiBisector bisector : this.voronoiEdgesB3S) {
-            if (bisector.getTag().equals("b3s") && this.showB3S && bisector.startPoint != null && bisector.endPoint != null/*TODO: remove once bug is gone*/){
+            if (bisector.getTag().equals("b3s") && this.showB3S /*&& bisector.startPoint != null && bisector.endPoint != null*//*TODO: remove once bug is gone*/){
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
             }
         }
