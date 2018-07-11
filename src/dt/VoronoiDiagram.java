@@ -29,12 +29,13 @@ public class VoronoiDiagram extends JPanel {
     // Consider using synchronized list to avoid concurrent modification...
     private final ArrayList<VoronoiBisector> voronoiEdgesB2S, voronoiEdgesB3S, displayEdges;
     private double curScale = 1.0;
-    private int pixelFactor = 1, scaleIterations, coneID = 0;
+    private final int pixelFactor = 1;
+    private int scaleIterations, coneID = 0;
     private Timer timer;
     private final double floatTolerance = 0.0000000001, raySize = 10000000;
     
-    private final boolean showB2S_steps = false, showB2S_hg12 = false, showB2S_hidden = true, showB2S = true;
-    private final boolean showB3S_steps = false, showB3S = true;
+    private final boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
+    private final boolean showB3S_fgRegion = true, showB3S = true;
     private final boolean doAnimation = false;
     
     private final ArrayList<Point> h1, h2, g1, g2;
@@ -167,11 +168,11 @@ public class VoronoiDiagram extends JPanel {
         
         // Find intersections between non-inner vertices
         ArrayList<Point> nonInnerVertices = findNonInnerVertices(q, a1, a2, angle);
-        System.out.print("Non-inner vertices ");
+        /*System.out.print("Non-inner vertices ");
         for (Point p : nonInnerVertices) {
             System.out.print(p + " ");
         }
-        System.out.println();
+        System.out.println();*/
         
         calculateAllBisectorRays(nonInnerVertices, h, g, a1, p1, p2, angle);
     }
@@ -404,9 +405,12 @@ public class VoronoiDiagram extends JPanel {
         Point[] rVerts = new Point[4];
         
         // Rotate all quad vertices
+        //System.out.print("Non-Inner Vertices rVerts: ");
         for (int i = 0; i < 4; i ++) {
             rVerts[i] = rotatePoint(q.getVertices()[i], midpoint(a1, a2), angle);
+            //System.out.print(rVerts[i] + ", ");
         }
+        //System.out.println();
         
         // Sort rotated quad vertices by ascending y value (more or less sweep line)
         Arrays.sort(rVerts, new Comparator<Point>() {
@@ -423,16 +427,16 @@ public class VoronoiDiagram extends JPanel {
         });
         
         //System.out.println("rVerts: " + rVerts[0] + ", " + rVerts[1] + ", " + rVerts[2] + ", " + rVerts[3]);
-        
+        double tolerance = 0.00001;
         // Check for SL hitting an edge
-        if (rVerts[0].y == rVerts[1].y /*&& rVerts[0].x < rVerts[1].x*/) {
+        if (Math.abs(rVerts[0].y - rVerts[1].y) < tolerance /*&& rVerts[0].x < rVerts[1].x*/) {
             nonInnerVerts.add(rotatePoint(rVerts[0], midpoint(a1, a2), -angle));
             nonInnerVerts.add(rotatePoint(rVerts[1], midpoint(a1, a2), -angle));
         } else {
             nonInnerVerts.add(rotatePoint(rVerts[0], midpoint(a1, a2), -angle));
         }
         
-        if (rVerts[2].y == rVerts[3].y /*&& rVerts[2].x > rVerts[3].x*/) {
+        if (Math.abs(rVerts[2].y - rVerts[3].y) < tolerance /*&& rVerts[2].x > rVerts[3].x*/) {
             nonInnerVerts.add(rotatePoint(rVerts[2], midpoint(a1, a2), -angle));
             nonInnerVerts.add(rotatePoint(rVerts[3], midpoint(a1, a2), -angle));
         } else {
@@ -713,8 +717,17 @@ public class VoronoiDiagram extends JPanel {
                 System.out.println("!!! case 3 bisector overlaps empty - this shouldn't happen !!!");
             }
         } else if (bisectorCase == 3 && isCollinear(p1, p2, p3)) {
-            System.out.println("Handling case 3 - not collinear");
+            System.out.println("Handling case 3 - collinear");
             //BC(a1; a2; a3) consists of one or two cones
+            ArrayList<VoronoiBisector[]> cones = findConeOverlapsB3S(p1, p2, p3);
+            if (!cones.isEmpty()) {
+                for (VoronoiBisector[] cone : cones) {
+                    this.voronoiEdgesB3S.add(cone[0]);
+                    this.voronoiEdgesB3S.add(cone[1]);
+                }
+            } else {
+                System.out.println("!!! case 3 bisector cone overlaps empty - this shouldn't happen !!!");
+            }
         }
     }
     
@@ -1095,6 +1108,20 @@ public class VoronoiDiagram extends JPanel {
         return overlaps;
     }
     
+    /**
+     * 
+     * @param a1 A point
+     * @param a2 A point
+     * @param a3 A point
+     * @return ArrayList of VoronoiBisector representing the overlapping cones between bisector of a1a3 and a2a3. case 3 collinear
+     */
+    private ArrayList<VoronoiBisector[]> findConeOverlapsB3S(Point a1, Point a2, Point a3) {
+        ArrayList<VoronoiBisector[]> coneOverlaps = new ArrayList();
+        
+        
+        
+        return coneOverlaps;
+    }
     
     /**
      * 
@@ -1487,7 +1514,7 @@ public class VoronoiDiagram extends JPanel {
         // Draw bisector segments between 2 sites
         for (VoronoiBisector bisector : this.voronoiEdgesB2S) {
             if (bisector.getTag().startsWith("b2s") && !bisector.getTag().startsWith("b2s_hidden") && this.showB2S ||
-                    bisector.getTag().startsWith("b2s_hidden") && this.showB2S_hidden){
+                    bisector.getTag().startsWith("b2s_hidden") && this.showB2S_hiddenCones){
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
             }
         }
@@ -1507,15 +1534,14 @@ public class VoronoiDiagram extends JPanel {
         for (VoronoiBisector bisector : this.displayEdges) {
             // TODO: sometimes the bisector start or end point are null and I don't know why
             if (bisector.startPoint != null && bisector.endPoint != null &&
-                    (bisector.getTag().equals("b2s_step") && this.showB2S_steps ||
-                    bisector.getTag().equals("b3s_step") && this.showB3S_steps)) {
+                    (bisector.getTag().equals("b2s_step") && this.showB2S_hgRegion ||
+                    bisector.getTag().equals("b3s_step") && this.showB3S_fgRegion)) {
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
             }
         }
         
-        
         // Draw h12, g12 points on quads
-        if (this.showB2S_hg12) {
+        if (this.showB2S_hgPoints) {
             g2d.setColor(Color.red);
             for(int i = 0; i < h1.size(); i ++) {
                 g2d.fill(new Ellipse2D.Double(h1.get(i).x - pointRadius, yMax - h1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
