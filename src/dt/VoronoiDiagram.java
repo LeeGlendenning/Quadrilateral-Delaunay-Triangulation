@@ -35,7 +35,7 @@ public class VoronoiDiagram extends JPanel {
     private final double floatTolerance = 0.0000000001, raySize = 10000000;
     
     private final boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
-    private final boolean showB3S_fgRegion = true, showB3S = true;
+    private final boolean showB3S_fgRegion = false, showB3S = true;
     private final boolean doAnimation = false;
     
     private final ArrayList<Point> h1, h2, g1, g2;
@@ -168,11 +168,6 @@ public class VoronoiDiagram extends JPanel {
         
         // Find intersections between non-inner vertices
         ArrayList<Point> nonInnerVertices = findNonInnerVertices(q, a1, a2, angle);
-        /*System.out.print("Non-inner vertices ");
-        for (Point p : nonInnerVertices) {
-            System.out.print(p + " ");
-        }
-        System.out.println();*/
         
         calculateAllBisectorRays(nonInnerVertices, h, g, a1, p1, p2, angle);
     }
@@ -442,6 +437,12 @@ public class VoronoiDiagram extends JPanel {
         } else {
             nonInnerVerts.add(rotatePoint(rVerts[3], midpoint(a1, a2), -angle));
         }
+        
+        System.out.print("Non-inner vertices ");
+        for (Point p : nonInnerVerts) {
+            System.out.print(p + " ");
+        }
+        System.out.println();
         
         //System.out.println("nonInner verts: " + nonInnerVerts[0] + " " + nonInnerVerts[1]);
         return nonInnerVerts;
@@ -929,7 +930,6 @@ public class VoronoiDiagram extends JPanel {
      * @param a2 A center point
      * @return Point array holding u and points representing its 2 rays and v and points representing its 2 rays respectively
      */
-    
     private Point[] finduv(Quadrilateral q, Point a1, Point a2) {
         double angle = calculateAngle(a1, a2);
         //System.out.print("finduv(): ");
@@ -942,12 +942,21 @@ public class VoronoiDiagram extends JPanel {
                 td[1] = niVerts.get(1);
                 break;
             case 3:
-                if (niVerts.get(0).y == niVerts.get(1).y && niVerts.get(0).x > niVerts.get(1).x) {
+                if (niVerts.get(0).y == niVerts.get(1).y) {
+                    if (niVerts.get(0).x > niVerts.get(1).x) {
+                        td[0] = niVerts.get(0);
+                    } else {
+                        td[0] = niVerts.get(1);
+                    }   
+                    td[1] = niVerts.get(2);
+                } else if (niVerts.get(1).y == niVerts.get(2).y) {
                     td[0] = niVerts.get(0);
-                } else {
-                    td[0] = niVerts.get(1);
-                }   
-                td[1] = niVerts.get(2);
+                    if (niVerts.get(1).x > niVerts.get(2).x) {
+                        td[1] = niVerts.get(1);
+                    } else {
+                        td[1] = niVerts.get(2);
+                    }
+                }
                 break;
             case 4:
                 if (niVerts.get(0).x > niVerts.get(1).x) {
@@ -956,19 +965,34 @@ public class VoronoiDiagram extends JPanel {
                     td[0] = niVerts.get(1);
                 }
                 if (niVerts.get(2).x > niVerts.get(3).x) {
-                    td[0] = niVerts.get(2);
+                    td[1] = niVerts.get(2);
                 } else {
-                    td[0] = niVerts.get(3);
+                    td[1] = niVerts.get(3);
                 }
                 break;
         }
+        
+        /*System.out.print("td vertices ");
+        for (Point p : td) {
+            System.out.print(p + " ");
+        }
+        System.out.println();*/
         
         Point[] u1 = findB3SUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[0]), midpoint(a1, a2), angle));
         //System.out.println("u1: " + td[0] + ", " + q.prevVertex(td[0]));
         Point[] u2 = findB3SUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a2, midpoint(a1, a2), angle), rotatePoint(q.nextVertex(td[0]), midpoint(a1, a2), angle));
         //System.out.println("u2: " + td[0] + ", " + q.nextVertex(td[0]));
-        Point[] v1 = findB3SUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.nextVertex(td[1]), midpoint(a1, a2), angle));
-        //System.out.println("v1: " + td[1] + ", " + q.nextVertex(td[1]));
+        
+        double tolerance = 0.00001;
+        Point[] v1;
+        // Edge parallel to a1a2
+        if (Math.abs(td[1].y - rotatePoint(q.prevVertex(td[1]), midpoint(a1, a2), angle).y) < tolerance) {
+            System.out.println("Handling B3S triangle FG region");
+            v1 = findB3SUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[1]), midpoint(a1, a2), angle));
+        } else {
+            v1 = findB3SUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.nextVertex(td[1]), midpoint(a1, a2), angle));
+        }
+        //System.out.println("v1: " + v1[0] + ", " + v1[1]);
         Point[] v2 = findB3SUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a2, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[1]), midpoint(a1, a2), angle));
         //System.out.println("v2: " + td[1] + ", " + q.prevVertex(td[1]));
         
@@ -983,7 +1007,7 @@ public class VoronoiDiagram extends JPanel {
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(v2[0], midpoint(a1, a2), -angle), rotatePoint(v2[1], midpoint(a1, a2), -angle), "b3s_step"));
         */
         
-        // Draw lines for debugging
+        // Draw FG region
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, rotatePoint(u1[3], midpoint(a1, a2), -angle), "b3s_step"));
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, rotatePoint(u2[3], midpoint(a1, a2), -angle), "b3s_step"));
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, v, rotatePoint(v1[3], midpoint(a1, a2), -angle), "b3s_step"));
@@ -1020,7 +1044,7 @@ public class VoronoiDiagram extends JPanel {
         Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
         Point rayEnd2 = new Point(-rayEndx, a.y);
         
-        double angle = calculateAngle(p1, p2); // Angle that slope(a, nonInnerVertex) makes with x axis
+        double angle = calculateAngle(p1, p2);
         
         // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
         Point[] ray = {new Point(p1.x, p1.y), rotatePoint(rayEnd, new Point(0,0), -angle)};
@@ -1039,7 +1063,6 @@ public class VoronoiDiagram extends JPanel {
         
         //System.out.println("ray = " + ray[0] + ", " + ray[1]);
         
-        //this.voronoiEdges.add(new VoronoiBisector(ray[0], ray[1]));
         return new Point[]{ray[0], ray[1], ray2[0], ray2[1]};
     }
     
