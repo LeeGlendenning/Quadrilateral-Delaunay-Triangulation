@@ -944,14 +944,15 @@ public class VoronoiDiagram extends JPanel {
                 td[1] = niVerts.get(1);
                 break;
             case 3:
-                if (rotatePoint(niVerts.get(0), midpoint(a1, a2), angle).y == rotatePoint(niVerts.get(1), midpoint(a1, a2), angle).y) {
+                double tolerance = 0.00001;
+                if (Math.abs(rotatePoint(niVerts.get(0), midpoint(a1, a2), angle).y - rotatePoint(niVerts.get(1), midpoint(a1, a2), angle).y) < tolerance) {
                     if (niVerts.get(0).x > niVerts.get(1).x) {
                         td[0] = niVerts.get(0);
                     } else {
                         td[0] = niVerts.get(1);
                     }   
                     td[1] = niVerts.get(2);
-                } else if (rotatePoint(niVerts.get(1), midpoint(a1, a2), angle).y == rotatePoint(niVerts.get(2), midpoint(a1, a2), angle).y) {
+                } else if (Math.abs(rotatePoint(niVerts.get(1), midpoint(a1, a2), angle).y - rotatePoint(niVerts.get(2), midpoint(a1, a2), angle).y) < tolerance) {
                     td[0] = niVerts.get(0);
                     if (niVerts.get(1).x > niVerts.get(2).x) {
                         td[1] = niVerts.get(1);
@@ -966,7 +967,7 @@ public class VoronoiDiagram extends JPanel {
                 } else {
                     td[0] = niVerts.get(1);
                 }
-                if (rotatePoint(niVerts.get(2), midpoint(a1, a2), angle).y > rotatePoint(niVerts.get(1), midpoint(a1, a2), angle).x) {
+                if (rotatePoint(niVerts.get(2), midpoint(a1, a2), angle).x > rotatePoint(niVerts.get(1), midpoint(a1, a2), angle).x) {
                     td[1] = niVerts.get(2);
                 } else {
                     td[1] = niVerts.get(3);
@@ -974,11 +975,11 @@ public class VoronoiDiagram extends JPanel {
                 break;
         }
         
-        /*System.out.print("td vertices ");
+        System.out.print("td vertices ");
         for (Point p : td) {
             System.out.print(p + " ");
         }
-        System.out.println();*/
+        System.out.println();
         
         Point[] u1 = findB3SUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[0]), midpoint(a1, a2), angle));
         //System.out.println("u1: " + td[0] + ", " + q.prevVertex(td[0]));
