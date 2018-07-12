@@ -45,12 +45,24 @@ public class VoronoiBisector {
     
     /**
      * 
-     * @return deep copy of adjacent points array
+     * @return Deep copy of adjacent points array as an ArrayList
      */
-    public ArrayList<Point> getAdjacentPts() {
+    public ArrayList<Point> getAdjacentPtsArrayList() {
         ArrayList<Point> adjCopy = new ArrayList();
         for (int i = 0; i < this.adjacentPoints.size(); i ++) {
             adjCopy.add(new Point(this.adjacentPoints.get(i).x, this.adjacentPoints.get(i).y));
+        }
+        return adjCopy;
+    }
+    
+    /**
+     * 
+     * @return Deep copy of adjacent points array
+     */
+    public Point[] getAdjacentPtsArray() {
+        Point[] adjCopy = new Point[this.adjacentPoints.size()];
+        for (int i = 0; i < this.adjacentPoints.size(); i ++) {
+            adjCopy[i] = new Point(this.adjacentPoints.get(i).x, this.adjacentPoints.get(i).y);
         }
         return adjCopy;
     }
@@ -61,6 +73,22 @@ public class VoronoiBisector {
      */
     public String getTag() {
         return this.tag;
+    }
+    
+    /**
+     * 
+     * @return start Point
+     */
+    public Point getStartPoint() {
+        return new Point(this.startPoint.x, this.startPoint.y);
+    }
+    
+    /**
+     * 
+     * @return end Point
+     */
+    public Point getEndPoint() {
+        return new Point(this.endPoint.x, this.endPoint.y);
     }
     
     /**
