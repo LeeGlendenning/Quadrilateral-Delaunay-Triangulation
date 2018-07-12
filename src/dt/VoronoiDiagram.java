@@ -12,7 +12,9 @@ import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -24,10 +26,10 @@ import javax.swing.Timer;
  */
 public class VoronoiDiagram extends JPanel {
 
-    private final ArrayList<Point> points, voronoiPoints; // voronoiPoints used for animation
+    private final List<Point> points, voronoiPoints; // voronoiPoints used for animation
     private final Quadrilateral quad;
     // Consider using synchronized list to avoid concurrent modification...
-    private final ArrayList<VoronoiBisector> voronoiEdgesB2S, voronoiEdgesB3S, displayEdges;
+    private final List<VoronoiBisector> voronoiEdgesB2S, voronoiEdgesB3S, displayEdges;
     private double curScale = 1.0;
     private final int pixelFactor = 1;
     private int scaleIterations, coneID = 0;
@@ -49,10 +51,10 @@ public class VoronoiDiagram extends JPanel {
     public VoronoiDiagram(Quadrilateral q, ArrayList<Point> p) {
         this.points = p;
         this.quad = q;
-        this.voronoiEdgesB2S = new ArrayList();
-        this.voronoiEdgesB3S = new ArrayList();
-        this.displayEdges = new ArrayList();
-        this.voronoiPoints = new ArrayList();
+        this.voronoiEdgesB2S = Collections.synchronizedList(new ArrayList<VoronoiBisector>());
+        this.voronoiEdgesB3S = Collections.synchronizedList(new ArrayList<VoronoiBisector>());
+        this.displayEdges = Collections.synchronizedList(new ArrayList<VoronoiBisector>());
+        this.voronoiPoints = Collections.synchronizedList(new ArrayList<Point>());
         this.scaleIterations = 0;
         this.h1 = new ArrayList();
         this.h2 = new ArrayList();
@@ -1605,12 +1607,12 @@ public class VoronoiDiagram extends JPanel {
         g2d.setColor(Color.black);
 
         // Draw bisector ray points
-        for (Point bisector : this.voronoiPoints) {
+        for (Point bisector : this.voronoiPoints.toArray(new Point[this.voronoiPoints.size()])) {
             g2d.fill(new Ellipse2D.Double(bisector.x * this.pixelFactor + voronoiPointRadius, yMax - (bisector.y * this.pixelFactor + voronoiPointRadius), voronoiPointRadius * 2, voronoiPointRadius * 2)); // x, y, width, height
         }
         
         // Draw bisector segments between 2 sites
-        for (VoronoiBisector bisector : this.voronoiEdgesB2S) {
+        for (VoronoiBisector bisector : this.voronoiEdgesB2S.toArray(new VoronoiBisector[this.voronoiEdgesB2S.size()])) {
             if (bisector.getTag().startsWith("b2s") && !bisector.getTag().startsWith("b2s_hidden") && this.showB2S ||
                     bisector.getTag().startsWith("b2s_hidden") && this.showB2S_hiddenCones){
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
@@ -1620,7 +1622,7 @@ public class VoronoiDiagram extends JPanel {
         // Draw bisector segments between 3 sites
         g2d.setColor(Color.red);
         g2d.setStroke(new BasicStroke(5));
-        for (VoronoiBisector bisector : this.voronoiEdgesB3S) {
+        for (VoronoiBisector bisector : this.voronoiEdgesB3S.toArray(new VoronoiBisector[this.voronoiEdgesB3S.size()])) {
             if ((bisector.getTag().equals("b3s") || bisector.getTag().equals("b3s_overlap") || bisector.getTag().equals("b3s_cone")) && this.showB3S /*&& bisector.startPoint != null && bisector.endPoint != null*//*TODO: remove once bug is gone*/){
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
             }
@@ -1629,7 +1631,7 @@ public class VoronoiDiagram extends JPanel {
         g2d.setStroke(new BasicStroke(1));
         
         // Draw display edges
-        for (VoronoiBisector bisector : this.displayEdges) {
+        for (VoronoiBisector bisector : this.displayEdges.toArray(new VoronoiBisector[this.displayEdges.size()])) {
             // TODO: sometimes the bisector start or end point are null and I don't know why
             if (bisector.startPoint != null && bisector.endPoint != null &&
                     (bisector.getTag().equals("b2s_step") && this.showB2S_hgRegion ||
