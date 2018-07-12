@@ -199,7 +199,8 @@ public class VoronoiDiagram extends JPanel {
             this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
         }
         
-        if (nonInnerVertices.size() == 3 && rNonInner.get(0).y == rNonInner.get(1).y) {
+        double tolerance = 0.00001;
+        if (nonInnerVertices.size() == 3 && Math.abs(rNonInner.get(0).y - rNonInner.get(1).y) < tolerance) {
             if (rNonInner.get(0).x < rNonInner.get(1).x) {
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
                 this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
@@ -218,7 +219,8 @@ public class VoronoiDiagram extends JPanel {
             this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
         }
         
-        if (nonInnerVertices.size() == 3 && rNonInner.get(1).y == rNonInner.get(2).y) {
+        if (nonInnerVertices.size() == 3 && Math.abs(rNonInner.get(1).y - rNonInner.get(2).y) < tolerance) {
+            System.out.println("here");
             ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
             this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s"));
             
@@ -1246,7 +1248,7 @@ public class VoronoiDiagram extends JPanel {
         Point pl = new Point(), pr = new Point(), ql = new Point(), qr = new Point();
         setLeftAndRightPoint(p1, p2, pl, pr, calculateAngle(p1, p2));
         setLeftAndRightPoint(q1, q2, ql, qr, calculateAngle(q1, q2));
-        
+        //System.out.println("\nInitial points: " + pl + ", " + pr + " : " + ql + ", " + qr);
         // Adjust ray endpoints to be at screen boundary
         if (pointIsInfinite(pl)) {
             pl = findBoundaryPointOnRay(pl, pr);
@@ -1320,10 +1322,11 @@ public class VoronoiDiagram extends JPanel {
      * @return Point on line segment at boundary of screen
      */
     private Point findBoundaryPointOnRay(Point p1, Point p2) {
-        Point[] leftScreen = {new Point(0, 0), new Point(0, this.getBounds().getSize().height)};
-        Point[] rightScreen = {new Point(this.getBounds().getSize().width, 0), new Point(this.getBounds().getSize().width, this.getBounds().getSize().height)};
-        Point[] topScreen = {new Point(0, this.getBounds().getSize().height), new Point(this.getBounds().getSize().width, this.getBounds().getSize().height)};
-        Point[] bottomScreen = {new Point(0, 0), new Point(this.getBounds().getSize().width, 0)};
+        double boundaryBuff = 1000;
+        Point[] leftScreen = {new Point(-boundaryBuff, -boundaryBuff), new Point(-boundaryBuff, this.getBounds().getSize().height+boundaryBuff)};
+        Point[] rightScreen = {new Point(this.getBounds().getSize().width+boundaryBuff, -boundaryBuff), new Point(this.getBounds().getSize().width+boundaryBuff, this.getBounds().getSize().height+boundaryBuff)};
+        Point[] topScreen = {new Point(-boundaryBuff, this.getBounds().getSize().height+boundaryBuff), new Point(this.getBounds().getSize().width+boundaryBuff, this.getBounds().getSize().height+boundaryBuff)};
+        Point[] bottomScreen = {new Point(-boundaryBuff, -boundaryBuff), new Point(this.getBounds().getSize().width+boundaryBuff, -boundaryBuff)};
         
         Point boundary;
         // Left side of screen will intersect ray
