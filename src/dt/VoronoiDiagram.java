@@ -1122,28 +1122,33 @@ public class VoronoiDiagram extends JPanel {
         
         for (int i = 0; i < this.voronoiEdgesB2S.size(); i ++) {
             //System.out.println("Considering " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(1));
-            
-            // TODO: confirm if the same overlap is found multiple times since we are looping through all bisectors every time this method is called
-            for (int j = i+1; j < this.voronoiEdgesB2S.size(); j ++) {
-                //System.out.println("Considering " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(1));
+            // If bisector belongs to a1a2, a1a3, or a2a3
+            if (this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a1) && this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a2) ||
+                    this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a1) && this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a3) ||
+                    this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a2) && this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a3)) {
+                for (int j = i+1; j < this.voronoiEdgesB2S.size(); j ++) {
+                    //System.out.println("Considering " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(1));
+                    // If bisector belongs to a1a2, a1a3, or a2a3
+                    if (this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a1) && this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a2) ||
+                            this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a1) && this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a3) ||
+                            this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a2) && this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a3)) {
+                        Point[] overlap = doLineSegmentsOverlap(this.voronoiEdgesB2S.get(i).startPoint, this.voronoiEdgesB2S.get(i).endPoint, 
+                                this.voronoiEdgesB2S.get(j).startPoint, this.voronoiEdgesB2S.get(j).endPoint);
 
-                Point[] overlap = doLineSegmentsOverlap(this.voronoiEdgesB2S.get(i).startPoint, this.voronoiEdgesB2S.get(i).endPoint, 
-                        this.voronoiEdgesB2S.get(j).startPoint, this.voronoiEdgesB2S.get(j).endPoint);
-
-                if (overlap != null) {
-                    //System.out.println("Found overlap: " + overlap[0] + ", " + overlap[1]);
-                    Point chosenPt;
-                    if (Math.abs(overlap[0].x) > 999 || Math.abs(overlap[0].y) > 999) {
-                        chosenPt = overlap[1];
-                    } else {
-                        chosenPt = overlap[0];
+                        if (overlap != null) {
+                            //System.out.println("Found overlap: " + overlap[0] + ", " + overlap[1]);
+                            Point chosenPt;
+                            if (Math.abs(overlap[0].x) > 999 || Math.abs(overlap[0].y) > 999) {
+                                chosenPt = overlap[1];
+                            } else {
+                                chosenPt = overlap[0];
+                            }
+                            this.voronoiEdgesB3S.add(new VoronoiBisector(new Point[]{a1, a2, a3}, chosenPt, chosenPt, "b3s_chosen_overlap"));
+                            overlaps.add(new VoronoiBisector(new Point[]{a1, a2, a3}, overlap[0], overlap[1], "b3s_overlap"));
+                        }
                     }
-                    this.voronoiEdgesB3S.add(new VoronoiBisector(new Point[]{a1, a2, a3}, chosenPt, chosenPt, "b3s_chosen_overlap"));
-                    overlaps.add(new VoronoiBisector(new Point[]{a1, a2, a3}, overlap[0], overlap[1], "b3s_overlap"));
                 }
-
             }
-            
         }
         return overlaps;
     }
@@ -1157,20 +1162,32 @@ public class VoronoiDiagram extends JPanel {
      */
     private ArrayList<VoronoiBisector[]> findConeIntersectionsB3S(Point a1, Point a2, Point a3) {
         ArrayList<VoronoiBisector[]> coneIntersections = new ArrayList();
-        
         ArrayList<VoronoiBisector[]> cones = getCones(); // List of VoronoiBisector tuples representing cones
         
-        // TODO: confirm if the same overlap is found multiple times since we are looping through all bisectors every time this method is called
         for (int i = 0; i < cones.size(); i ++) {
-            for (int j = i+1; j < cones.size(); j ++) {
-                VoronoiBisector[] coneIntersection;
-                if ((coneIntersection = doConesIntersect(cones.get(i), cones.get(j))) != null) {
-                    Point chosenPt = doLineSegmentsIntersect(coneIntersection[0].startPoint, coneIntersection[0].endPoint, 
-                            coneIntersection[1].startPoint, coneIntersection[1].endPoint);
-                    Point[] adjacentUnion = pointArrayUnion(coneIntersection[0].getAdjacentPtsArray(), coneIntersection[1].getAdjacentPtsArray());
-                    this.voronoiEdgesB3S.add(new VoronoiBisector(adjacentUnion, chosenPt, chosenPt, "b3s_chosen_cone"));
-                    
-                    coneIntersections.add(coneIntersection);
+            // If cone belongs to a1a2, a1a3, or a2a3
+            if (cones.get(i)[0].getAdjacentPtsArrayList().contains(a1) && cones.get(i)[0].getAdjacentPtsArrayList().contains(a2) ||
+                    cones.get(i)[0].getAdjacentPtsArrayList().contains(a1) && cones.get(i)[0].getAdjacentPtsArrayList().contains(a3) ||
+                    cones.get(i)[0].getAdjacentPtsArrayList().contains(a2) && cones.get(i)[0].getAdjacentPtsArrayList().contains(a3)) {
+                
+                for (int j = i+1; j < cones.size(); j ++) {
+                    // If cone belongs to a1a2, a1a3, or a2a3
+                    if (cones.get(j)[0].getAdjacentPtsArrayList().contains(a1) && cones.get(j)[0].getAdjacentPtsArrayList().contains(a2) ||
+                            cones.get(j)[0].getAdjacentPtsArrayList().contains(a1) && cones.get(j)[0].getAdjacentPtsArrayList().contains(a3) ||
+                            cones.get(j)[0].getAdjacentPtsArrayList().contains(a2) && cones.get(j)[0].getAdjacentPtsArrayList().contains(a3)) {
+                        
+                        VoronoiBisector[] coneIntersection;
+                        if ((coneIntersection = doConesIntersect(cones.get(i), cones.get(j))) != null) {
+                            // Add chosen B3S point to list (apex of cone)
+                            Point chosenPt = doLineSegmentsIntersect(coneIntersection[0].startPoint, coneIntersection[0].endPoint, 
+                                    coneIntersection[1].startPoint, coneIntersection[1].endPoint);
+                            Point[] adjacentUnion = pointArrayUnion(coneIntersection[0].getAdjacentPtsArray(), coneIntersection[1].getAdjacentPtsArray());
+                            this.voronoiEdgesB3S.add(new VoronoiBisector(adjacentUnion, chosenPt, chosenPt, "b3s_chosen_cone"));
+                            
+                            // Add entire cone to list for displaying
+                            coneIntersections.add(coneIntersection);
+                        }
+                    }
                 }
             }
         }
@@ -1662,11 +1679,13 @@ public class VoronoiDiagram extends JPanel {
             
         }
         // Draw chosen B3S
-        g2d.setStroke(new BasicStroke(7));
         for (VoronoiBisector bisector : this.voronoiEdgesB3S.toArray(new VoronoiBisector[this.voronoiEdgesB3S.size()])) {
-            if (bisector.getTag().startsWith("b3s_chosen")) {
+            if (bisector.getTag().startsWith("b3s_chosen") && this.showB3S) {
                 g2d.setColor(Color.blue);
+                g2d.setStroke(new BasicStroke(7));
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
+                g2d.setStroke(new BasicStroke(2));
+                quad.drawQuad(g2d, bisector.startPoint, this.curScale, this.pixelFactor, yMax); // Scaled quad
             }
         }
         g2d.setColor(Color.black);
