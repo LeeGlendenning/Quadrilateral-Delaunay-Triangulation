@@ -37,7 +37,7 @@ public class VoronoiDiagram extends JPanel {
     private final double floatTolerance = 0.0000000001, raySize = 10000000;
     
     private final boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
-    private final boolean showB3S_fgRegion = true, showB3S_hidden = true, showB3S = true;
+    private final boolean showB3S_fgRegion = false, showB3S_hidden = true, showB3S = true;
     private final boolean doAnimation = false;
     
     private final ArrayList<Point> h1, h2, g1, g2;
@@ -95,6 +95,9 @@ public class VoronoiDiagram extends JPanel {
                 }
             }
         }
+        
+        System.out.println("Drawing minimum quads");
+        calculateMinQuads();
         
         // Consider having a method which checks whether all quad segments are off the screen and stop animation only if true
         timer = new Timer(delay, new ActionListener() {
@@ -648,14 +651,15 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
-     * Find a bisector ray from given bisector endpoint
+     * Constructs a ray from a through nonInnerVertex then translated to endPt
      * 
      * @param endPt Endpoint of main bisector
      * @param a Point in a quad
      * @param nonInnerVertex A vertex of the quad with an extreme y value
      */
-    private Point[] findBisectorRay(Point endPt, Point a, Point nonInnerVertex) {
+    private Point[] findBisectorRay(Point endPt, Point a, Point niVertex) {
         // NonInnerVertex is relative to Quadrilateral. Translate relative to a
+        Point nonInnerVertex = new Point(niVertex.x, niVertex.y);
         nonInnerVertex.x += a.x - this.quad.getCenter().x;
         nonInnerVertex.y += a.y - this.quad.getCenter().y;
         
@@ -1176,16 +1180,23 @@ public class VoronoiDiagram extends JPanel {
                             cones.get(j)[0].getAdjacentPtsArrayList().contains(a1) && cones.get(j)[0].getAdjacentPtsArrayList().contains(a3) ||
                             cones.get(j)[0].getAdjacentPtsArrayList().contains(a2) && cones.get(j)[0].getAdjacentPtsArrayList().contains(a3)) {
                         
+                        //System.out.println("Comparing " + cones.get(i)[0].startPoint + ", " + cones.get(i)[0].endPoint);
+                        //System.out.println("and " + cones.get(i)[1].startPoint + ", " + cones.get(i)[1].endPoint);
+                        //System.out.println("to " + cones.get(j)[0].startPoint + ", " + cones.get(j)[0].endPoint);
+                        //System.out.println("and " + cones.get(j)[1].startPoint + ", " + cones.get(j)[1].endPoint);
                         VoronoiBisector[] coneIntersection;
                         if ((coneIntersection = doConesIntersect(cones.get(i), cones.get(j))) != null) {
                             // Add chosen B3S point to list (apex of cone)
                             Point chosenPt = doLineSegmentsIntersect(coneIntersection[0].startPoint, coneIntersection[0].endPoint, 
                                     coneIntersection[1].startPoint, coneIntersection[1].endPoint);
-                            Point[] adjacentUnion = pointArrayUnion(coneIntersection[0].getAdjacentPtsArray(), coneIntersection[1].getAdjacentPtsArray());
-                            this.voronoiEdgesB3S.add(new VoronoiBisector(adjacentUnion, chosenPt, chosenPt, "b3s_chosen_cone"));
-                            
-                            // Add entire cone to list for displaying
-                            coneIntersections.add(coneIntersection);
+                            if (!pointIsInfinite(chosenPt)) {
+                                Point[] adjacentUnion = pointArrayUnion(coneIntersection[0].getAdjacentPtsArray(), coneIntersection[1].getAdjacentPtsArray());
+                                //System.out.println("Found cone intersection at " + chosenPt + "\n");
+                                this.voronoiEdgesB3S.add(new VoronoiBisector(adjacentUnion, chosenPt, chosenPt, "b3s_chosen_cone"));
+
+                                // Add entire cone to list for displaying
+                                coneIntersections.add(coneIntersection);
+                            }
                         }
                     }
                 }
@@ -1235,10 +1246,12 @@ public class VoronoiDiagram extends JPanel {
                         cones.add(new VoronoiBisector[2]);
                         cones.get(index)[0] = cone;
                         //System.out.println("Adding cone " + curConeID + " at index " + index + " [0]");
+                        //System.out.println(cone.startPoint + ", " + cone.endPoint);
                         isFirstRay = false;
                     } else {
                         cones.get(index)[1] = cone;
                         //System.out.println("Adding cone " + curConeID + " at index " + index + " [1]");
+                        //System.out.println(cone.startPoint + ", " + cone.endPoint);
                         index ++;
                         isFirstRay = true;
                     }
@@ -1401,6 +1414,129 @@ public class VoronoiDiagram extends JPanel {
         }
     }        
             
+    
+    
+    
+    
+    
+    
+    
+    
+    /**
+     * Find the scaling for each of the minimum quads
+     */
+    private void calculateMinQuads() {
+        for (VoronoiBisector chosenB3S : voronoiEdgesB3S) {
+            Point scalePt;
+            if (chosenB3S.getTag().contains("chosen") && (scalePt = findMinimumQuadScaling(this.quad, chosenB3S)) != null) {
+                System.out.println("Scale = " + scalePt + "\n");
+                
+                chosenB3S.setMinQuadScale(scalePt);
+            }
+        }
+    }
+    
+    /**
+     * @param q Quadrilateral to scale through the adjacent B3S points
+     * @param chosenB3S Chosen VoronoiBisector between 3 sites
+     * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S points
+     */
+    private Point findMinimumQuadScaling(Quadrilateral q, VoronoiBisector chosenB3S) {
+        Point[] qVerts = q.getPixelVertsForPoint(chosenB3S.endPoint, curScale, pixelFactor);
+        System.out.println("qVerts for " + chosenB3S.endPoint);
+        for (Point p : qVerts) {
+            System.out.print(p + " ");
+        }
+        System.out.println();
+        
+        int ii;
+        for (int i = 0; i < qVerts.length; i ++) {
+            if (i == qVerts.length-1) {
+                ii = 0;
+            } else {
+                ii = i+1;
+            }
+            
+            Point[] ray1 = findMinQuadRay(chosenB3S.endPoint, chosenB3S.endPoint, qVerts[i]);
+            Point[] ray2 = findMinQuadRay(chosenB3S.endPoint, chosenB3S.endPoint, qVerts[ii]);
+            
+            Point[] adjB3S = chosenB3S.getAdjacentPtsArray();
+            for (int j = 0; j < adjB3S.length; j ++) {
+                // If chosenB3S is right of ray1 and left of ray2 (i.e. in between rays)
+                //this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "debug"));
+                //this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "debug"));
+                System.out.println("B3S at " + chosenB3S.endPoint);
+                //System.out.println("Found point " + adjB3S[j] + " betwen Ray1 through " + qVerts[i] + ", Ray2 through " + qVerts[ii]);
+
+                // Construct a ray in direction of edge closest to point and find intersection point with either ray1 or ray2
+                // The distance between start of ray causing intersection and the intersection point is the scale
+
+                Point[] intersectionRay = findMinQuadRay(adjB3S[j], qVerts[i], qVerts[ii]);
+                //this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay[0], intersectionRay[1], "debug"));
+                //System.out.println("ray: " + intersectionRay[0] + ", " + intersectionRay[1]);
+                Point scalePoint;
+                if ((scalePoint = doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray1[0], ray1[1])) != null) {
+                    System.out.println("Found scalePt: " + scalePoint);
+                    //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
+                    return pointDifference(scalePoint, chosenB3S.endPoint);
+                } else if ((scalePoint = doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray2[0], ray2[1])) != null) {
+                    System.out.println("Found scalePt: " + scalePoint);
+                    //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
+                    return pointDifference(scalePoint, chosenB3S.endPoint);
+                }
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Compute the x and y distance between two points
+     * 
+     * @param p1 First point
+     * @param p2 Second point
+     * @return Point having x and y values of abs(p1 - p2)
+     */
+    private Point pointDifference(Point p1, Point p2) {
+        return new Point(Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y));
+    }
+    
+    /**
+     * Constructs a ray from startPt through throughPt then translated to translatePt
+     * 
+     * @param translatePt Point ray startPt will be translated to
+     * @param startPt Initial start point of ray
+     * @param throughPt Point the ray will pass through before being translated
+     */
+    private Point[] findMinQuadRay(Point translatePt, Point startPt, Point throughPt) {
+        //System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
+        
+        // Define the direction of the ray starting at a
+        double rayEndx = this.raySize;
+        //System.out.println(a + " : " + nonInnerVertex);
+        if (startPt.x > throughPt.x || (startPt.x == throughPt.x && startPt.y > throughPt.y)) {
+            rayEndx = -this.raySize;
+        }
+        Point rayEnd = new Point(rayEndx, startPt.y); // End point of ray which is basically + or - infinity
+        
+        double angle  = calculateAngle(startPt, throughPt); // Angle that slope(a, nonInnerVertex) makes with x axis
+        
+        // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
+        Point[] ray = {new Point(startPt.x, startPt.y), rotatePoint(rayEnd, new Point(0,0), -angle)};
+        
+        //System.out.println("ray = " + ray[0] + ", " + ray[1]);
+        
+        //Translate ray so that it starts at endPt
+        ray[0].x += translatePt.x - startPt.x;
+        ray[0].y += translatePt.y - startPt.y;
+        ray[1].x += translatePt.x - startPt.x;
+        ray[1].y += translatePt.y - startPt.y;
+        
+        //this.voronoiEdges.add(new VoronoiBisector(ray[0], ray[1]));
+        return new Point[]{ray[0], ray[1]};
+    }
+    
+    
     
     
     
@@ -1678,16 +1814,28 @@ public class VoronoiDiagram extends JPanel {
             }
             
         }
-        // Draw chosen B3S
+        // Draw chosen B3S and min quads
         for (VoronoiBisector bisector : this.voronoiEdgesB3S.toArray(new VoronoiBisector[this.voronoiEdgesB3S.size()])) {
             if (bisector.getTag().startsWith("b3s_chosen") && this.showB3S) {
                 g2d.setColor(Color.blue);
                 g2d.setStroke(new BasicStroke(7));
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
                 g2d.setStroke(new BasicStroke(2));
-                quad.drawQuad(g2d, bisector.startPoint, this.curScale, this.pixelFactor, yMax); // Scaled quad
+                quad.drawVoronoiQuad(g2d, bisector.startPoint, this.curScale, bisector.getMinQuadScale(), this.pixelFactor, yMax); // Scaled quad
             }
         }
+        
+        // Draw min quads
+        /*if (this.showB3S) {
+            for (Point p : this.points) {
+                g2d.setColor(p.getColour());
+                // Subtract pointRadius because points are drawn at coordinates from top left
+                g2d.fill(new Ellipse2D.Double(p.x * this.pixelFactor - pointRadius, yMax - (p.y * this.pixelFactor + pointRadius), pointRadius * 2, pointRadius * 2)); // x, y, width, height
+                quad.drawQuad(g2d, p, 1.0, this.pixelFactor, yMax); // Original quad
+                quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax); // Scaled quad
+            }
+        }*/
+        
         g2d.setColor(Color.black);
         g2d.setStroke(new BasicStroke(1));
         
@@ -1696,7 +1844,8 @@ public class VoronoiDiagram extends JPanel {
             // TODO: sometimes the bisector start or end point are null and I don't know why
             if (bisector.startPoint != null && bisector.endPoint != null &&
                     (bisector.getTag().equals("b2s_step") && this.showB2S_hgRegion ||
-                    bisector.getTag().equals("b3s_step") && this.showB3S_fgRegion)) {
+                    bisector.getTag().equals("b3s_step") && this.showB3S_fgRegion ||
+                    bisector.getTag().equals("debug"))) {
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
             }
         }
