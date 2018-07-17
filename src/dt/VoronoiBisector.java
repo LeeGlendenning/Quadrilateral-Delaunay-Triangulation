@@ -14,7 +14,7 @@ public class VoronoiBisector {
     //ArrayList<Point[]> bisectorSegments; // List of start and end Points of the bisector segments. start/endpts may be equal, list size <= 4
     Point startPoint, endPoint;
     private final String tag; // "b2s" = bisector of 2 sites, "b3s" = bisector of 3 sites
-    private Point minQuadScale;
+    private double minQuadScale;
     
     /**
      * Create a Bisector having two endpoints and store the points that belong to it
@@ -29,7 +29,7 @@ public class VoronoiBisector {
         this.startPoint = startPt;
         this.endPoint = endPt;
         this.tag = tag;
-        this.minQuadScale = new Point();
+        this.minQuadScale = 1.0;
     }
     
     /**
@@ -49,17 +49,16 @@ public class VoronoiBisector {
      * 
      * @param scale Scaling for minimum quad
      */
-    public void setMinQuadScale(Point scale) {
-        this.minQuadScale.x = scale.x;
-        this.minQuadScale.y = scale.y;
+    public void setMinQuadScale(double scale) {
+        this.minQuadScale = scale;
     }
     
     /**
      * 
      * @return Scaling for minimum quad
      */
-    public Point getMinQuadScale() {
-        return new Point(this.minQuadScale.x, this.minQuadScale.y);
+    public double getMinQuadScale() {
+        return this.minQuadScale;
     }
     
     /**

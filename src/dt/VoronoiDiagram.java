@@ -1427,11 +1427,11 @@ public class VoronoiDiagram extends JPanel {
      */
     private void calculateMinQuads() {
         for (VoronoiBisector chosenB3S : voronoiEdgesB3S) {
-            Point scalePt;
-            if (chosenB3S.getTag().contains("chosen") && (scalePt = findMinimumQuadScaling(this.quad, chosenB3S)) != null) {
-                System.out.println("Scale = " + scalePt + "\n");
+            Double scale;
+            if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(this.quad, chosenB3S)) != null) {
+                System.out.println("Scale = " + scale + "\n");
                 
-                chosenB3S.setMinQuadScale(scalePt);
+                chosenB3S.setMinQuadScale(scale);
             }
         }
     }
@@ -1441,7 +1441,7 @@ public class VoronoiDiagram extends JPanel {
      * @param chosenB3S Chosen VoronoiBisector between 3 sites
      * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S points
      */
-    private Point findMinimumQuadScaling(Quadrilateral q, VoronoiBisector chosenB3S) {
+    private Double findMinimumQuadScaling(Quadrilateral q, VoronoiBisector chosenB3S) {
         Point[] qVerts = q.getPixelVertsForPoint(chosenB3S.endPoint, curScale, pixelFactor);
         System.out.println("qVerts for " + chosenB3S.endPoint);
         for (Point p : qVerts) {
@@ -1478,11 +1478,11 @@ public class VoronoiDiagram extends JPanel {
                 if ((scalePoint = doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray1[0], ray1[1])) != null) {
                     System.out.println("Found scalePt: " + scalePoint);
                     //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
-                    return pointDifference(scalePoint, chosenB3S.endPoint);
+                    return euclideanDistance(scalePoint, chosenB3S.endPoint) / euclideanDistance(qVerts[i], chosenB3S.endPoint);
                 } else if ((scalePoint = doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray2[0], ray2[1])) != null) {
                     System.out.println("Found scalePt: " + scalePoint);
                     //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
-                    return pointDifference(scalePoint, chosenB3S.endPoint);
+                    return euclideanDistance(scalePoint, chosenB3S.endPoint) / euclideanDistance(qVerts[ii], chosenB3S.endPoint);
                 }
             }
         }
@@ -1497,8 +1497,19 @@ public class VoronoiDiagram extends JPanel {
      * @param p2 Second point
      * @return Point having x and y values of abs(p1 - p2)
      */
-    private Point pointDifference(Point p1, Point p2) {
+    /*private Point pointDifference(Point p1, Point p2) {
         return new Point(Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y));
+    }*/
+    
+    /**
+     * Compute the Euclidean distance between two points
+     * 
+     * @param p1 First point
+     * @param p2 Second point
+     * @return Euclidean distance between p1 and p2
+     */
+    private double euclideanDistance(Point p1, Point p2) {
+        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
     }
     
     /**
@@ -1821,7 +1832,9 @@ public class VoronoiDiagram extends JPanel {
                 g2d.setStroke(new BasicStroke(7));
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
                 g2d.setStroke(new BasicStroke(2));
-                quad.drawVoronoiQuad(g2d, bisector.startPoint, this.curScale, bisector.getMinQuadScale(), this.pixelFactor, yMax); // Scaled quad
+                quad.drawQuad(g2d, bisector.startPoint, 1.0, this.pixelFactor, yMax); // Original quad
+                quad.drawQuad(g2d, bisector.startPoint, bisector.getMinQuadScale(), this.pixelFactor, yMax);
+                //quad.drawVoronoiQuad(g2d, bisector.startPoint, this.curScale, bisector.getMinQuadScale(), this.pixelFactor, yMax); // Scaled quad
             }
         }
         

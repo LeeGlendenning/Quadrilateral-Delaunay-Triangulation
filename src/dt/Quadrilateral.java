@@ -279,13 +279,13 @@ public class Quadrilateral {
      * 
      * @param size Point representing x and y values to increase all Quad vertices by
      */
-    private Point[] increasePoints(Point size, Point[] verts, Point center) {
-        /*System.out.println("increasePoints...");
+    /*private Point[] increasePoints(Point size, Point[] verts, Point center) {
+        System.out.println("increasePoints...");
         System.out.print("Initial verts: ");
         for (Point v : verts) {
             System.out.print(v + " ");
         }
-        System.out.println();*/
+        System.out.println();
         
         for (Point v : verts) {
             if (v.x < center.x) {
@@ -299,19 +299,19 @@ public class Quadrilateral {
                 v.y += (size.y - pointDifference(center, v).y);
             }
         }
-        /*System.out.print("New verts: ");
+        System.out.print("New verts: ");
         for (Point v : verts) {
             System.out.print(v + " ");
         }
-        System.out.println();*/
+        System.out.println();
         
-        /*System.out.print("dist to center: ");
+        System.out.print("dist to center: ");
         for (Point v : computeVertDistToPoint(verts, center)) {
             System.out.print(v + " ");
         }
-        System.out.println();*/
+        System.out.println();
         return verts;
-    }
+    }*/
     
     /**
      * Draw quad around a point
@@ -323,7 +323,7 @@ public class Quadrilateral {
      * @param pixelFactor Factor to scale pixels by
      * @param yMax Height of screen. Used to draw from bottom left corner
      */
-    public void drawVoronoiQuad(Graphics2D g2d, Point p, double scale, Point size, int pixelFactor, int yMax) {
+    /*public void drawVoronoiQuad(Graphics2D g2d, Point p, double scale, Point size, int pixelFactor, int yMax) {
         Point[] distToCenter = computeVertDistToPoint(increasePoints(size, getPixelVertsForPoint(p, scale, pixelFactor), p), p);
         
         int j = 1;
@@ -333,5 +333,5 @@ public class Quadrilateral {
                     ((int)Math.round(p.x + distToCenter[j].x))*pixelFactor, yMax - ((int)Math.round(p.y + distToCenter[j].y))*pixelFactor); // x1, y1, x2, y2
         }
         
-    }
+    }*/
 }
