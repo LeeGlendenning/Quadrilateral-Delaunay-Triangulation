@@ -1430,7 +1430,6 @@ public class VoronoiDiagram extends JPanel {
             Double scale;
             if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(this.quad, chosenB3S)) != null) {
                 System.out.println("Scale = " + scale + "\n");
-                
                 chosenB3S.setMinQuadScale(scale);
             }
         }
@@ -1442,7 +1441,7 @@ public class VoronoiDiagram extends JPanel {
      * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S points
      */
     private Double findMinimumQuadScaling(Quadrilateral q, VoronoiBisector chosenB3S) {
-        Point[] qVerts = q.getPixelVertsForPoint(chosenB3S.endPoint, curScale, pixelFactor);
+        Point[] qVerts = q.getPixelVertsForPoint(chosenB3S.endPoint, curScale, pixelFactor, chosenB3S.isReflected());
         System.out.println("qVerts for " + chosenB3S.endPoint);
         for (Point p : qVerts) {
             System.out.print(p + " ");
@@ -1460,8 +1459,9 @@ public class VoronoiDiagram extends JPanel {
             Point[] ray1 = findMinQuadRay(chosenB3S.endPoint, chosenB3S.endPoint, qVerts[i]);
             Point[] ray2 = findMinQuadRay(chosenB3S.endPoint, chosenB3S.endPoint, qVerts[ii]);
             
-            Point[] adjB3S = chosenB3S.getAdjacentPtsArray();
-            for (int j = 0; j < adjB3S.length; j ++) {
+            //Point[] adjB3S = chosenB3S.getAdjacentPtsArray();
+            Point furthestAdjB3S = findFurthestPoint(chosenB3S.getAdjacentPtsArray(), chosenB3S.endPoint);
+            //for (int j = 0; j < adjB3S.length; j ++) {
                 // If chosenB3S is right of ray1 and left of ray2 (i.e. in between rays)
                 //this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "debug"));
                 //this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "debug"));
@@ -1471,7 +1471,7 @@ public class VoronoiDiagram extends JPanel {
                 // Construct a ray in direction of edge closest to point and find intersection point with either ray1 or ray2
                 // The distance between start of ray causing intersection and the intersection point is the scale
 
-                Point[] intersectionRay = findMinQuadRay(adjB3S[j], qVerts[i], qVerts[ii]);
+                Point[] intersectionRay = findMinQuadRay(furthestAdjB3S, qVerts[i], qVerts[ii]);
                 //this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay[0], intersectionRay[1], "debug"));
                 //System.out.println("ray: " + intersectionRay[0] + ", " + intersectionRay[1]);
                 Point scalePoint;
@@ -1484,10 +1484,31 @@ public class VoronoiDiagram extends JPanel {
                     //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
                     return euclideanDistance(scalePoint, chosenB3S.endPoint) / euclideanDistance(qVerts[ii], chosenB3S.endPoint);
                 }
-            }
+            //}
         }
         
         return null;
+    }
+    
+    /**
+     * 
+     * @param pointSet Point array of which one point will be returned as furthest from the refPoint
+     * @param refPoint Reference Point to find distance with pointSet
+     * @return Point in pointSet having largest Euclidean distance to refPoint
+     */
+    public Point findFurthestPoint(Point[] pointSet, Point refPoint) {
+        Point furthest = null;
+        double furthestDist = -1;
+        for (Point p : pointSet) {
+            if (furthest == null) {
+                furthest = p;
+                furthestDist = euclideanDistance(p, refPoint);
+            } else if (euclideanDistance(p, refPoint) > furthestDist) {
+                furthest = p;
+                furthestDist = euclideanDistance(p, refPoint);
+            }
+        }
+        return furthest;
     }
     
     /**
@@ -1581,8 +1602,8 @@ public class VoronoiDiagram extends JPanel {
      * @param p2 Second point
      */
     public void findQuadIntersections(Quadrilateral q, Point p1, Point p2) {
-        Point[] quad1 = q.getPixelVertsForPoint(p1, this.curScale, this.pixelFactor);
-        Point[] quad2 = q.getPixelVertsForPoint(p2, this.curScale, this.pixelFactor);
+        Point[] quad1 = q.getPixelVertsForPoint(p1, this.curScale, this.pixelFactor, false);
+        Point[] quad2 = q.getPixelVertsForPoint(p2, this.curScale, this.pixelFactor, false);
 
         int k, l;
         for (int i = 0; i < 4; i++) {
@@ -1786,8 +1807,8 @@ public class VoronoiDiagram extends JPanel {
             g2d.setColor(p.getColour());
             // Subtract pointRadius because points are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(p.x * this.pixelFactor - pointRadius, yMax - (p.y * this.pixelFactor + pointRadius), pointRadius * 2, pointRadius * 2)); // x, y, width, height
-            quad.drawQuad(g2d, p, 1.0, this.pixelFactor, yMax); // Original quad
-            quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax); // Scaled quad
+            quad.drawQuad(g2d, p, 1.0, this.pixelFactor, yMax, false); // Original quad
+            quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax, false); // Scaled quad
         }
 
         g2d.setColor(Color.black);
@@ -1821,8 +1842,8 @@ public class VoronoiDiagram extends JPanel {
                 g2d.setStroke(new BasicStroke(7));
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
                 g2d.setStroke(new BasicStroke(2));
-                quad.drawQuad(g2d, bisector.startPoint, 1.0, this.pixelFactor, yMax); // Original quad
-                quad.drawQuad(g2d, bisector.startPoint, bisector.getMinQuadScale(), this.pixelFactor, yMax);
+                quad.drawQuad(g2d, bisector.startPoint, 1.0, this.pixelFactor, yMax, bisector.isReflected()); // Original quad
+                quad.drawQuad(g2d, bisector.startPoint, bisector.getMinQuadScale(), this.pixelFactor, yMax, bisector.isReflected());
                 //quad.drawVoronoiQuad(g2d, bisector.startPoint, this.curScale, bisector.getMinQuadScale(), this.pixelFactor, yMax); // Scaled quad
             }
         }

@@ -15,6 +15,7 @@ public class VoronoiBisector {
     Point startPoint, endPoint;
     private final String tag; // "b2s" = bisector of 2 sites, "b3s" = bisector of 3 sites
     private double minQuadScale;
+    private boolean reflected;
     
     /**
      * Create a Bisector having two endpoints and store the points that belong to it
@@ -30,6 +31,23 @@ public class VoronoiBisector {
         this.endPoint = endPt;
         this.tag = tag;
         this.minQuadScale = 1.0;
+        this.reflected = false;
+    }
+    
+    /**
+     * 
+     * @return True if min quad for this bisector should be reflected
+     */
+    public boolean isReflected() {
+        return this.reflected;
+    }
+    
+    /**
+     * 
+     * @param isReflect Boolean for whether to reflect the min quad for this bisector
+     */
+    public void setReflected(boolean isReflected) {
+        this.reflected = isReflected;
     }
     
     /**
