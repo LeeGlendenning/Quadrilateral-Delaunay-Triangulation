@@ -109,14 +109,4 @@ public class VoronoiBisector {
         return new Point(this.endPoint.x, this.endPoint.y);
     }
     
-    /**
-     * Add a line segment to the bisector
-     * 
-     * @param startPt An endpoint of the bisector segment
-     * @param endPt An endpoint of the bisector segment
-     */
-    /*public void addSegment(Point startPt, Point endPt) {
-        bisectorSegments.add(new Point[]{startPt, endPt});
-    }*/
-    
 }

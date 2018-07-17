@@ -1491,17 +1491,6 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
-     * Compute the x and y distance between two points
-     * 
-     * @param p1 First point
-     * @param p2 Second point
-     * @return Point having x and y values of abs(p1 - p2)
-     */
-    /*private Point pointDifference(Point p1, Point p2) {
-        return new Point(Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y));
-    }*/
-    
-    /**
      * Compute the Euclidean distance between two points
      * 
      * @param p1 First point
