@@ -89,11 +89,11 @@ public class Quadrilateral {
     private Point[] computeVertDistToPoint(Point[] verts, Point p, boolean isReflected) {
         Point[] distToCenter = new Point[4];
         for (int i = 0; i < 4; i ++) {
-            /*if (isReflected) {
+            if (isReflected) {
                 distToCenter[i] = new Point(verts[i].x - p.x, p.y - verts[i].y);
-            } else {*/
+            } else {
                 distToCenter[i] = new Point(verts[i].x - p.x, verts[i].y - p.y);
-            //}
+            }
         }
         return distToCenter;
     }

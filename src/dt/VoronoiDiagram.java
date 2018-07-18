@@ -37,7 +37,7 @@ public class VoronoiDiagram extends JPanel {
     private final double floatTolerance = 0.0000000001, raySize = 10000000;
     
     private final boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
-    private final boolean showB3S_fgRegion = false, showB3S_hidden = true, showB3S = true;
+    private final boolean showB3S_fgRegion = true, showB3S_hidden = true, showB3S = true;
     private final boolean doAnimation = false;
     
     private final ArrayList<Point> h1, h2, g1, g2;
@@ -714,10 +714,16 @@ public class VoronoiDiagram extends JPanel {
             } else {
                 System.out.println("!!! case 2 bisector null - this shouldn't happen !!!");
             }
-        } else if (bisectorCase == 3 && !isCollinear(p1, p2, p3)) {
+        } else if ((bisectorCase == 3 || bisectorCase == 4) && !isCollinear(p1, p2, p3)) {
             System.out.println("Handling case 3 - not collinear");
             //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
-            ArrayList<VoronoiBisector> bisectors = findOverlapsB3S(p1, p2, p3);
+            boolean isReflected = false;
+            if (bisectorCase == 4) {
+                System.out.println("Reflecting B3S");
+                isReflected = true;
+            }
+            
+            ArrayList<VoronoiBisector> bisectors = findOverlapsB3S(p1, p2, p3, isReflected);
             if (!bisectors.isEmpty()) {
                 for (VoronoiBisector bisector : bisectors) {
                     this.voronoiEdgesB3S.add(bisector);
@@ -829,8 +835,10 @@ public class VoronoiDiagram extends JPanel {
             System.out.println("Point inside G21 - case 1 (do nothing)");
             return 1;
             
-        } else if (isLeftOfSegment(a1, uv[0], a3, caseTolerance) == 0 ||
-                isLeftOfSegment(a2, uv[0], a3, caseTolerance) == 0 ||
+        } else if (isLeftOfSegment(a1, uv[0], a3, caseTolerance) == 0) {
+            System.out.println("Point on boundary a1u - case 3 reflect B3S");
+            return 4;
+        } else if (isLeftOfSegment(a2, uv[0], a3, caseTolerance) == 0 ||
                 isLeftOfSegment(uv[3], a2, a3, caseTolerance) == 0 ||
                 isLeftOfSegment(uv[3], a1, a3, caseTolerance) == 0 ||
                 isLeftOfSegment(uv[1], a1, a3, caseTolerance) == 0 ||
@@ -1121,7 +1129,7 @@ public class VoronoiDiagram extends JPanel {
      * @param a3 A point
      * @return ArrayList of VoronoiBisector representing the overlapping segments between bisector of a1a3 and a2a3. case 3 non-collinear
      */
-    private ArrayList<VoronoiBisector> findOverlapsB3S(Point a1, Point a2, Point a3) {
+    private ArrayList<VoronoiBisector> findOverlapsB3S(Point a1, Point a2, Point a3, boolean isReflected) {
         ArrayList<VoronoiBisector> overlaps = new ArrayList();
         
         for (int i = 0; i < this.voronoiEdgesB2S.size(); i ++) {
@@ -1147,7 +1155,12 @@ public class VoronoiDiagram extends JPanel {
                             } else {
                                 chosenPt = overlap[0];
                             }
-                            this.voronoiEdgesB3S.add(new VoronoiBisector(new Point[]{a1, a2, a3}, chosenPt, chosenPt, "b3s_chosen_overlap"));
+                            
+                            VoronoiBisector bisector = new VoronoiBisector(new Point[]{a1, a2, a3}, chosenPt, chosenPt, "b3s_chosen_overlap");
+                            if (isReflected) {
+                                bisector.setReflected(true);
+                            }
+                            this.voronoiEdgesB3S.add(bisector);
                             overlaps.add(new VoronoiBisector(new Point[]{a1, a2, a3}, overlap[0], overlap[1], "b3s_overlap"));
                         }
                     }
@@ -1842,9 +1855,8 @@ public class VoronoiDiagram extends JPanel {
                 g2d.setStroke(new BasicStroke(7));
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
                 g2d.setStroke(new BasicStroke(2));
-                quad.drawQuad(g2d, bisector.startPoint, 1.0, this.pixelFactor, yMax, bisector.isReflected()); // Original quad
+                //quad.drawQuad(g2d, bisector.startPoint, 1.0, this.pixelFactor, yMax, bisector.isReflected()); // Original quad
                 quad.drawQuad(g2d, bisector.startPoint, bisector.getMinQuadScale(), this.pixelFactor, yMax, bisector.isReflected());
-                //quad.drawVoronoiQuad(g2d, bisector.startPoint, this.curScale, bisector.getMinQuadScale(), this.pixelFactor, yMax); // Scaled quad
             }
         }
         

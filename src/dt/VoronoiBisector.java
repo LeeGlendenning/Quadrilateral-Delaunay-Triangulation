@@ -44,7 +44,7 @@ public class VoronoiBisector {
     
     /**
      * 
-     * @param isReflect Boolean for whether to reflect the min quad for this bisector
+     * @param isReflected Boolean for whether to reflect the min quad for this bisector
      */
     public void setReflected(boolean isReflected) {
         this.reflected = isReflected;
