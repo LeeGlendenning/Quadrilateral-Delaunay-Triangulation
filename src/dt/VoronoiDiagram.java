@@ -9,7 +9,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,21 +25,21 @@ import javax.swing.Timer;
  */
 public class VoronoiDiagram extends JPanel {
 
-    private final List<Point> points, voronoiPoints; // voronoiPoints used for animation
-    private final Quadrilateral quad;
+    protected final List<Point> points, voronoiPoints; // voronoiPoints used for animation
+    protected final Quadrilateral quad;
     // Consider using synchronized list to avoid concurrent modification...
-    private final List<VoronoiBisector> voronoiEdgesB2S, voronoiEdgesB3S, displayEdges;
-    private double curScale = 1.0;
-    private final int pixelFactor = 1;
+    protected final List<VoronoiBisector> voronoiEdgesB2S, voronoiEdgesB3S, displayEdges;
+    protected double curScale = 1.0;
+    protected final int pixelFactor = 1;
     private int scaleIterations, coneID = 0;
     private Timer timer;
     private final double floatTolerance = 0.0000000001, raySize = 10000000;
     
     private final boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
-    private final boolean showB3S_fgRegion = true, showB3S_hidden = true, showB3S = true;
-    private final boolean doAnimation = true;
+    private final boolean showB3S_fgRegion = false, showB3S_hidden = true, showB3S = true;
+    private final boolean doAnimation = false;
     
-    private final ArrayList<Point> h1, h2, g1, g2;
+    protected final ArrayList<Point> h1, h2, g1, g2;
 
     /**
      * Construct Voronoi diagram for point set using a Quadrilateral
@@ -63,7 +62,7 @@ public class VoronoiDiagram extends JPanel {
         createJFrame();
         //constructVoronoi();
         if (this.doAnimation) {
-            doVoronoiAnimation(100, 1000);
+            doVoronoiAnimation(40, 1000);
         } else {
             doVoronoiAnimation(40, 0);
         }
@@ -1800,7 +1799,7 @@ public class VoronoiDiagram extends JPanel {
         window.pack();
         window.setVisible(true);
     }
-
+    
     /**
      * Draws the Voronoi diagram to the window
      *
@@ -1809,93 +1808,33 @@ public class VoronoiDiagram extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D) g;
+        Painter painter = new Painter(g2d, this);
 
         int pointRadius = 3, voronoiPointRadius = 1;
         int yMax = this.getBounds().getSize().height;
 
-        Graphics2D g2d = (Graphics2D) g;
-
-        // Draw points and quads
-        for (Point p : this.points) {
-            g2d.setColor(p.getColour());
-            // Subtract pointRadius because points are drawn at coordinates from top left
-            g2d.fill(new Ellipse2D.Double(p.x * this.pixelFactor - pointRadius, yMax - (p.y * this.pixelFactor + pointRadius), pointRadius * 2, pointRadius * 2)); // x, y, width, height
-            quad.drawQuad(g2d, p, 1.0, this.pixelFactor, yMax/*, false*/); // Original quad
-            quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax/*, false*/); // Scaled quad
-        }
+        
+        painter.drawPointsAndQuads(g2d, pointRadius, yMax);
 
         g2d.setColor(Color.black);
-
-        // Draw bisector ray points
-        for (Point bisector : this.voronoiPoints.toArray(new Point[this.voronoiPoints.size()])) {
-            g2d.fill(new Ellipse2D.Double(bisector.x * this.pixelFactor + voronoiPointRadius, yMax - (bisector.y * this.pixelFactor + voronoiPointRadius), voronoiPointRadius * 2, voronoiPointRadius * 2)); // x, y, width, height
-        }
+        painter.drawBisectorRayPoints(g2d, voronoiPointRadius, yMax);
         
         // Draw bisector segments between 2 sites
-        for (VoronoiBisector bisector : this.voronoiEdgesB2S.toArray(new VoronoiBisector[this.voronoiEdgesB2S.size()])) {
-            if (bisector.getTag().startsWith("b2s_chosen") && this.showB2S ||
-                    bisector.getTag().startsWith("b2s_hidden") && this.showB2S_hiddenCones){
-                g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
-            }
-        }
+        painter.drawB2S(g2d, yMax, this.showB2S, this.showB2S_hiddenCones);
         
         // Draw bisector segments between 3 sites
         g2d.setStroke(new BasicStroke(5));
-        for (VoronoiBisector bisector : this.voronoiEdgesB3S.toArray(new VoronoiBisector[this.voronoiEdgesB3S.size()])) {
-            if (bisector.getTag().startsWith("b3s") && this.showB3S_hidden){
-                g2d.setColor(Color.red);
-                g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
-            }
-            
-        }
-        // Draw chosen B3S and min quads
-        for (VoronoiBisector bisector : this.voronoiEdgesB3S.toArray(new VoronoiBisector[this.voronoiEdgesB3S.size()])) {
-            if (bisector.getTag().startsWith("b3s_chosen") && this.showB3S) {
-                g2d.setColor(Color.blue);
-                g2d.setStroke(new BasicStroke(7));
-                g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
-                g2d.setStroke(new BasicStroke(2));
-                //quad.drawQuad(g2d, bisector.startPoint, 1.0, this.pixelFactor, yMax, bisector.isReflected()); // Original quad
-                //quad.drawQuad(g2d, bisector.startPoint, bisector.getMinQuadScale(), this.pixelFactor, yMax, bisector.isReflected());
-                quad.drawQuad(g2d, bisector.startPoint, this.curScale, this.pixelFactor, yMax/*, false*/);
-            }
-        }
+        painter.drawB3S(g2d, yMax, this.showB3S_hidden);
         
-        // Draw min quads
-        /*if (this.showB3S) {
-            for (Point p : this.points) {
-                g2d.setColor(p.getColour());
-                // Subtract pointRadius because points are drawn at coordinates from top left
-                g2d.fill(new Ellipse2D.Double(p.x * this.pixelFactor - pointRadius, yMax - (p.y * this.pixelFactor + pointRadius), pointRadius * 2, pointRadius * 2)); // x, y, width, height
-                quad.drawQuad(g2d, p, 1.0, this.pixelFactor, yMax); // Original quad
-                quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax); // Scaled quad
-            }
-        }*/
+        g2d.setColor(Color.blue);
+        painter.drawChosenB3SAndMinQuads(g2d, yMax, this.showB3S);
         
         g2d.setColor(Color.black);
         g2d.setStroke(new BasicStroke(1));
+        painter.drawDisplayEdges(g2d, yMax, this.showB2S_hgRegion, this.showB3S_fgRegion);
         
-        // Draw display edges
-        for (VoronoiBisector bisector : this.displayEdges.toArray(new VoronoiBisector[this.displayEdges.size()])) {
-            // TODO: sometimes the bisector start or end point are null and I don't know why
-            if (bisector.startPoint != null && bisector.endPoint != null &&
-                    (bisector.getTag().equals("b2s_step") && this.showB2S_hgRegion ||
-                    bisector.getTag().equals("b3s_step") && this.showB3S_fgRegion ||
-                    bisector.getTag().equals("debug"))) {
-                g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
-            }
-        }
-        
-        // Draw h12, g12 points on quads
-        if (this.showB2S_hgPoints) {
-            g2d.setColor(Color.red);
-            for(int i = 0; i < h1.size(); i ++) {
-                g2d.fill(new Ellipse2D.Double(h1.get(i).x - pointRadius, yMax - h1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-                g2d.fill(new Ellipse2D.Double(h2.get(i).x - pointRadius, yMax - h2.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-                g2d.fill(new Ellipse2D.Double(g1.get(i).x - pointRadius, yMax - g1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-                g2d.fill(new Ellipse2D.Double(g2.get(i).x - pointRadius, yMax - g2.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-            }
-        }
+        painter.drawB2S_hgPoints(g2d, yMax, pointRadius, this.showB2S_hgPoints);
     }
 
 }
