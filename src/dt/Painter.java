@@ -27,7 +27,7 @@ public class Painter {
      * @param pointRadius Visual radius of points in point set
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      */
-    public void drawPointsAndQuads(Graphics2D g2d, int pointRadius, int yMax) {
+    public void drawPointsAndQuads(Graphics2D g2d, int yMax, int pointRadius) {
         for (Point p : vd.points) {
             g2d.setColor(p.getColour());
             // Subtract pointRadius because points are drawn at coordinates from top left
@@ -44,7 +44,7 @@ public class Painter {
      * @param voronoiPointRadius Visual radius of bisector ray points
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      */
-    public void drawBisectorRayPoints(Graphics2D g2d, int voronoiPointRadius, int yMax) {
+    public void drawBisectorRayPoints(Graphics2D g2d, int yMax, int voronoiPointRadius) {
         for (Point bisector : vd.voronoiPoints.toArray(new Point[vd.voronoiPoints.size()])) {
             g2d.fill(new Ellipse2D.Double(bisector.x * vd.pixelFactor + voronoiPointRadius, yMax - (bisector.y * vd.pixelFactor + voronoiPointRadius), voronoiPointRadius * 2, voronoiPointRadius * 2)); // x, y, width, height
         }

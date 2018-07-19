@@ -1815,10 +1815,10 @@ public class VoronoiDiagram extends JPanel {
         int yMax = this.getBounds().getSize().height;
 
         
-        painter.drawPointsAndQuads(g2d, pointRadius, yMax);
+        painter.drawPointsAndQuads(g2d, yMax, pointRadius);
 
         g2d.setColor(Color.black);
-        painter.drawBisectorRayPoints(g2d, voronoiPointRadius, yMax);
+        painter.drawBisectorRayPoints(g2d, yMax, voronoiPointRadius);
         
         // Draw bisector segments between 2 sites
         painter.drawB2S(g2d, yMax, this.showB2S, this.showB2S_hiddenCones);
