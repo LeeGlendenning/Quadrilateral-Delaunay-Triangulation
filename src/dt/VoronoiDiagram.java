@@ -38,7 +38,7 @@ public class VoronoiDiagram extends JPanel {
     
     private final boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
     private final boolean showB3S_fgRegion = true, showB3S_hidden = true, showB3S = true;
-    private final boolean doAnimation = false;
+    private final boolean doAnimation = true;
     
     private final ArrayList<Point> h1, h2, g1, g2;
 
@@ -63,7 +63,7 @@ public class VoronoiDiagram extends JPanel {
         createJFrame();
         //constructVoronoi();
         if (this.doAnimation) {
-            doVoronoiAnimation(40, 1000);
+            doVoronoiAnimation(100, 1000);
         } else {
             doVoronoiAnimation(40, 0);
         }
@@ -1157,9 +1157,9 @@ public class VoronoiDiagram extends JPanel {
                             }
                             
                             VoronoiBisector bisector = new VoronoiBisector(new Point[]{a1, a2, a3}, chosenPt, chosenPt, "b3s_chosen_overlap");
-                            if (isReflected) {
+                            /*if (isReflected) {
                                 bisector.setReflected(true);
-                            }
+                            }*/
                             this.voronoiEdgesB3S.add(bisector);
                             overlaps.add(new VoronoiBisector(new Point[]{a1, a2, a3}, overlap[0], overlap[1], "b3s_overlap"));
                         }
@@ -1454,7 +1454,7 @@ public class VoronoiDiagram extends JPanel {
      * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S points
      */
     private Double findMinimumQuadScaling(Quadrilateral q, VoronoiBisector chosenB3S) {
-        Point[] qVerts = q.getPixelVertsForPoint(chosenB3S.endPoint, curScale, pixelFactor, chosenB3S.isReflected());
+        Point[] qVerts = q.getPixelVertsForPoint(chosenB3S.endPoint, curScale, pixelFactor/*, chosenB3S.isReflected()*/);
         System.out.println("qVerts for " + chosenB3S.endPoint);
         for (Point p : qVerts) {
             System.out.print(p + " ");
@@ -1615,8 +1615,8 @@ public class VoronoiDiagram extends JPanel {
      * @param p2 Second point
      */
     public void findQuadIntersections(Quadrilateral q, Point p1, Point p2) {
-        Point[] quad1 = q.getPixelVertsForPoint(p1, this.curScale, this.pixelFactor, false);
-        Point[] quad2 = q.getPixelVertsForPoint(p2, this.curScale, this.pixelFactor, false);
+        Point[] quad1 = q.getPixelVertsForPoint(p1, this.curScale, this.pixelFactor/*, false*/);
+        Point[] quad2 = q.getPixelVertsForPoint(p2, this.curScale, this.pixelFactor/*, false*/);
 
         int k, l;
         for (int i = 0; i < 4; i++) {
@@ -1820,8 +1820,8 @@ public class VoronoiDiagram extends JPanel {
             g2d.setColor(p.getColour());
             // Subtract pointRadius because points are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(p.x * this.pixelFactor - pointRadius, yMax - (p.y * this.pixelFactor + pointRadius), pointRadius * 2, pointRadius * 2)); // x, y, width, height
-            quad.drawQuad(g2d, p, 1.0, this.pixelFactor, yMax, false); // Original quad
-            quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax, false); // Scaled quad
+            quad.drawQuad(g2d, p, 1.0, this.pixelFactor, yMax/*, false*/); // Original quad
+            quad.drawQuad(g2d, p, this.curScale, this.pixelFactor, yMax/*, false*/); // Scaled quad
         }
 
         g2d.setColor(Color.black);
@@ -1856,7 +1856,8 @@ public class VoronoiDiagram extends JPanel {
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * this.pixelFactor), (int)Math.round(bisector.endPoint.x * this.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * this.pixelFactor));
                 g2d.setStroke(new BasicStroke(2));
                 //quad.drawQuad(g2d, bisector.startPoint, 1.0, this.pixelFactor, yMax, bisector.isReflected()); // Original quad
-                quad.drawQuad(g2d, bisector.startPoint, bisector.getMinQuadScale(), this.pixelFactor, yMax, bisector.isReflected());
+                //quad.drawQuad(g2d, bisector.startPoint, bisector.getMinQuadScale(), this.pixelFactor, yMax, bisector.isReflected());
+                quad.drawQuad(g2d, bisector.startPoint, this.curScale, this.pixelFactor, yMax/*, false*/);
             }
         }
         

@@ -86,14 +86,14 @@ public class Quadrilateral {
      * @param isReflected If true, reflect quad vertices about x coordinate of p
      * @return Point array with x-y distance of each vertex to the center of the quad
      */
-    private Point[] computeVertDistToPoint(Point[] verts, Point p, boolean isReflected) {
+    private Point[] computeVertDistToPoint(Point[] verts, Point p/*, boolean isReflected*/) {
         Point[] distToCenter = new Point[4];
         for (int i = 0; i < 4; i ++) {
-            if (isReflected) {
+            /*if (isReflected) {
                 distToCenter[i] = new Point(verts[i].x - p.x, p.y - verts[i].y);
-            } else {
+            } else {*/
                 distToCenter[i] = new Point(verts[i].x - p.x, verts[i].y - p.y);
-            }
+            //}
         }
         return distToCenter;
     }
@@ -198,8 +198,8 @@ public class Quadrilateral {
      * @param isReflected If true, reflect quad vertices about x coordinate of p
      * @return Pixel coordinates
      */
-    public Point[] getPixelVertsForPoint(Point p, double scale, int pixelFactor, boolean isReflected) {
-        Point[] distToCenter = computeVertDistToPoint(scaleQuad(scale), this.center, isReflected);
+    public Point[] getPixelVertsForPoint(Point p, double scale, int pixelFactor/*, boolean isReflected*/) {
+        Point[] distToCenter = computeVertDistToPoint(scaleQuad(scale), this.center/*, isReflected*/);
         Point[] verts = new Point[4];
         for (int i = 0; i < 4; i ++) {
             verts[i] = new Point( (p.x + distToCenter[i].x)*pixelFactor, (p.y + distToCenter[i].y)*pixelFactor);
@@ -260,8 +260,8 @@ public class Quadrilateral {
      * @param yMax Height of screen. Used to draw from bottom left corner
      * @param isReflected If true, reflect quad vertices about x coordinate of p
      */
-    public void drawQuad(Graphics2D g2d, Point p, double scale, int pixelFactor, int yMax, boolean isReflected) {
-        Point[] distToCenter = computeVertDistToPoint(scaleQuad(scale), this.center, isReflected);
+    public void drawQuad(Graphics2D g2d, Point p, double scale, int pixelFactor, int yMax/*, boolean isReflected*/) {
+        Point[] distToCenter = computeVertDistToPoint(scaleQuad(scale), this.center/*, isReflected*/);
         
         int j = 1;
         for (int i = 0; i < 4; i ++) {
