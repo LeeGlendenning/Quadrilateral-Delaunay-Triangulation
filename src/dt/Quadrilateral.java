@@ -171,22 +171,11 @@ public class Quadrilateral {
         {
             j = (j==3) ? 0 : i+1;
             //System.out.println("edge length: " + euclideanDistance(vertices[i], vertices[j]));
-            if (euclideanDistance(vertices[i], vertices[j]) < min){
+            if (Utility.euclideanDistance(vertices[i], vertices[j]) < min){
                 return false;
             }
         }
         return true;
-    }
-    
-    /**
-     * Compute the Euclidean distance between two points
-     * 
-     * @param p1 First point
-     * @param p2 Second point
-     * @return Euclidean distance between p1 and p2
-     */
-    private double euclideanDistance(Point p1, Point p2) {
-        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
     }
     
     /**

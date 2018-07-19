@@ -26,7 +26,7 @@ public class VoronoiBisector {
      * @param tag String describing the bisector
      */
     public VoronoiBisector(Point[] adjacentPts, Point startPt, Point endPt, String tag) {
-        this.adjacentPoints = arrayToList(adjacentPts);
+        this.adjacentPoints = Utility.arrayToList(adjacentPts);
         this.startPoint = startPt;
         this.endPoint = endPt;
         this.tag = tag;
@@ -49,19 +49,6 @@ public class VoronoiBisector {
     /*public void setReflected(boolean isReflected) {
         this.reflected = isReflected;
     }*/
-    
-    /**
-     * 
-     * @param pts Array of Points
-     * @return ArrayList version of given array
-     */
-    private ArrayList<Point> arrayToList(Point[] pts) {
-        ArrayList<Point> ptsList = new ArrayList();
-        for (int i = 0; i < pts.length; i ++) {
-            ptsList.add(pts[i]);
-        }
-        return ptsList;
-    }
     
     /**
      * 

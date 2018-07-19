@@ -33,7 +33,7 @@ public class VoronoiDiagram extends JPanel {
     protected final int pixelFactor = 1;
     private int scaleIterations, coneID = 0;
     private Timer timer;
-    private final double floatTolerance = 0.0000000001, raySize = 10000000;
+    private final double /*floatTolerance = 0.0000000001,*/ raySize = 10000000;
     
     private final boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
     private final boolean showB3S_fgRegion = false, showB3S_hidden = true, showB3S = true;
@@ -88,7 +88,7 @@ public class VoronoiDiagram extends JPanel {
                 for (int k = j + 1; k < this.points.size(); k++) {
                     //System.out.println("i = " + i + ", j = " + j + ", k = " + k);
                     Point left = new Point(), right = new Point();
-                    setLeftAndRightPoint(this.points.get(i), this.points.get(j), left, right, calculateAngle(this.points.get(i), this.points.get(j)));
+                    setLeftAndRightPoint(this.points.get(i), this.points.get(j), left, right, Utility.calculateAngle(this.points.get(i), this.points.get(j)));
                     findBisectorOfThreeSites(this.quad, left, right, this.points.get(k));
                     System.out.println();
                 }
@@ -116,26 +116,7 @@ public class VoronoiDiagram extends JPanel {
     
     
     
-    /**
-     * 
-     * @param p1 A Point
-     * @param p2 A Point
-     * @return Angle p1,p2 makes with the x axis
-     */
-    private double calculateAngle(Point p1, Point p2) {
-        double angle; // Angle that slope(p1p2) makes with x axis
-        if (p1.x == p2.x) {
-            angle = Math.toRadians(-90);
-            /*if (p1.y < p2.y) {
-                angle = Math.toRadians(90);
-            } else {
-                angle = Math.toRadians(-90);
-            }*/
-        } else {
-            angle = Math.atan((p1.y - p2.y) / (p2.x - p1.x));
-        }
-        return angle;
-    }
+    
     
     /**
      * Find main bisector between all pairs of points
@@ -145,7 +126,7 @@ public class VoronoiDiagram extends JPanel {
      * @param p2 A point in the point set
      */
     private void findBisectorOfTwoSites(Quadrilateral q, Point p1, Point p2) {
-        double angle = calculateAngle(p1, p2); // Angle that slope(p1p2) makes with x axis
+        double angle = Utility.calculateAngle(p1, p2); // Angle that slope(p1p2) makes with x axis
         
         System.out.println("Angle = " + Math.toDegrees(angle));
         Point a1 = new Point(), a2 = new Point();
@@ -188,7 +169,7 @@ public class VoronoiDiagram extends JPanel {
     private void calculateAllBisectorRays(ArrayList<Point> nonInnerVertices, Point h, Point g, Point a1, Point p1, Point p2, double angle) {
         ArrayList<Point> rNonInner = new ArrayList();
         for (Point niVert : nonInnerVertices) {
-            rNonInner.add(rotatePoint(niVert, a1, angle));
+            rNonInner.add(Utility.rotatePoint(niVert, a1, angle));
         }
         
         // If SL hits edge there are 2 non-inner verts at that y height
@@ -275,17 +256,6 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
-     * Compute the midpoint of two points
-     * 
-     * @param p1 First point
-     * @param p2 Second point
-     * @return Midpoint of p1 and p2
-     */
-    private Point midpoint(Point p1, Point p2) {
-        return new Point((p1.x + p2.x)/2, (p1.y + p2.y)/2);
-    }
-    
-    /**
      * Determine which point is left and right based on normal
      * 
      * @param p1 First point to consider
@@ -297,8 +267,8 @@ public class VoronoiDiagram extends JPanel {
     private void setLeftAndRightPoint(Point p1, Point p2, Point left, Point right, double angle) {
         
         //System.out.println("Rotating " + p1 + " and " + p2 + " by " + Math.toDegrees(angle) + " degrees");
-        Point r1 = rotatePoint(p1, midpoint(p1, p2), angle);
-        Point r2 = rotatePoint(p2, midpoint(p1, p2), angle);
+        Point r1 = Utility.rotatePoint(p1, Utility.midpoint(p1, p2), angle);
+        Point r2 = Utility.rotatePoint(p2, Utility.midpoint(p1, p2), angle);
         //System.out.println("Rotated points: " + r1 + ", " + r2);
         
         if (Math.min(r1.x, r2.x) == r1.x) {
@@ -316,47 +286,6 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
-     * Compute slope of line segment
-     * 
-     * @param p1 Endpoint of line segment
-     * @param p2 Endpoint of line segment
-     * @return Slope of p1p2
-     */
-    private double slope(Point p1, Point p2) {
-        //System.out.println("Slope(" + p1 + ", " + p2 + ") = (" + p2.y + " - " + p1.y + ") / (" + p2.x + " - " + p1.x + ") = " + (p2.y - p1.y) / (p2.x - p1.x));
-        return (p2.y - p1.y) / (p2.x - p1.x);
-    }
-    
-    /**
-     * Rotate a point around a pivot point by an angle
-     * 
-     * @param pivotx X coordinate of pivot point
-     * @param pivoty Y coordinate of pivot point
-     * @param angle Rotation angle
-     * @param p Point to rotate
-     * @return New location of rotated point
-     */
-    private Point rotatePoint(Point p, Point pivot, double angle) {
-        Point r = new Point(p.x, p.y);
-        double s = Math.sin(angle);
-        double c = Math.cos(angle);
-
-        // Translate point to origin (pivot point)
-        r.x -= pivot.x;
-        r.y -= pivot.y;
-
-        // Rotate point
-        double xnew = r.x * c - r.y * s;
-        double ynew = r.x * s + r.y * c;
-
-        // Translate point back
-        r.x = xnew + pivot.x;
-        r.y = ynew + pivot.y;
-        
-        return r;
-    }
-    
-    /**
      * Find the two vertices of a quad that do not have max or min y values wrt an angle
      * 
      * @param q A quadrilateral to iterate over
@@ -368,7 +297,7 @@ public class VoronoiDiagram extends JPanel {
         System.out.print("Rotated quad: ");
         // Rotate all quad vertices
         for (int i = 0; i < 4; i ++) {
-            rVerts[i] = rotatePoint(q.getVertices()[i], q.getCenter(), angle);
+            rVerts[i] = Utility.rotatePoint(q.getVertices()[i], q.getCenter(), angle);
             System.out.print(rVerts[i] + " ");
         }
         System.out.println();
@@ -408,7 +337,7 @@ public class VoronoiDiagram extends JPanel {
         // Rotate all quad vertices
         //System.out.print("Non-Inner Vertices rVerts: ");
         for (int i = 0; i < 4; i ++) {
-            rVerts[i] = rotatePoint(q.getVertices()[i], midpoint(a1, a2), angle);
+            rVerts[i] = Utility.rotatePoint(q.getVertices()[i], Utility.midpoint(a1, a2), angle);
             //System.out.print(rVerts[i] + ", ");
         }
         //System.out.println();
@@ -431,17 +360,17 @@ public class VoronoiDiagram extends JPanel {
         double tolerance = 0.00001;
         // Check for SL hitting an edge
         if (Math.abs(rVerts[0].y - rVerts[1].y) < tolerance /*&& rVerts[0].x < rVerts[1].x*/) {
-            nonInnerVerts.add(rotatePoint(rVerts[0], midpoint(a1, a2), -angle));
-            nonInnerVerts.add(rotatePoint(rVerts[1], midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[0], Utility.midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[1], Utility.midpoint(a1, a2), -angle));
         } else {
-            nonInnerVerts.add(rotatePoint(rVerts[0], midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[0], Utility.midpoint(a1, a2), -angle));
         }
         
         if (Math.abs(rVerts[2].y - rVerts[3].y) < tolerance /*&& rVerts[2].x > rVerts[3].x*/) {
-            nonInnerVerts.add(rotatePoint(rVerts[2], midpoint(a1, a2), -angle));
-            nonInnerVerts.add(rotatePoint(rVerts[3], midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[2], Utility.midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[3], Utility.midpoint(a1, a2), -angle));
         } else {
-            nonInnerVerts.add(rotatePoint(rVerts[3], midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[3], Utility.midpoint(a1, a2), -angle));
         }
         
         System.out.print("Non-inner vertices ");
@@ -490,7 +419,7 @@ public class VoronoiDiagram extends JPanel {
         Point[] rVerts = new Point[4];
         // Rotate all quad vertices
         for (int i = 0; i < 4; i ++) {
-            rVerts[i] = rotatePoint(q.getVertices()[i], q.getCenter(), angle);
+            rVerts[i] = Utility.rotatePoint(q.getVertices()[i], q.getCenter(), angle);
         }
         
         // Horizontal lines going through the inner vertices
@@ -551,10 +480,10 @@ public class VoronoiDiagram extends JPanel {
         }
         
         // Rotate points back to original coordinate system and translate to a1 and a2
-        temph1 = rotatePoint(temph1, q.getCenter(), -angle);
-        temph2 = rotatePoint(temph2, q.getCenter(), -angle);
-        tempg1 = rotatePoint(tempg1, q.getCenter(), -angle);
-        tempg2 = rotatePoint(tempg2, q.getCenter(), -angle);
+        temph1 = Utility.rotatePoint(temph1, q.getCenter(), -angle);
+        temph2 = Utility.rotatePoint(temph2, q.getCenter(), -angle);
+        tempg1 = Utility.rotatePoint(tempg1, q.getCenter(), -angle);
+        tempg2 = Utility.rotatePoint(tempg2, q.getCenter(), -angle);
         
         h1.x = a1.x + temph1.x - q.getCenter().x;
         h1.y = a1.y + temph1.y - q.getCenter().y;
@@ -580,10 +509,10 @@ public class VoronoiDiagram extends JPanel {
     private Point doRaysIntersect(Point a1, Point h1, Point a2, Point h2) {
         
         // Rotate a1h1 to be horizontal with x axis
-        double angle = calculateAngle(a1, h1); // Angle that slope(a1h1) makes with x axis
+        double angle = Utility.calculateAngle(a1, h1); // Angle that slope(a1h1) makes with x axis
         
-        Point ra1 = rotatePoint(a1, midpoint(a1, h1), angle);
-        Point rh1 = rotatePoint(h1, midpoint(a1, h1), angle);
+        Point ra1 = Utility.rotatePoint(a1, Utility.midpoint(a1, h1), angle);
+        Point rh1 = Utility.rotatePoint(h1, Utility.midpoint(a1, h1), angle);
         
         // Define the ray a1h1 and rotate back to original position
         double rayEndx1 = this.raySize;
@@ -598,17 +527,17 @@ public class VoronoiDiagram extends JPanel {
             raya1h1[0] = new Point(a1.x, a1.y);
             raya1h1[1] = new Point(a1.x, (a1.y < h1.y) ? this.raySize : -this.raySize);
         } else {
-            raya1h1[0] = rotatePoint(new Point(ra1.x, ra1.y), midpoint(a1, h1), -angle);
-            raya1h1[1] = rotatePoint(new Point(rayEndx1, rayEndy1), midpoint(a1, h1), -angle);
+            raya1h1[0] = Utility.rotatePoint(new Point(ra1.x, ra1.y), Utility.midpoint(a1, h1), -angle);
+            raya1h1[1] = Utility.rotatePoint(new Point(rayEndx1, rayEndy1), Utility.midpoint(a1, h1), -angle);
         }
         
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, raya1h1[0], raya1h1[1], "b2s_step"));
         
         // Rotate a2h2 to be horizontal with x axis
-        angle = calculateAngle(a2, h2);
+        angle = Utility.calculateAngle(a2, h2);
         
-        Point ra2 = rotatePoint(a2, midpoint(a2, h2), angle);
-        Point rh2 = rotatePoint(h2, midpoint(a2, h2), angle);
+        Point ra2 = Utility.rotatePoint(a2, Utility.midpoint(a2, h2), angle);
+        Point rh2 = Utility.rotatePoint(h2, Utility.midpoint(a2, h2), angle);
         
         // Define the ray a1h1 and rotate back to original position
         double rayEndx2 = this.raySize;
@@ -623,27 +552,28 @@ public class VoronoiDiagram extends JPanel {
             raya2h2[0] = new Point(a2.x, a2.y);
             raya2h2[1] = new Point(a2.x, (a2.y < h2.y) ? this.raySize : -this.raySize);
         } else {
-            raya2h2[0] = rotatePoint(new Point(ra2.x, ra2.y), midpoint(a2, h2), -angle);
-            raya2h2[1] = rotatePoint(new Point(rayEndx2, rayEndy2), midpoint(a2, h2), -angle);
+            raya2h2[0] = Utility.rotatePoint(new Point(ra2.x, ra2.y), Utility.midpoint(a2, h2), -angle);
+            raya2h2[1] = Utility.rotatePoint(new Point(rayEndx2, rayEndy2), Utility.midpoint(a2, h2), -angle);
         }
         
         this.displayEdges.add(new VoronoiBisector(new Point[]{}, raya2h2[0], raya2h2[1], "b2s_step"));
         
         //System.out.println("comparing " + raya1h1[0] + ", " + raya1h1[1] + " and " + raya2h2[0] + ", " + raya2h2[1]);
         //System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
-        if (Math.abs(slope(a1, h1) - slope(a2, h2)) < this.floatTolerance || (slope(a1, h1) == Double.POSITIVE_INFINITY && slope(a2, h2) == Double.NEGATIVE_INFINITY) || (slope(a1, h1) == Double.NEGATIVE_INFINITY && slope(a2, h2) == Double.POSITIVE_INFINITY)) {
+        double tolerance = 0.00001;
+        if (Math.abs(Utility.slope(a1, h1) - Utility.slope(a2, h2)) < tolerance || (Utility.slope(a1, h1) == Double.POSITIVE_INFINITY && Utility.slope(a2, h2) == Double.NEGATIVE_INFINITY) || (Utility.slope(a1, h1) == Double.NEGATIVE_INFINITY && Utility.slope(a2, h2) == Double.POSITIVE_INFINITY)) {
             System.out.println("Handling degenerate case for main bisector segment !!!");
-            ra1 = rotatePoint(a1, midpoint(a1, a2), angle);
-            ra2 = rotatePoint(a2, midpoint(a1, a2), angle);
-            rh1 = rotatePoint(h1, midpoint(a1, a2), angle);
-            rh2 = rotatePoint(h2, midpoint(a1, a2), angle);
+            ra1 = Utility.rotatePoint(a1, Utility.midpoint(a1, a2), angle);
+            ra2 = Utility.rotatePoint(a2, Utility.midpoint(a1, a2), angle);
+            rh1 = Utility.rotatePoint(h1, Utility.midpoint(a1, a2), angle);
+            rh2 = Utility.rotatePoint(h2, Utility.midpoint(a1, a2), angle);
             
             /*System.out.println("Points before 1st rotation: a1.x = " + a1.x + ", h1.x = " + h1.x + " a2.x = " + a2.x + ", h2.x = " + h2.x);
             System.out.println("Points before 2nd rotation: a1.x = " + ra1.x + ", h1.x = " + rh1.x + " a2.x = " + ra2.x + ", h2.x = " + rh2.x);
             System.out.println("Point before 2nd rotation: " + new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y));
             System.out.println(rotatePoint(new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y), midpoint(a1, a2), -angle));*/
             
-            return rotatePoint(new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y), midpoint(a1, a2), -angle);
+            return Utility.rotatePoint(new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y), Utility.midpoint(a1, a2), -angle);
         } else {
             return doLineSegmentsIntersect(raya1h1[0], raya1h1[1], raya2h2[0], raya2h2[1]);
         }
@@ -672,10 +602,10 @@ public class VoronoiDiagram extends JPanel {
         }
         Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
         
-        double angle  = calculateAngle(a, nonInnerVertex); // Angle that slope(a, nonInnerVertex) makes with x axis
+        double angle = Utility.calculateAngle(a, nonInnerVertex); // Angle that slope(a, nonInnerVertex) makes with x axis
         
         // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
-        Point[] ray = {new Point(a.x, a.y), rotatePoint(rayEnd, new Point(0,0), -angle)};
+        Point[] ray = {new Point(a.x, a.y), Utility.rotatePoint(rayEnd, new Point(0,0), -angle)};
         
         //System.out.println("ray = " + ray[0] + ", " + ray[1]);
         
@@ -713,7 +643,7 @@ public class VoronoiDiagram extends JPanel {
             } else {
                 System.out.println("!!! case 2 bisector null - this shouldn't happen !!!");
             }
-        } else if ((bisectorCase == 3 || bisectorCase == 4) && !isCollinear(p1, p2, p3)) {
+        } else if ((bisectorCase == 3 || bisectorCase == 4) && !Utility.isCollinear(p1, p2, p3)) {
             System.out.println("Handling case 3 - not collinear");
             //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
             boolean isReflected = false;
@@ -730,7 +660,7 @@ public class VoronoiDiagram extends JPanel {
             } else {
                 System.out.println("!!! case 3 bisector overlaps empty - this shouldn't happen !!!");
             }
-        } else if (bisectorCase == 3 && isCollinear(p1, p2, p3)) {
+        } else if (bisectorCase == 3 && Utility.isCollinear(p1, p2, p3)) {
             System.out.println("Handling case 3 - collinear");
             //BC(a1; a2; a3) consists of one or two cones
             ArrayList<VoronoiBisector[]> cones = findConeIntersectionsB3S(p1, p2, p3);
@@ -764,7 +694,7 @@ public class VoronoiDiagram extends JPanel {
         //a3 = new Point(a1.x,a1.y);
         double caseTolerance = 0.01;
         
-        double angle = calculateAngle(a1, a2);
+        double angle = Utility.calculateAngle(a1, a2);
         
         // Check for degenerate case. FG consists of a line through a1a2
         if (segsParallelToa1a2(q, a1, a2, angle) == 2) { // FG12 is a line
@@ -777,9 +707,9 @@ public class VoronoiDiagram extends JPanel {
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "b3s_step"));
 
-            if (isLeftOfSegment(a1, a2, a3, caseTolerance) == 0 ||
-                    isLeftOfSegment(ray1[0], ray1[1], a3, caseTolerance) == 0 ||
-                    isLeftOfSegment(ray2[0], ray2[1], a3, caseTolerance) == 0 ) {
+            if (Utility.isLeftOfSegment(a1, a2, a3, caseTolerance) == 0 ||
+                    Utility.isLeftOfSegment(ray1[0], ray1[1], a3, caseTolerance) == 0 ||
+                    Utility.isLeftOfSegment(ray2[0], ray2[1], a3, caseTolerance) == 0 ) {
 
                 System.out.println("Point on boundary - case 3 (degenerate case)");
                 return 3;
@@ -800,11 +730,11 @@ public class VoronoiDiagram extends JPanel {
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "b3s_step"));
             
             if (uv[0] == null) {
-                uv[0] = midpoint(a1, a2);
+                uv[0] = Utility.midpoint(a1, a2);
                 uv[1] = ray2[1];
                 uv[2] = ray1[1];
             } else if (uv[3] == null) {
-                uv[3] = midpoint(a1, a2);
+                uv[3] = Utility.midpoint(a1, a2);
                 uv[4] = ray2[1];
                 uv[5] = ray1[1];
             }
@@ -814,36 +744,36 @@ public class VoronoiDiagram extends JPanel {
         System.out.println(Arrays.toString(uv));
         
         // Case 1 split into 3 parts for debugging
-        if (isLeftOfSegment(a1, uv[0], a3, caseTolerance) == -1 &&
-                isLeftOfSegment(a2, uv[0], a3, caseTolerance) == 1 &&
-                isLeftOfSegment(uv[3], a2, a3, caseTolerance) == 1 &&
-                isLeftOfSegment(uv[3],a1, a3, caseTolerance) == -1) 
+        if (Utility.isLeftOfSegment(a1, uv[0], a3, caseTolerance) == -1 &&
+                Utility.isLeftOfSegment(a2, uv[0], a3, caseTolerance) == 1 &&
+                Utility.isLeftOfSegment(uv[3], a2, a3, caseTolerance) == 1 &&
+                Utility.isLeftOfSegment(uv[3],a1, a3, caseTolerance) == -1) 
         {
             System.out.println("Point inside F - case 1 (do nothing)");
             return 1;
             
-        } else if (isLeftOfSegment(uv[1], a1, a3, caseTolerance) == 1 &&
-                isLeftOfSegment(a1,uv[4], a3, caseTolerance) == 1) 
+        } else if (Utility.isLeftOfSegment(uv[1], a1, a3, caseTolerance) == 1 &&
+                Utility.isLeftOfSegment(a1,uv[4], a3, caseTolerance) == 1) 
         {
             System.out.println("Point inside G12 - case 1 (do nothing)");
             return 1;
             
-        } else if (isLeftOfSegment(uv[2], a2, a3, caseTolerance) == -1 &&
-                isLeftOfSegment(a2,uv[5], a3, caseTolerance) == -1) 
+        } else if (Utility.isLeftOfSegment(uv[2], a2, a3, caseTolerance) == -1 &&
+                Utility.isLeftOfSegment(a2,uv[5], a3, caseTolerance) == -1) 
         {
             System.out.println("Point inside G21 - case 1 (do nothing)");
             return 1;
             
-        } else if (isLeftOfSegment(a1, uv[0], a3, caseTolerance) == 0) {
+        } else if (Utility.isLeftOfSegment(a1, uv[0], a3, caseTolerance) == 0) {
             System.out.println("Point on boundary a1u - case 3 reflect B3S");
             return 4;
-        } else if (isLeftOfSegment(a2, uv[0], a3, caseTolerance) == 0 ||
-                isLeftOfSegment(uv[3], a2, a3, caseTolerance) == 0 ||
-                isLeftOfSegment(uv[3], a1, a3, caseTolerance) == 0 ||
-                isLeftOfSegment(uv[1], a1, a3, caseTolerance) == 0 ||
-                isLeftOfSegment(a1, uv[4], a3, caseTolerance) == 0 ||
-                isLeftOfSegment(uv[2], a2, a3, caseTolerance) == 0 ||
-                isLeftOfSegment(a2, uv[5], a3, caseTolerance) == 0) 
+        } else if (Utility.isLeftOfSegment(a2, uv[0], a3, caseTolerance) == 0 ||
+                Utility.isLeftOfSegment(uv[3], a2, a3, caseTolerance) == 0 ||
+                Utility.isLeftOfSegment(uv[3], a1, a3, caseTolerance) == 0 ||
+                Utility.isLeftOfSegment(uv[1], a1, a3, caseTolerance) == 0 ||
+                Utility.isLeftOfSegment(a1, uv[4], a3, caseTolerance) == 0 ||
+                Utility.isLeftOfSegment(uv[2], a2, a3, caseTolerance) == 0 ||
+                Utility.isLeftOfSegment(a2, uv[5], a3, caseTolerance) == 0) 
         {
             System.out.println("Point on boundary - case 3");
             return 3;
@@ -871,7 +801,8 @@ public class VoronoiDiagram extends JPanel {
                 j = i + 1;
             }
             
-            if (isParallel(q.getVertices()[i], q.getVertices()[j], a1, a2)) {
+            double tolerance = 0.00001;
+            if (Utility.isParallel(q.getVertices()[i], q.getVertices()[j], a1, a2, tolerance)) {
                 parallelCount ++;
             }
         }
@@ -881,72 +812,13 @@ public class VoronoiDiagram extends JPanel {
     
     /**
      * 
-     * @param p1 Endpoint of first line segment
-     * @param p2 Endpoint of first line segment
-     * @param p3 Endpoint of second line segment
-     * @param p4 Endpoint of second line segment
-     * @return True if p1p2 is parallel (has same slope within 10 decimal places) to p3p4
-     */
-    private boolean isParallel(Point p1, Point p2, Point p3, Point p4) {
-        //System.out.println("p1 = " + p1 + "p2 = " + p2 + "p3 = " + p3 + "p4 = " + p4);
-        //System.out.println("isparallel: " + calculateAngle(p1, p2) + " : " + calculateAngle(p3, p4) + " == " + (Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < this.floatTolerance));
-        return Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < this.floatTolerance;
-    }
-    
-    /**
-     * 
-     * @param a A Point
-     * @param b A Point
-     * @param c A Point
-     * @return True if a, b, c are collinear. False otherwise
-     */
-    private boolean isCollinear(Point a, Point b, Point c) {
-        return (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x) == 0;
-    }
-    
-    /**
-     * NOTE: Point a should have less or equal x value to point b for sign to be correct
-     * 
-     * @param a Endpoint of line segment
-     * @param b Endpoint of line segment
-     * @param c Query point
-     * @return +1 if point is left of line (ccw order), 0 if point is on line (collinear), -1 otherwise (cw order)
-     */
-    private int isLeftOfSegment(Point a, Point b, Point c, double tolerance){
-        //System.out.println("a = " + a + ", b = " + b + ", c = " + c);
-        double cross = (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
-        //System.out.println("isLeftOfSegment: cross = " + cross);
-        
-        Point ra = rotatePoint(a, midpoint(a, b), calculateAngle(a, b));
-        Point rb = rotatePoint(b, midpoint(a, b), calculateAngle(a, b));
-        Point rc = rotatePoint(c, midpoint(a, b), calculateAngle(a, b));
-        //System.out.println("ra = " + ra + "rb = " + rb + "rc = " + rc);
-        
-        // Test if point c is on segment ab
-        //System.out.println("isLeft: ra.y - rc.y = " + Math.abs(ra.y - rc.y) + ", rb.y - rc.y = " + Math.abs(rb.y - rc.y));
-        //System.out.println(((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0));
-        //System.out.println("rc.x = " + rc.x + ", min(ra.x, rb.x) = " + Math.min(ra.x, rb.x) + ", max(ra.x, rb.x) = " + Math.max(ra.x, rb.x));
-        //System.out.println(Math.abs(rc.x - Math.max(ra.x, rb.x)) + ", " + Math.abs(rc.x - Math.min(ra.x, rb.x)));
-        //System.out.println(((rc.x > Math.min(a.x, b.x) && rc.x < Math.max(a.x, b.x)) || Math.abs(rc.x - Math.max(a.x, b.x)) < tolerance || Math.abs(rc.x - Math.min(a.x, b.x)) < tolerance));
-        if (((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0) &&
-                (rc.x > Math.min(ra.x, rb.x) && rc.x < Math.max(ra.x, rb.x) || Math.abs(rc.x - Math.max(ra.x, rb.x)) < tolerance || Math.abs(rc.x - Math.min(ra.x, rb.x)) < tolerance)) {
-            return 0;
-        } else if (cross > 1) {
-            return 1;
-        } else {
-            return -1;
-        }
-   }
-    
-    /**
-     * 
      * @param q Quadrilateral to find u and v for
      * @param a1 A center point
      * @param a2 A center point
      * @return Point array holding u and points representing its 2 rays and v and points representing its 2 rays respectively
      */
     private Point[] finduv(Quadrilateral q, Point a1, Point a2) {
-        double angle = calculateAngle(a1, a2);
+        double angle = Utility.calculateAngle(a1, a2);
         //System.out.print("finduv(): ");
         Point[] td = new Point[2];
         ArrayList<Point> niVerts = findNonInnerVertices(q, a1, a2, angle);
@@ -958,14 +830,14 @@ public class VoronoiDiagram extends JPanel {
                 break;
             case 3:
                 double tolerance = 0.00001;
-                if (Math.abs(rotatePoint(niVerts.get(0), midpoint(a1, a2), angle).y - rotatePoint(niVerts.get(1), midpoint(a1, a2), angle).y) < tolerance) {
+                if (Math.abs(Utility.rotatePoint(niVerts.get(0), Utility.midpoint(a1, a2), angle).y - Utility.rotatePoint(niVerts.get(1), Utility.midpoint(a1, a2), angle).y) < tolerance) {
                     if (niVerts.get(0).x > niVerts.get(1).x) {
                         td[0] = niVerts.get(0);
                     } else {
                         td[0] = niVerts.get(1);
                     }   
                     td[1] = niVerts.get(2);
-                } else if (Math.abs(rotatePoint(niVerts.get(1), midpoint(a1, a2), angle).y - rotatePoint(niVerts.get(2), midpoint(a1, a2), angle).y) < tolerance) {
+                } else if (Math.abs(Utility.rotatePoint(niVerts.get(1), Utility.midpoint(a1, a2), angle).y - Utility.rotatePoint(niVerts.get(2), Utility.midpoint(a1, a2), angle).y) < tolerance) {
                     td[0] = niVerts.get(0);
                     if (niVerts.get(1).x > niVerts.get(2).x) {
                         td[1] = niVerts.get(1);
@@ -975,12 +847,12 @@ public class VoronoiDiagram extends JPanel {
                 }
                 break;
             case 4:
-                if (rotatePoint(niVerts.get(0), midpoint(a1, a2), angle).x > rotatePoint(niVerts.get(1), midpoint(a1, a2), angle).x) {
+                if (Utility.rotatePoint(niVerts.get(0), Utility.midpoint(a1, a2), angle).x > Utility.rotatePoint(niVerts.get(1), Utility.midpoint(a1, a2), angle).x) {
                     td[0] = niVerts.get(0);
                 } else {
                     td[0] = niVerts.get(1);
                 }
-                if (rotatePoint(niVerts.get(2), midpoint(a1, a2), angle).x > rotatePoint(niVerts.get(1), midpoint(a1, a2), angle).x) {
+                if (Utility.rotatePoint(niVerts.get(2), Utility.midpoint(a1, a2), angle).x > Utility.rotatePoint(niVerts.get(1), Utility.midpoint(a1, a2), angle).x) {
                     td[1] = niVerts.get(2);
                 } else {
                     td[1] = niVerts.get(3);
@@ -994,42 +866,42 @@ public class VoronoiDiagram extends JPanel {
         }
         System.out.println();
         
-        Point[] u1 = findB3SUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[0]), midpoint(a1, a2), angle));
+        Point[] u1 = findB3SUVRays(Utility.rotatePoint(td[0], Utility.midpoint(a1, a2), angle), Utility.rotatePoint(a1, Utility.midpoint(a1, a2), angle), Utility.rotatePoint(q.prevVertex(td[0]), Utility.midpoint(a1, a2), angle));
         //System.out.println("u1: " + td[0] + ", " + q.prevVertex(td[0]));
-        Point[] u2 = findB3SUVRays(rotatePoint(td[0], midpoint(a1, a2), angle), rotatePoint(a2, midpoint(a1, a2), angle), rotatePoint(q.nextVertex(td[0]), midpoint(a1, a2), angle));
+        Point[] u2 = findB3SUVRays(Utility.rotatePoint(td[0], Utility.midpoint(a1, a2), angle), Utility.rotatePoint(a2, Utility.midpoint(a1, a2), angle), Utility.rotatePoint(q.nextVertex(td[0]), Utility.midpoint(a1, a2), angle));
         //System.out.println("u2: " + td[0] + ", " + q.nextVertex(td[0]));
         
         double tolerance = 0.00001;
         Point[] v1;
         // Edge parallel to a1a2
-        if (Math.abs(td[1].y - rotatePoint(q.prevVertex(td[1]), midpoint(a1, a2), angle).y) < tolerance) {
+        if (Math.abs(td[1].y - Utility.rotatePoint(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle).y) < tolerance) {
             System.out.println("Handling B3S triangle FG region");
-            v1 = findB3SUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[1]), midpoint(a1, a2), angle));
+            v1 = findB3SUVRays(Utility.rotatePoint(td[1], Utility.midpoint(a1, a2), angle), Utility.rotatePoint(a1, Utility.midpoint(a1, a2), angle), Utility.rotatePoint(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle));
         } else {
-            v1 = findB3SUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a1, midpoint(a1, a2), angle), rotatePoint(q.nextVertex(td[1]), midpoint(a1, a2), angle));
+            v1 = findB3SUVRays(Utility.rotatePoint(td[1], Utility.midpoint(a1, a2), angle), Utility.rotatePoint(a1, Utility.midpoint(a1, a2), angle), Utility.rotatePoint(q.nextVertex(td[1]), Utility.midpoint(a1, a2), angle));
         }
         //System.out.println("v1: " + v1[0] + ", " + v1[1]);
-        Point[] v2 = findB3SUVRays(rotatePoint(td[1], midpoint(a1, a2), angle), rotatePoint(a2, midpoint(a1, a2), angle), rotatePoint(q.prevVertex(td[1]), midpoint(a1, a2), angle));
+        Point[] v2 = findB3SUVRays(Utility.rotatePoint(td[1], Utility.midpoint(a1, a2), angle), Utility.rotatePoint(a2, Utility.midpoint(a1, a2), angle), Utility.rotatePoint(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle));
         //System.out.println("v2: " + td[1] + ", " + q.prevVertex(td[1]));
         
-        Point u = doLineSegmentsIntersect(rotatePoint(u1[0], midpoint(a1, a2), -angle), rotatePoint(u1[1], midpoint(a1, a2), -angle), rotatePoint(u2[0], midpoint(a1, a2), -angle), rotatePoint(u2[1], midpoint(a1, a2), -angle));
-        Point v = doLineSegmentsIntersect(rotatePoint(v1[0], midpoint(a1, a2), -angle), rotatePoint(v1[1], midpoint(a1, a2), -angle), rotatePoint(v2[0], midpoint(a1, a2), -angle), rotatePoint(v2[1], midpoint(a1, a2), -angle));
+        Point u = doLineSegmentsIntersect(Utility.rotatePoint(u1[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u1[1], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u2[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u2[1], Utility.midpoint(a1, a2), -angle));
+        Point v = doLineSegmentsIntersect(Utility.rotatePoint(v1[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v1[1], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v2[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v2[1], Utility.midpoint(a1, a2), -angle));
         //System.out.println("u = " + u + ", v = " + v);
         
         //below lines only for debugging when u or v is null (shouldn't happen)
-        /*this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(u1[0], midpoint(a1, a2), -angle), rotatePoint(u1[1], midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(u2[0], midpoint(a1, a2), -angle), rotatePoint(u2[1], midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(v1[0], midpoint(a1, a2), -angle), rotatePoint(v1[1], midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, rotatePoint(v2[0], midpoint(a1, a2), -angle), rotatePoint(v2[1], midpoint(a1, a2), -angle), "b3s_step"));
+        /*this.displayEdges.add(new VoronoiBisector(new Point[]{}, Utility.rotatePoint(u1[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u1[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, Utility.rotatePoint(u2[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u2[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, Utility.rotatePoint(v1[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v1[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, Utility.rotatePoint(v2[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v2[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
         */
         
         // Draw FG region
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, rotatePoint(u1[3], midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, rotatePoint(u2[3], midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, v, rotatePoint(v1[3], midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, v, rotatePoint(v2[3], midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, Utility.rotatePoint(u1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, Utility.rotatePoint(u2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, v, Utility.rotatePoint(v1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new VoronoiBisector(new Point[]{}, v, Utility.rotatePoint(v2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
                 
-        return new Point[]{u, rotatePoint(u1[3], midpoint(a1, a2), -angle), rotatePoint(u2[3], midpoint(a1, a2), -angle), v, rotatePoint(v1[3], midpoint(a1, a2), -angle), rotatePoint(v2[3], midpoint(a1, a2), -angle)};
+        return new Point[]{u, Utility.rotatePoint(u1[3], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u2[3], Utility.midpoint(a1, a2), -angle), v, Utility.rotatePoint(v1[3], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v2[3], Utility.midpoint(a1, a2), -angle)};
     }
     
     /**
@@ -1060,11 +932,11 @@ public class VoronoiDiagram extends JPanel {
         Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
         Point rayEnd2 = new Point(-rayEndx, a.y);
         
-        double angle = calculateAngle(p1, p2);
+        double angle = Utility.calculateAngle(p1, p2);
         
         // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
-        Point[] ray = {new Point(p1.x, p1.y), rotatePoint(rayEnd, new Point(0,0), -angle)};
-        Point[] ray2 = {new Point(p1.x, p1.y), rotatePoint(rayEnd2, new Point(0,0), -angle)};
+        Point[] ray = {new Point(p1.x, p1.y), Utility.rotatePoint(rayEnd, new Point(0,0), -angle)};
+        Point[] ray2 = {new Point(p1.x, p1.y), Utility.rotatePoint(rayEnd2, new Point(0,0), -angle)};
         
         //Translate ray so that it starts at a
         ray[0].x += a.x - p1.x;
@@ -1202,7 +1074,7 @@ public class VoronoiDiagram extends JPanel {
                             Point chosenPt = doLineSegmentsIntersect(coneIntersection[0].startPoint, coneIntersection[0].endPoint, 
                                     coneIntersection[1].startPoint, coneIntersection[1].endPoint);
                             if (!pointIsInfinite(chosenPt)) {
-                                Point[] adjacentUnion = pointArrayUnion(coneIntersection[0].getAdjacentPtsArray(), coneIntersection[1].getAdjacentPtsArray());
+                                Point[] adjacentUnion = Utility.pointArrayUnion(coneIntersection[0].getAdjacentPtsArray(), coneIntersection[1].getAdjacentPtsArray());
                                 //System.out.println("Found cone intersection at " + chosenPt + "\n");
                                 this.voronoiEdgesB3S.add(new VoronoiBisector(adjacentUnion, chosenPt, chosenPt, "b3s_chosen_cone"));
 
@@ -1216,28 +1088,6 @@ public class VoronoiDiagram extends JPanel {
         }
         
         return coneIntersections;
-    }
-    
-    /**
-     * 
-     * @param arr1 Point array
-     * @param arr2 Point array
-     * @return Point array containing the union of arr1 and arr2
-     */
-    private Point[] pointArrayUnion(Point[] arr1, Point[] arr2) {
-        ArrayList<Point> union = new ArrayList();
-        
-        for (Point p1 : arr1) {
-            union.add(p1);
-        }
-        
-        for (Point p2 : arr2) {
-            if (!union.contains(p2)) {
-                union.add(p2);
-            }
-        }
-        
-        return union.toArray(new Point[union.size()]);
     }
     
     /**
@@ -1301,7 +1151,7 @@ public class VoronoiDiagram extends JPanel {
      * 
      * @param edges ArrayList of Voronoi Bisectors to print formatted
      */
-    private void printEdges(ArrayList<VoronoiBisector> edges) {
+    private void printVoronoiEdges(ArrayList<VoronoiBisector> edges) {
         for (VoronoiBisector vb : edges) {
             System.out.println(" " + /*vb.adjacentPoints.get(0) + ", " + vb.adjacentPoints.get(1) + ": " +*/ vb.startPoint + ", " + vb.endPoint);
         }
@@ -1324,8 +1174,8 @@ public class VoronoiDiagram extends JPanel {
         Point[] overlap = {null, null};
         
         Point pl = new Point(), pr = new Point(), ql = new Point(), qr = new Point();
-        setLeftAndRightPoint(p1, p2, pl, pr, calculateAngle(p1, p2));
-        setLeftAndRightPoint(q1, q2, ql, qr, calculateAngle(q1, q2));
+        setLeftAndRightPoint(p1, p2, pl, pr, Utility.calculateAngle(p1, p2));
+        setLeftAndRightPoint(q1, q2, ql, qr, Utility.calculateAngle(q1, q2));
         //System.out.println("\nInitial points: " + pl + ", " + pr + " : " + ql + ", " + qr);
         // Adjust ray endpoints to be at screen boundary
         if (pointIsInfinite(pl)) {
@@ -1343,8 +1193,8 @@ public class VoronoiDiagram extends JPanel {
 
         //System.out.println("\nDoLineSegmentsOverlap: " + pl + ", " + pr + " : " + ql + ", " + qr);
 
-        double qlOverlap = isLeftOfSegment(pl, pr, ql, overlapTolerane);
-        double qrOverlap = isLeftOfSegment(pl, pr, qr, overlapTolerane);
+        double qlOverlap = Utility.isLeftOfSegment(pl, pr, ql, overlapTolerane);
+        double qrOverlap = Utility.isLeftOfSegment(pl, pr, qr, overlapTolerane);
 
         //System.out.println("qlOverlap = " + qlOverlap);
         //System.out.println("qrOverlap = " + qrOverlap);
@@ -1364,8 +1214,8 @@ public class VoronoiDiagram extends JPanel {
             overlap[1] = qr;
         }
 
-        double plOverlap = isLeftOfSegment(ql, qr, pl, overlapTolerane);
-        double prOverlap = isLeftOfSegment(ql, qr, pr, overlapTolerane);
+        double plOverlap = Utility.isLeftOfSegment(ql, qr, pl, overlapTolerane);
+        double prOverlap = Utility.isLeftOfSegment(ql, qr, pr, overlapTolerane);
 
         // Left part of P overlaps Q
         if (plOverlap == 0) {
@@ -1490,11 +1340,11 @@ public class VoronoiDiagram extends JPanel {
                 if ((scalePoint = doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray1[0], ray1[1])) != null) {
                     System.out.println("Found scalePt: " + scalePoint);
                     //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
-                    return euclideanDistance(scalePoint, chosenB3S.endPoint) / euclideanDistance(qVerts[i], chosenB3S.endPoint);
+                    return Utility.euclideanDistance(scalePoint, chosenB3S.endPoint) / Utility.euclideanDistance(qVerts[i], chosenB3S.endPoint);
                 } else if ((scalePoint = doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray2[0], ray2[1])) != null) {
                     System.out.println("Found scalePt: " + scalePoint);
                     //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
-                    return euclideanDistance(scalePoint, chosenB3S.endPoint) / euclideanDistance(qVerts[ii], chosenB3S.endPoint);
+                    return Utility.euclideanDistance(scalePoint, chosenB3S.endPoint) / Utility.euclideanDistance(qVerts[ii], chosenB3S.endPoint);
                 }
             //}
         }
@@ -1514,24 +1364,13 @@ public class VoronoiDiagram extends JPanel {
         for (Point p : pointSet) {
             if (furthest == null) {
                 furthest = p;
-                furthestDist = euclideanDistance(p, refPoint);
-            } else if (euclideanDistance(p, refPoint) > furthestDist) {
+                furthestDist = Utility.euclideanDistance(p, refPoint);
+            } else if (Utility.euclideanDistance(p, refPoint) > furthestDist) {
                 furthest = p;
-                furthestDist = euclideanDistance(p, refPoint);
+                furthestDist = Utility.euclideanDistance(p, refPoint);
             }
         }
         return furthest;
-    }
-    
-    /**
-     * Compute the Euclidean distance between two points
-     * 
-     * @param p1 First point
-     * @param p2 Second point
-     * @return Euclidean distance between p1 and p2
-     */
-    private double euclideanDistance(Point p1, Point p2) {
-        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
     }
     
     /**
@@ -1552,10 +1391,10 @@ public class VoronoiDiagram extends JPanel {
         }
         Point rayEnd = new Point(rayEndx, startPt.y); // End point of ray which is basically + or - infinity
         
-        double angle  = calculateAngle(startPt, throughPt); // Angle that slope(a, nonInnerVertex) makes with x axis
+        double angle  = Utility.calculateAngle(startPt, throughPt); // Angle that slope(a, nonInnerVertex) makes with x axis
         
         // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
-        Point[] ray = {new Point(startPt.x, startPt.y), rotatePoint(rayEnd, new Point(0,0), -angle)};
+        Point[] ray = {new Point(startPt.x, startPt.y), Utility.rotatePoint(rayEnd, new Point(0,0), -angle)};
         
         //System.out.println("ray = " + ray[0] + ", " + ray[1]);
         
@@ -1654,19 +1493,19 @@ public class VoronoiDiagram extends JPanel {
      */
     private Point doLineSegmentsIntersect(Point p1, Point p2, Point q1, Point q2) {
         //System.out.println("DoLineSegmentsIntersect: " + p1 + ", " + p2 + " : " + q1 + ", " + q2);
-        Point r = subtractPoints(p2, p1);
-        Point s = subtractPoints(q2, q1);
+        Point r = Utility.subtractPoints(p2, p1);
+        Point s = Utility.subtractPoints(q2, q1);
 
-        double numerator = crossProduct(subtractPoints(q1, p1), r);
-        double denominator = crossProduct(r, s);
+        double numerator = Utility.crossProduct(Utility.subtractPoints(q1, p1), r);
+        double denominator = Utility.crossProduct(r, s);
         
         // Lines are collinear
         if (numerator == 0 && denominator == 0) {
             double tolerance = 0.01;
             // If line segments share an endpoint, line segments intersect
-            if (equalPoints(p1, q1, tolerance) || equalPoints(p1, q2, tolerance) || equalPoints(p2, q1, tolerance) || equalPoints(p2, q2, tolerance)) {
+            if (Utility.equalPoints(p1, q1, tolerance) || Utility.equalPoints(p1, q2, tolerance) || Utility.equalPoints(p2, q1, tolerance) || Utility.equalPoints(p2, q2, tolerance)) {
                 Point intersection;
-                if (equalPoints(p1, q1, tolerance) || equalPoints(p1, q2, tolerance)) {
+                if (Utility.equalPoints(p1, q1, tolerance) || Utility.equalPoints(p1, q2, tolerance)) {
                     intersection = p1;
                 } else {
                     intersection = p2;
@@ -1693,71 +1532,19 @@ public class VoronoiDiagram extends JPanel {
         }
 
         double u = numerator / denominator;
-        double t = crossProduct(subtractPoints(q1, p1), s) / denominator;
+        double t = Utility.crossProduct(Utility.subtractPoints(q1, p1), s) / denominator;
         
         // Lines are not parallel but intersect
         if ((t >= 0) && (t <= 1) && (u >= 0) && (u <= 1)) {
             Point intersection;
             r.x *= t;
             r.y *= t;
-            intersection = addPoints(p1, r);
+            intersection = Utility.addPoints(p1, r);
             //System.out.println("2Found intersection at (" + intersection.x + ", " + intersection.y + ")");
             return intersection;
         }
 
         return null;
-    }
-
-    /**
-     * Take the cross product of two point objects
-     *
-     * @param p1 First point
-     * @param p2 Second point
-     * @return Cross product of the two points
-     */
-    private double crossProduct(Point p1, Point p2) {
-        return (p1.x * p2.y) - (p1.y * p2.x);
-    }
-
-    /**
-     * Subtract the x and y values of point object from another
-     *
-     * @param p1 Point to be subtracted from
-     * @param p2 Point to subtract other point by
-     * @return Result of p1 - p2
-     */
-    private Point subtractPoints(Point p1, Point p2) {
-        Point subP = new Point();
-        subP.x = p1.x - p2.x;
-        subP.y = p1.y - p2.y;
-
-        return subP;
-    }
-
-    /**
-     * Add the x and y values of two points
-     *
-     * @param p1 First point
-     * @param p2 Second point
-     * @return Result of p1 + p2
-     */
-    private Point addPoints(Point p1, Point p2) {
-        Point addP = new Point();
-        addP.x = p1.x + p2.x;
-        addP.y = p1.y + p2.y;
-
-        return addP;
-    }
-
-    /**
-     * Determine whether the x and y values of two points are both equal
-     *
-     * @param p1 First point to compare
-     * @param p2 Second point to compare
-     * @return True if point are equal, false otherwise
-     */
-    private boolean equalPoints(Point p1, Point p2, double tolerance) {
-        return (Math.abs(p1.x - p2.x) < tolerance && Math.abs(p1.y - p2.y) < tolerance);
     }
 
     /**
