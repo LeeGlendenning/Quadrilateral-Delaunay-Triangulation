@@ -95,8 +95,8 @@ public class Painter {
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param showB3S If true, show bisectors between 3 sites that are marked "chosen"
      */
-    public void drawChosenB3SAndMinQuads(Graphics2D g2d, VoronoiBisector[] voronoiEdgesB3S, int yMax, boolean showB3S) {
-        for (VoronoiBisector bisector : voronoiEdgesB3S) {
+    public void drawChosenB3SAndMinQuads(Graphics2D g2d, VoronoiBisector[] chosenB3S, int yMax, boolean showB3S) {
+        for (VoronoiBisector bisector : chosenB3S) {
             if (bisector.getTag().startsWith("b3s_chosen") && showB3S) {
                 g2d.setStroke(new BasicStroke(7));
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * vd.pixelFactor), (int)Math.round(bisector.endPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * vd.pixelFactor));

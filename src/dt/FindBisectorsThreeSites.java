@@ -685,147 +685,18 @@ public class FindBisectorsThreeSites {
         return Utility.deepCopyVBArray(this.voronoiEdgesB3S.toArray(new VoronoiBisector[this.voronoiEdgesB3S.size()]));
     }
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     /**
-     * Find the scaling for each of the minimum quads
-     * @param quad Quadrilateral to find min scaling for
-     * @param curScale Current scale for animation
-     * @param pixelFactor Scaling factor considering pixels
+     * 
+     * @return Deep copy array of chosen bisectors between 3 points
      */
-    public void calculateMinQuads(Quadrilateral quad, double curScale, int pixelFactor) {
+    public VoronoiBisector[] getChosenBisectors() {
+        List<VoronoiBisector> chosenBisectors = new ArrayList();
         for (VoronoiBisector chosenB3S : this.voronoiEdgesB3S) {
-            Double scale;
-            if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(quad, chosenB3S, curScale, pixelFactor)) != null) {
-                System.out.println("Scale = " + scale + "\n");
-                chosenB3S.setMinQuadScale(scale);
+            if (chosenB3S.getTag().contains("chosen")) {
+                chosenBisectors.add(chosenB3S);
             }
         }
+        return Utility.deepCopyVBArray(chosenBisectors.toArray(new VoronoiBisector[this.voronoiEdgesB3S.size()]));
     }
-    
-    /**
-     * @param q Quadrilateral to scale through the adjacent B3S points
-     * @param chosenB3S Chosen VoronoiBisector between 3 sites
-     * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S points
-     */
-    private Double findMinimumQuadScaling(Quadrilateral q, VoronoiBisector chosenB3S, double curScale, int pixelFactor) {
-        Point[] qVerts = q.getPixelVertsForPoint(chosenB3S.endPoint, curScale, pixelFactor/*, chosenB3S.isReflected()*/);
-        System.out.println("qVerts for " + chosenB3S.endPoint);
-        for (Point p : qVerts) {
-            System.out.print(p + " ");
-        }
-        System.out.println();
-        
-        int ii;
-        for (int i = 0; i < qVerts.length; i ++) {
-            if (i == qVerts.length-1) {
-                ii = 0;
-            } else {
-                ii = i+1;
-            }
-            
-            Point[] ray1 = findMinQuadRay(chosenB3S.endPoint, chosenB3S.endPoint, qVerts[i]);
-            Point[] ray2 = findMinQuadRay(chosenB3S.endPoint, chosenB3S.endPoint, qVerts[ii]);
-            
-            //Point[] adjB3S = chosenB3S.getAdjacentPtsArray();
-            Point furthestAdjB3S = findFurthestPoint(chosenB3S.getAdjacentPtsArray(), chosenB3S.endPoint);
-            //for (int j = 0; j < adjB3S.length; j ++) {
-                // If chosenB3S is right of ray1 and left of ray2 (i.e. in between rays)
-                //this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "debug"));
-                //this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "debug"));
-                System.out.println("B3S at " + chosenB3S.endPoint);
-                //System.out.println("Found point " + adjB3S[j] + " betwen Ray1 through " + qVerts[i] + ", Ray2 through " + qVerts[ii]);
-
-                // Construct a ray in direction of edge closest to point and find intersection point with either ray1 or ray2
-                // The distance between start of ray causing intersection and the intersection point is the scale
-
-                Point[] intersectionRay = findMinQuadRay(furthestAdjB3S, qVerts[i], qVerts[ii]);
-                //this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay[0], intersectionRay[1], "debug"));
-                //System.out.println("ray: " + intersectionRay[0] + ", " + intersectionRay[1]);
-                Point scalePoint;
-                if ((scalePoint = Utility.doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray1[0], ray1[1])) != null) {
-                    System.out.println("Found scalePt: " + scalePoint);
-                    //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
-                    return Utility.euclideanDistance(scalePoint, chosenB3S.endPoint) / Utility.euclideanDistance(qVerts[i], chosenB3S.endPoint);
-                } else if ((scalePoint = Utility.doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray2[0], ray2[1])) != null) {
-                    System.out.println("Found scalePt: " + scalePoint);
-                    //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
-                    return Utility.euclideanDistance(scalePoint, chosenB3S.endPoint) / Utility.euclideanDistance(qVerts[ii], chosenB3S.endPoint);
-                }
-            //}
-        }
-        
-        return null;
-    }
-    
-    /**
-     * 
-     * @param pointSet Point array of which one point will be returned as furthest from the refPoint
-     * @param refPoint Reference Point to find distance with pointSet
-     * @return Point in pointSet having largest Euclidean distance to refPoint
-     */
-    public Point findFurthestPoint(Point[] pointSet, Point refPoint) {
-        Point furthest = null;
-        double furthestDist = -1;
-        for (Point p : pointSet) {
-            if (furthest == null) {
-                furthest = p;
-                furthestDist = Utility.euclideanDistance(p, refPoint);
-            } else if (Utility.euclideanDistance(p, refPoint) > furthestDist) {
-                furthest = p;
-                furthestDist = Utility.euclideanDistance(p, refPoint);
-            }
-        }
-        return furthest;
-    }
-    
-    /**
-     * Constructs a ray from startPt through throughPt then translated to translatePt
-     * 
-     * @param translatePt Point ray startPt will be translated to
-     * @param startPt Initial start point of ray
-     * @param throughPt Point the ray will pass through before being translated
-     */
-    private Point[] findMinQuadRay(Point translatePt, Point startPt, Point throughPt) {
-        //System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
-        
-        // Define the direction of the ray starting at a
-        double rayEndx = Utility.RAY_SIZE;
-        //System.out.println(a + " : " + nonInnerVertex);
-        if (startPt.x > throughPt.x || (startPt.x == throughPt.x && startPt.y > throughPt.y)) {
-            rayEndx = -Utility.RAY_SIZE;
-        }
-        Point rayEnd = new Point(rayEndx, startPt.y); // End point of ray which is basically + or - infinity
-        
-        double angle  = Utility.calculateAngle(startPt, throughPt); // Angle that slope(a, nonInnerVertex) makes with x axis
-        
-        // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
-        Point[] ray = {new Point(startPt.x, startPt.y), Utility.rotatePoint(rayEnd, new Point(0,0), -angle)};
-        
-        //System.out.println("ray = " + ray[0] + ", " + ray[1]);
-        
-        //Translate ray so that it starts at endPt
-        ray[0].x += translatePt.x - startPt.x;
-        ray[0].y += translatePt.y - startPt.y;
-        ray[1].x += translatePt.x - startPt.x;
-        ray[1].y += translatePt.y - startPt.y;
-        
-        //this.voronoiEdges.add(new VoronoiBisector(ray[0], ray[1]));
-        return new Point[]{ray[0], ray[1]};
-    }
-    
-    
     
 }
