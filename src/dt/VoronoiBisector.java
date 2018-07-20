@@ -10,9 +10,9 @@ import java.util.ArrayList;
  */
 public class VoronoiBisector {
     
-    ArrayList<Point> adjacentPoints; // Points that this bisector belongs to. Size 2 or 3. Necessary for computing dual of Voronoi
+    private final ArrayList<Point> adjacentPoints; // Points that this bisector belongs to. Size 2 or 3. Necessary for computing dual of Voronoi
     //ArrayList<Point[]> bisectorSegments; // List of start and end Points of the bisector segments. start/endpts may be equal, list size <= 4
-    Point startPoint, endPoint;
+    private final Point startPoint, endPoint;
     private final String tag; // "b2s" = bisector of 2 sites, "b3s" = bisector of 3 sites
     private double minQuadScale;
     //private boolean reflected;
@@ -103,7 +103,7 @@ public class VoronoiBisector {
      * @return start Point
      */
     public Point getStartPoint() {
-        return new Point(this.startPoint.x, this.startPoint.y);
+        return this.startPoint.deepCopy();
     }
     
     /**
@@ -111,7 +111,7 @@ public class VoronoiBisector {
      * @return end Point
      */
     public Point getEndPoint() {
-        return new Point(this.endPoint.x, this.endPoint.y);
+        return this.endPoint.deepCopy();
     }
     
     /**

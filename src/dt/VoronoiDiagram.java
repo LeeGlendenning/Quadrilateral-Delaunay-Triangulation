@@ -10,7 +10,6 @@ import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JFrame;
@@ -59,9 +58,9 @@ public class VoronoiDiagram extends JPanel {
         b2s = new FindBisectorsTwoSites();
         b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
         
-        findBisectors();
+        findB2SAndB3S();
         
-        createJFrame();
+        displayVoronoiDiagram();
         //constructVoronoi();
         if (this.doAnimation) {
             doVoronoiAnimation(40, 1000, b2s, b3s);
@@ -78,7 +77,7 @@ public class VoronoiDiagram extends JPanel {
         timer = new Timer(delay, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
-                constructVoronoiStep();
+                animationStep();
                 repaint();
                 scaleIterations ++;
                 // Limit iterations such that only intersections are found within the window area
@@ -93,7 +92,7 @@ public class VoronoiDiagram extends JPanel {
     /**
      * Find all bisectors between 2 points and bisectors between 3 points
      */
-    private void findBisectors() {
+    private void findB2SAndB3S() {
         System.out.println("Finding Bisectors Between 2 Sites:\n");
         
         // For each pair of points, find bisector
@@ -148,14 +147,44 @@ public class VoronoiDiagram extends JPanel {
      * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S points
      */
     private Double findMinimumQuadScaling(VoronoiBisector chosenB3S, double curScale, int pixelFactor) {
-        Point[] qVerts = this.quad.getPixelVertsForPoint(chosenB3S.endPoint, curScale, pixelFactor/*, chosenB3S.isReflected()*/);
-        System.out.println("qVerts for " + chosenB3S.endPoint);
+        Point[] qVerts = this.quad.getPixelVertsForPoint(chosenB3S.getEndPoint(), curScale, pixelFactor/*, chosenB3S.isReflected()*/);
+        /*System.out.println("qVerts for " + chosenB3S.getEndPoint());
         for (Point p : qVerts) {
             System.out.print(p + " ");
         }
-        System.out.println();
+        System.out.println();*/
+        
+        Point[][] quadRays = new Point[4][2]; // Rays from quad center through each vertex
+        for (int i = 0; i < 4; i ++) {
+            quadRays[i] = findMinQuadRay(chosenB3S.getEndPoint(), chosenB3S.getEndPoint(), qVerts[i]);
+            //this.displayEdges.add(new VoronoiBisector(new Point[]{}, quadRays[i][0], quadRays[i][1], "debug"));
+        }
+        
+        Double scale = null, tempScale;
+        for (Point adj : chosenB3S.getAdjacentPtsArray()) {
+            tempScale = findScaleForAdjacentB3SPt(adj, quadRays, qVerts, chosenB3S.getEndPoint());
+            if (scale == null || tempScale > scale) {
+                scale = tempScale;
+            }
+        }
+        
+        return scale;
+    }
+    
+    /**
+     * 
+     * @param adj A Point belonging to the B3S
+     * @param quadRays Rays from quad center through each vertex
+     * @param qVerts Point array of quad vertices
+     * @return Quad scaling based on intersection of adj Point parallel to all quad vertices and the quad rays
+     */
+    private Double findScaleForAdjacentB3SPt(Point adj, Point[][] quadRays, Point[] qVerts, Point chosenB3SPt) {
+        Double scale = null;
+        
+        Point intersectionPt;
         
         int ii;
+        // For each edge of the quad
         for (int i = 0; i < qVerts.length; i ++) {
             if (i == qVerts.length-1) {
                 ii = 0;
@@ -163,59 +192,45 @@ public class VoronoiDiagram extends JPanel {
                 ii = i+1;
             }
             
-            Point[] ray1 = findMinQuadRay(chosenB3S.endPoint, chosenB3S.endPoint, qVerts[i]);
-            Point[] ray2 = findMinQuadRay(chosenB3S.endPoint, chosenB3S.endPoint, qVerts[ii]);
-            
-            //Point[] adjB3S = chosenB3S.getAdjacentPtsArray();
-            Point furthestAdjB3S = findFurthestPoint(chosenB3S.getAdjacentPtsArray(), chosenB3S.endPoint);
-            //for (int j = 0; j < adjB3S.length; j ++) {
-                // If chosenB3S is right of ray1 and left of ray2 (i.e. in between rays)
-                //this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "debug"));
-                //this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "debug"));
-                System.out.println("B3S at " + chosenB3S.endPoint);
-                //System.out.println("Found point " + adjB3S[j] + " betwen Ray1 through " + qVerts[i] + ", Ray2 through " + qVerts[ii]);
-
-                // Construct a ray in direction of edge closest to point and find intersection point with either ray1 or ray2
-                // The distance between start of ray causing intersection and the intersection point is the scale
-
-                Point[] intersectionRay = findMinQuadRay(furthestAdjB3S, qVerts[i], qVerts[ii]);
-                //this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay[0], intersectionRay[1], "debug"));
-                //System.out.println("ray: " + intersectionRay[0] + ", " + intersectionRay[1]);
-                Point scalePoint;
-                if ((scalePoint = Utility.doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray1[0], ray1[1])) != null) {
-                    System.out.println("Found scalePt: " + scalePoint);
-                    //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
-                    return Utility.euclideanDistance(scalePoint, chosenB3S.endPoint) / Utility.euclideanDistance(qVerts[i], chosenB3S.endPoint);
-                } else if ((scalePoint = Utility.doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray2[0], ray2[1])) != null) {
-                    System.out.println("Found scalePt: " + scalePoint);
-                    //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
-                    return Utility.euclideanDistance(scalePoint, chosenB3S.endPoint) / Utility.euclideanDistance(qVerts[ii], chosenB3S.endPoint);
+            double tempScale;
+            // Create ray from adj parallel to quad edge
+            Point[] intersectionRay1 = findMinQuadRay(adj, qVerts[i], qVerts[ii]);
+            //this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay1[0], intersectionRay1[1], "debug"));
+            if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay1[0], intersectionRay1[1], quadRays[i][0], quadRays[i][1])) != null) {
+                //System.out.println("1dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
+                tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[i], chosenB3SPt);
+                if (scale == null || tempScale > scale) {
+                    scale = tempScale;
                 }
-            //}
-        }
-        
-        return null;
-    }
-    
-    /**
-     * 
-     * @param pointSet Point array of which one point will be returned as furthest from the refPoint
-     * @param refPoint Reference Point to find distance with pointSet
-     * @return Point in pointSet having largest Euclidean distance to refPoint
-     */
-    public Point findFurthestPoint(Point[] pointSet, Point refPoint) {
-        Point furthest = null;
-        double furthestDist = -1;
-        for (Point p : pointSet) {
-            if (furthest == null) {
-                furthest = p;
-                furthestDist = Utility.euclideanDistance(p, refPoint);
-            } else if (Utility.euclideanDistance(p, refPoint) > furthestDist) {
-                furthest = p;
-                furthestDist = Utility.euclideanDistance(p, refPoint);
+            }
+            if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay1[0], intersectionRay1[1], quadRays[ii][0], quadRays[ii][1])) != null) {
+                //System.out.println("2dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
+                tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[ii], chosenB3SPt);
+                if (scale == null || tempScale > scale) {
+                    scale = tempScale;
+                }
+            }
+            
+            // Create ray from adj parallel to quad edge in other direction
+            Point[] intersectionRay2 = findMinQuadRay(adj, qVerts[ii], qVerts[i]);
+            //this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay2[0], intersectionRay2[1], "debug"));
+            if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay2[0], intersectionRay2[1], quadRays[i][0], quadRays[i][1])) != null) {
+                //System.out.println("3dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
+                tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[i], chosenB3SPt);
+                if (scale == null || tempScale > scale) {
+                    scale = tempScale;
+                }
+            }
+            if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay2[0], intersectionRay2[1], quadRays[ii][0], quadRays[ii][1])) != null) {
+                //System.out.println("4dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
+                tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[ii], chosenB3SPt);
+                if (scale == null || tempScale > scale) {
+                    scale = tempScale;
+                }
             }
         }
-        return furthest;
+        
+        return scale;
     }
     
     /**
@@ -254,6 +269,29 @@ public class VoronoiDiagram extends JPanel {
     }
     
     
+    /**
+     * 
+     * @param pointSet Point array of which one point will be returned as furthest from the refPoint
+     * @param refPoint Reference Point to find distance with pointSet
+     * @return Point in pointSet having largest Euclidean distance to refPoint
+     */
+    /*public Point findFurthestPoint(Point[] pointSet, Point refPoint) {
+        Point furthest = null;
+        double furthestDist = -1;
+        for (Point p : pointSet) {
+            if (furthest == null) {
+                furthest = p;
+                furthestDist = Utility.euclideanDistance(p, refPoint);
+            } else if (Utility.euclideanDistance(p, refPoint) > furthestDist) {
+                furthest = p;
+                furthestDist = Utility.euclideanDistance(p, refPoint);
+            }
+        }
+        return furthest;
+    }*/
+    
+    
+    
     
     
     
@@ -261,17 +299,9 @@ public class VoronoiDiagram extends JPanel {
     
     
     /**
-     * **Consider renaming method**
-     * 
-     * Construct Voronoi diagram for the point set using the quad
-     * Find bisector rays on either side of previously found main bisector
-     * 
-     * 
-     * Note: can replace animation by uncommenting the for loop. Consider renaming this method to constructVoronoi() then
+     * Applies one step for the animation
      */
-    private void constructVoronoiStep() {
-        
-        //for (int iterations = 0; iterations < 1000; iterations++) {
+    private void animationStep() {
         this.curScale += 0.1;
         this.quad.scaleQuad(this.curScale);
 
@@ -282,8 +312,6 @@ public class VoronoiDiagram extends JPanel {
                 findQuadIntersections(this.quad, this.points.get(i), this.points.get(j));
             }
         }
-
-        //}
     }
 
     /**
@@ -326,8 +354,8 @@ public class VoronoiDiagram extends JPanel {
     /**
      * Create a window to draw the Voronoi diagram to the screen
      */
-    private void createJFrame() {
-        System.out.println("Drawing Voronoi diagram\n");
+    private void displayVoronoiDiagram() {
+        System.out.println("\nDrawing Voronoi diagram\n");
 
         // Set up display window
         JFrame window = new JFrame("Voronoi Diagram");

@@ -64,7 +64,7 @@ public class Painter {
         for (VoronoiBisector bisector : voronoiEdgesB2S) {
             if (bisector.getTag().startsWith("b2s_chosen") && showB2S ||
                     bisector.getTag().startsWith("b2s_hidden") && showB2S_hiddenCones){
-                g2d.drawLine((int)Math.round(bisector.startPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * vd.pixelFactor), (int)Math.round(bisector.endPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * vd.pixelFactor));
+                g2d.drawLine((int)Math.round(bisector.getStartPoint().x * vd.pixelFactor), yMax - (int)Math.round(bisector.getStartPoint().y * vd.pixelFactor), (int)Math.round(bisector.getEndPoint().x * vd.pixelFactor), yMax - (int)Math.round(bisector.getEndPoint().y * vd.pixelFactor));
             }
         }
     }
@@ -81,7 +81,7 @@ public class Painter {
         for (VoronoiBisector bisector : voronoiEdgesB3S) {
             if (bisector.getTag().startsWith("b3s") && showB3S_hidden){
                 g2d.setColor(Color.red);
-                g2d.drawLine((int)Math.round(bisector.startPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * vd.pixelFactor), (int)Math.round(bisector.endPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * vd.pixelFactor));
+                g2d.drawLine((int)Math.round(bisector.getStartPoint().x * vd.pixelFactor), yMax - (int)Math.round(bisector.getStartPoint().y * vd.pixelFactor), (int)Math.round(bisector.getEndPoint().x * vd.pixelFactor), yMax - (int)Math.round(bisector.getEndPoint().y * vd.pixelFactor));
             }
             
         }
@@ -99,10 +99,10 @@ public class Painter {
         for (VoronoiBisector bisector : chosenB3S) {
             if (bisector.getTag().startsWith("b3s_chosen") && showB3S) {
                 g2d.setStroke(new BasicStroke(7));
-                g2d.drawLine((int)Math.round(bisector.startPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * vd.pixelFactor), (int)Math.round(bisector.endPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * vd.pixelFactor));
+                g2d.drawLine((int)Math.round(bisector.getStartPoint().x * vd.pixelFactor), yMax - (int)Math.round(bisector.getStartPoint().y * vd.pixelFactor), (int)Math.round(bisector.getEndPoint().x * vd.pixelFactor), yMax - (int)Math.round(bisector.getEndPoint().y * vd.pixelFactor));
                 g2d.setStroke(new BasicStroke(2));
                 //vd.quad.drawQuad(g2d, bisector.startPoint, 1.0, vd.pixelFactor, yMax/*, bisector.isReflected()*/); // Original quad
-                vd.quad.drawQuad(g2d, bisector.startPoint, bisector.getMinQuadScale(), vd.pixelFactor, yMax/*, bisector.isReflected()*/);
+                vd.quad.drawQuad(g2d, bisector.getStartPoint(), bisector.getMinQuadScale(), vd.pixelFactor, yMax/*, bisector.isReflected()*/);
                 //vd.quad.drawQuad(g2d, bisector.startPoint, vd.curScale, vd.pixelFactor, yMax/*, false*/);
             }
         }
@@ -119,11 +119,11 @@ public class Painter {
     public void drawDisplayEdges(Graphics2D g2d, int yMax, boolean showB2S_hgRegion, boolean showB3S_fgRegion) {
         for (VoronoiBisector bisector : vd.displayEdges.toArray(new VoronoiBisector[vd.displayEdges.size()])) {
             // TODO: sometimes the bisector start or end point are null and I don't know why
-            if (bisector.startPoint != null && bisector.endPoint != null &&
+            if (bisector.getStartPoint() != null && bisector.getEndPoint() != null &&
                     (bisector.getTag().equals("b2s_step") && showB2S_hgRegion ||
                     bisector.getTag().equals("b3s_step") && showB3S_fgRegion ||
                     bisector.getTag().equals("debug"))) {
-                g2d.drawLine((int)Math.round(bisector.startPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * vd.pixelFactor), (int)Math.round(bisector.endPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * vd.pixelFactor));
+                g2d.drawLine((int)Math.round(bisector.getStartPoint().x * vd.pixelFactor), yMax - (int)Math.round(bisector.getStartPoint().y * vd.pixelFactor), (int)Math.round(bisector.getEndPoint().x * vd.pixelFactor), yMax - (int)Math.round(bisector.getEndPoint().y * vd.pixelFactor));
             }
         }
     }
