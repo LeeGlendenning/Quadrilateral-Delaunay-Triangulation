@@ -105,7 +105,7 @@ public class Quadrilateral {
      * @return Array of scaled vertices
      */
     public Point[] scaleQuad(double scaleFactor) {
-        Point[] scaledVertices = deepCopyPointSet(this.vertices);
+        Point[] scaledVertices = Utility.deepCopyPointArray(this.vertices);
         for (int i = 0; i < 4; i ++) {
             // Translate center of quad to origin
             scaledVertices[i].x -= this.center.x;
@@ -126,22 +126,6 @@ public class Quadrilateral {
     }
     
     /**
-     * Create deep copy of a point array
-     * 
-     * @param ptSet Point array to clone
-     * @return Deep copy of ptSet
-     */
-    private Point[] deepCopyPointSet(Point[] ptSet) {
-        Point[] newSet = new Point[4];
-        for (int i = 0; i < 4; i ++) {
-            newSet[i] = new Point();
-            newSet[i].x = ptSet[i].x;
-            newSet[i].y = ptSet[i].y;
-        }
-        return newSet;
-    }
-    
-    /**
      * Scale quad to minimum size
      * Scales just below min but scaling back up by a small amount doesn't do anything because of integer coordinates (doubles rounded)
      */
@@ -149,9 +133,9 @@ public class Quadrilateral {
         System.out.println("Minimizing quad");
         
         double curScale = 1.0;
-        Point[] tempVertices = deepCopyPointSet(this.vertices);
+        Point[] tempVertices = Utility.deepCopyPointArray(this.vertices);
         while (edgeLengthsLargerThanMin(tempVertices, 3.0)) {
-            this.vertices = deepCopyPointSet(tempVertices);
+            this.vertices = Utility.deepCopyPointArray(tempVertices);
             curScale -= 0.1;
             tempVertices = scaleQuad(curScale);
         }
@@ -201,7 +185,7 @@ public class Quadrilateral {
      * @return Cloned list of vertices defining the quad
      */
     public Point[] getVertices() {
-        return deepCopyPointSet(this.vertices);
+        return Utility.deepCopyPointArray(this.vertices);
     }
     
     /**

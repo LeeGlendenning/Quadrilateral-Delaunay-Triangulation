@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
+import java.util.List;
 
 /**
  * Painter class is used to draw all Graphics2D elements to the screen
@@ -54,12 +55,13 @@ public class Painter {
      * Draw all bisectors between two sites
      * 
      * @param g2d Graphics2D object used to draw to the screen
+     * @param voronoiEdgesB2S Array of VoronoiBisector objects to draw to screen
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param showB2S If true, draw bisectors between 2 sites that are marked "chosen"
      * @param showB2S_hiddenCones If true, draw bisectors between 2 sites that are marked "hidden"
      */
-    public void drawB2S(Graphics2D g2d, int yMax, boolean showB2S, boolean showB2S_hiddenCones) {
-        for (VoronoiBisector bisector : vd.voronoiEdgesB2S.toArray(new VoronoiBisector[vd.voronoiEdgesB2S.size()])) {
+    public void drawB2S(Graphics2D g2d, VoronoiBisector[] voronoiEdgesB2S, int yMax, boolean showB2S, boolean showB2S_hiddenCones) {
+        for (VoronoiBisector bisector : voronoiEdgesB2S) {
             if (bisector.getTag().startsWith("b2s_chosen") && showB2S ||
                     bisector.getTag().startsWith("b2s_hidden") && showB2S_hiddenCones){
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * vd.pixelFactor), (int)Math.round(bisector.endPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * vd.pixelFactor));
@@ -128,19 +130,23 @@ public class Painter {
      * Draw HG points used to find bisectors between 2 sites
      * 
      * @param g2d Graphics2D object used to draw to the screen
+     * @param h1
+     * @param h2
+     * @param g1
+     * @param g2
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param pointRadius Visual radius of HG points
      * @param showB2S_hgPoints If true, show hg points used to find bisectors between 2 sites
      */
-    public void drawB2S_hgPoints(Graphics2D g2d, int yMax, int pointRadius, boolean showB2S_hgPoints) {
+    public void drawB2S_hgPoints(Graphics2D g2d, Point[] h1, Point[] h2, Point[] g1, Point[] g2, int yMax, int pointRadius, boolean showB2S_hgPoints) {
         // Draw h12, g12 points on quads
         if (showB2S_hgPoints) {
             g2d.setColor(Color.red);
-            for(int i = 0; i < vd.h1.size(); i ++) {
-                g2d.fill(new Ellipse2D.Double(vd.h1.get(i).x - pointRadius, yMax - vd.h1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-                g2d.fill(new Ellipse2D.Double(vd.h2.get(i).x - pointRadius, yMax - vd.h2.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-                g2d.fill(new Ellipse2D.Double(vd.g1.get(i).x - pointRadius, yMax - vd.g1.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
-                g2d.fill(new Ellipse2D.Double(vd.g2.get(i).x - pointRadius, yMax - vd.g2.get(i).y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+            for(int i = 0; i < h1.length; i ++) {
+                g2d.fill(new Ellipse2D.Double(h1[i].x - pointRadius, yMax - h1[i].y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+                g2d.fill(new Ellipse2D.Double(h2[i].x - pointRadius, yMax - h2[i].y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+                g2d.fill(new Ellipse2D.Double(g1[i].x - pointRadius, yMax - g1[i].y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
+                g2d.fill(new Ellipse2D.Double(g2[i].x - pointRadius, yMax - g2[i].y - pointRadius, pointRadius * 2, pointRadius * 2)); // x, y, width, height
             }
         }
     }

@@ -1,12 +1,16 @@
 package dt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  *
  * @author Lee Glendenning
  */
 public class Utility {
+    
+    public static final double RAY_SIZE = 10000000;
     
     /**
      * 
@@ -237,4 +241,196 @@ public class Utility {
         }
         return ptsList;
     }
+    
+    /**
+     * Determine whether two line segments intersect using vector cross product
+     * approach Method outlined in http://stackoverflow.com/a/565282/786339
+     *
+     * @param p1 First point of first line segment
+     * @param p2 Second point of first line segment
+     * @param q1 First point of second line segment
+     * @param q2 Second point of second line segment
+     * @return Intersection point if the line segments intersect, null otherwise
+     */
+    public static Point doLineSegmentsIntersect(Point p1, Point p2, Point q1, Point q2) {
+        //System.out.println("DoLineSegmentsIntersect: " + p1 + ", " + p2 + " : " + q1 + ", " + q2);
+        Point r = Utility.subtractPoints(p2, p1);
+        Point s = Utility.subtractPoints(q2, q1);
+
+        double numerator = Utility.crossProduct(Utility.subtractPoints(q1, p1), r);
+        double denominator = Utility.crossProduct(r, s);
+        
+        // Lines are collinear
+        if (numerator == 0 && denominator == 0) {
+            double tolerance = 0.01;
+            // If line segments share an endpoint, line segments intersect
+            if (Utility.equalPoints(p1, q1, tolerance) || Utility.equalPoints(p1, q2, tolerance) || Utility.equalPoints(p2, q1, tolerance) || Utility.equalPoints(p2, q2, tolerance)) {
+                Point intersection;
+                if (Utility.equalPoints(p1, q1, tolerance) || Utility.equalPoints(p1, q2, tolerance)) {
+                    intersection = p1;
+                } else {
+                    intersection = p2;
+                }
+                //System.out.println("1Found intersection at (" + intersection.x + ", " + intersection.y + ")");
+                return intersection;
+            }
+
+            // Line segments overlap if all point differences in either direction do not have the same sign
+            if (!allEqual(new boolean[]{(q1.x - p1.x < 0), (q1.x - p2.x < 0),
+                (q2.x - p1.x < 0), (q2.x - p2.x < 0)}) || !allEqual(new boolean[]{(q1.y - p1.y < 0),
+                (q1.y - p2.y < 0), (q2.y - p1.y < 0), (q2.y - p2.y < 0)})) 
+            {
+                // Need to return multiple points or a line segment?
+                return null;
+            } else {
+                return null;
+            }
+        }
+
+        // Lines are parallel and do not intersect
+        if (denominator == 0) {
+            return null;
+        }
+
+        double u = numerator / denominator;
+        double t = Utility.crossProduct(Utility.subtractPoints(q1, p1), s) / denominator;
+        
+        // Lines are not parallel but intersect
+        if ((t >= 0) && (t <= 1) && (u >= 0) && (u <= 1)) {
+            Point intersection;
+            r.x *= t;
+            r.y *= t;
+            intersection = Utility.addPoints(p1, r);
+            //System.out.println("2Found intersection at (" + intersection.x + ", " + intersection.y + ")");
+            return intersection;
+        }
+
+        return null;
+    }
+    
+    /**
+     * Determine whether an array of boolean values all have the same value
+     *
+     * @param arguments Array of boolean values
+     * @return True if all array elements are the same, false otherwise
+     */
+    private static boolean allEqual(boolean[] arguments) {
+        boolean firstValue = arguments[0];
+
+        for (int i = 1; i < arguments.length; i++) {
+            if (arguments[i] != firstValue) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Determine which point is left and right based on normal
+     * 
+     * @param p1 First point to consider
+     * @param p2 Second  point to consider
+     * @param left Point object to assign as left point
+     * @param right Point object to assign as right point
+     * @param axisRotation Angle of slope p1p2
+     */
+    public static void setLeftAndRightPoint(Point p1, Point p2, Point left, Point right, double angle) {
+        
+        //System.out.println("Rotating " + p1 + " and " + p2 + " by " + Math.toDegrees(angle) + " degrees");
+        Point r1 = Utility.rotatePoint(p1, Utility.midpoint(p1, p2), angle);
+        Point r2 = Utility.rotatePoint(p2, Utility.midpoint(p1, p2), angle);
+        //System.out.println("Rotated points: " + r1 + ", " + r2);
+        
+        if (Math.min(r1.x, r2.x) == r1.x) {
+            left.x = p1.x;
+            left.y = p1.y;
+            right.x = p2.x;
+            right.y = p2.y;
+        } else {
+            left.x = p2.x;
+            left.y = p2.y;
+            right.x = p1.x;
+            right.y = p1.y;
+        }
+        
+    }
+    
+    /**
+     * Find the two vertices of a quad that have max and min y values wrt an angle
+     * 
+     * @param q A quadrilateral to iterate over
+     * @param a1 Point used as reference for rotation
+     * @param a2 Point used as reference for rotation
+     * @param angle Angle to rotate quad by such that a1a2 is parallel to x axis
+     * @return Array of nonInner vertices of size 2
+     */
+    public static ArrayList<Point> findNonInnerVertices(Quadrilateral q, Point a1, Point a2, double angle) {
+        ArrayList<Point> nonInnerVerts = new ArrayList();
+        Point[] rVerts = new Point[4];
+        
+        // Rotate all quad vertices
+        //System.out.print("Non-Inner Vertices rVerts: ");
+        for (int i = 0; i < 4; i ++) {
+            rVerts[i] = Utility.rotatePoint(q.getVertices()[i], Utility.midpoint(a1, a2), angle);
+            //System.out.print(rVerts[i] + ", ");
+        }
+        //System.out.println();
+        
+        // Sort rotated quad vertices by ascending y value (more or less sweep line)
+        Arrays.sort(rVerts, new Comparator<Point>() {
+            @Override
+            public int compare(Point p1, Point p2) {
+                if (p1.y > p2.y) {
+                    return +1;
+                } else if (p1.y < p2.y) {
+                     return -1;
+                } else {
+                    return 0;
+                }
+            }
+        });
+        
+        //System.out.println("rVerts: " + rVerts[0] + ", " + rVerts[1] + ", " + rVerts[2] + ", " + rVerts[3]);
+        double tolerance = 0.00001;
+        // Check for SL hitting an edge
+        if (Math.abs(rVerts[0].y - rVerts[1].y) < tolerance /*&& rVerts[0].x < rVerts[1].x*/) {
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[0], Utility.midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[1], Utility.midpoint(a1, a2), -angle));
+        } else {
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[0], Utility.midpoint(a1, a2), -angle));
+        }
+        
+        if (Math.abs(rVerts[2].y - rVerts[3].y) < tolerance /*&& rVerts[2].x > rVerts[3].x*/) {
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[2], Utility.midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[3], Utility.midpoint(a1, a2), -angle));
+        } else {
+            nonInnerVerts.add(Utility.rotatePoint(rVerts[3], Utility.midpoint(a1, a2), -angle));
+        }
+        
+        System.out.print("Non-inner vertices ");
+        for (Point p : nonInnerVerts) {
+            System.out.print(p + " ");
+        }
+        System.out.println();
+        
+        //System.out.println("nonInner verts: " + nonInnerVerts[0] + " " + nonInnerVerts[1]);
+        return nonInnerVerts;
+    }
+    
+    /**
+     * Create deep copy of a point array
+     * 
+     * @param ptArr Point array to clone
+     * @return Deep copy of ptSet
+     */
+    public static Point[] deepCopyPointArray(Point[] ptArr) {
+        Point[] newSet = new Point[ptArr.length];
+        for (int i = 0; i < ptArr.length; i ++) {
+            newSet[i] = new Point();
+            newSet[i].x = ptArr[i].x;
+            newSet[i].y = ptArr[i].y;
+        }
+        return newSet;
+    }
+    
 }

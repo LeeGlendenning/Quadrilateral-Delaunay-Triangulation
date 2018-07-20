@@ -12,7 +12,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -28,18 +27,18 @@ public class VoronoiDiagram extends JPanel {
     protected final List<Point> points, voronoiPoints; // voronoiPoints used for animation
     protected final Quadrilateral quad;
     // Consider using synchronized list to avoid concurrent modification...
-    protected final List<VoronoiBisector> voronoiEdgesB2S, voronoiEdgesB3S, displayEdges;
+    protected final List<VoronoiBisector> voronoiEdgesB3S, displayEdges;
     protected double curScale = 1.0;
     protected final int pixelFactor = 1;
-    private int scaleIterations, coneID = 0;
+    private int scaleIterations;
     private Timer timer;
-    private final double /*floatTolerance = 0.0000000001,*/ raySize = 10000000;
+    private final FindBisectorsTwoSites b2s;
     
     private final boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
     private final boolean showB3S_fgRegion = false, showB3S_hidden = true, showB3S = true;
     private final boolean doAnimation = false;
     
-    protected final ArrayList<Point> h1, h2, g1, g2;
+    //protected final ArrayList<Point> h1, h2, g1, g2;
 
     /**
      * Construct Voronoi diagram for point set using a Quadrilateral
@@ -50,36 +49,38 @@ public class VoronoiDiagram extends JPanel {
     public VoronoiDiagram(Quadrilateral q, ArrayList<Point> p) {
         this.points = p;
         this.quad = q;
-        this.voronoiEdgesB2S = Collections.synchronizedList(new ArrayList<VoronoiBisector>());
+        
         this.voronoiEdgesB3S = Collections.synchronizedList(new ArrayList<VoronoiBisector>());
         this.displayEdges = Collections.synchronizedList(new ArrayList<VoronoiBisector>());
         this.voronoiPoints = Collections.synchronizedList(new ArrayList<Point>());
         this.scaleIterations = 0;
-        this.h1 = new ArrayList();
-        this.h2 = new ArrayList();
-        this.g1 = new ArrayList();
-        this.g2 = new ArrayList();
+        
+        b2s = new FindBisectorsTwoSites();
+        
         createJFrame();
         //constructVoronoi();
         if (this.doAnimation) {
-            doVoronoiAnimation(40, 1000);
+            doVoronoiAnimation(40, 1000, b2s);
         } else {
-            doVoronoiAnimation(40, 0);
+            doVoronoiAnimation(40, 0, b2s);
         }
     }
     
     /**
      * Animate quad scaling and intersection discovery
      */
-    private void doVoronoiAnimation(int delay, int maxScaleIterations) {
+    private void doVoronoiAnimation(int delay, int maxScaleIterations, FindBisectorsTwoSites b2s) {
         System.out.println("Finding Bisectors Between 2 Sites:\n");
+        
         // For each pair of points, find bisector
         for (int i = 0; i < this.points.size(); i++) {
             for (int j = i + 1; j < this.points.size(); j++) {
-                findBisectorOfTwoSites(this.quad, this.points.get(i), this.points.get(j));
+                b2s.findBisectorOfTwoSites(this.quad, this.points.get(i), this.points.get(j));
                 System.out.println();
             }
         }
+        
+        VoronoiBisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
         
         System.out.println("\nFinding Bisectors Between 3 Sites:\n");
         // For each triplet of points, find bisector
@@ -88,8 +89,8 @@ public class VoronoiDiagram extends JPanel {
                 for (int k = j + 1; k < this.points.size(); k++) {
                     //System.out.println("i = " + i + ", j = " + j + ", k = " + k);
                     Point left = new Point(), right = new Point();
-                    setLeftAndRightPoint(this.points.get(i), this.points.get(j), left, right, Utility.calculateAngle(this.points.get(i), this.points.get(j)));
-                    findBisectorOfThreeSites(this.quad, left, right, this.points.get(k));
+                    Utility.setLeftAndRightPoint(this.points.get(i), this.points.get(j), left, right, Utility.calculateAngle(this.points.get(i), this.points.get(j)));
+                    findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, left, right, this.points.get(k));
                     System.out.println();
                 }
             }
@@ -118,506 +119,6 @@ public class VoronoiDiagram extends JPanel {
     
     
     
-    /**
-     * Find main bisector between all pairs of points
-     * 
-     * @param q Quadrilateral to iterate over
-     * @param p1 A point in the point set
-     * @param p2 A point in the point set
-     */
-    private void findBisectorOfTwoSites(Quadrilateral q, Point p1, Point p2) {
-        double angle = Utility.calculateAngle(p1, p2); // Angle that slope(p1p2) makes with x axis
-        
-        System.out.println("Angle = " + Math.toDegrees(angle));
-        Point a1 = new Point(), a2 = new Point();
-        setLeftAndRightPoint(p1, p2, a1, a2, angle);
-        System.out.println("left point : " + a1 + ", right point: " + a2);
-        
-        // Two "middle" vertices of quad wrt y value and angle
-        Point[] innerVertices = findInnerVertices(q, angle);
-        
-        h1.add(new Point());
-        h2.add(new Point());
-        g1.add(new Point());
-        g2.add(new Point());
-        findh12g12(h1.get(h1.size()-1), h2.get(h1.size()-1), g1.get(h1.size()-1), g2.get(h1.size()-1), a1, a2, q, innerVertices, angle);
-        System.out.println("h1 = " + h1 + ", h2 = " + h2);
-        System.out.println("g1 = " + g1 + ", g2 = " + g2);
-        
-        // Endpoints of main bisector between p1 and p2
-        Point h = doRaysIntersect(a1, h1.get(h1.size()-1), a2, h2.get(h2.size()-1));
-        Point g = doRaysIntersect(a1, g1.get(g1.size()-1), a2, g2.get(g2.size()-1));
-        
-        System.out.println("Endpoints: " + h + ", " + g);
-        this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, h, g, "b2s_chosen"));
-        
-        // Find intersections between non-inner vertices
-        ArrayList<Point> nonInnerVertices = findNonInnerVertices(q, a1, a2, angle);
-        
-        calculateAllBisectorRays(nonInnerVertices, h, g, a1, p1, p2, angle);
-    }
-    
-    /**
-     * 
-     * @param nonInnerVertices ArrayList of non-inner vertices of the Quadrilateral
-     * @param h Intersection point of h rays
-     * @param g Intersection point of g rays
-     * @param a1 A center point of the Quadrilateral
-     * @param p1 An adjacent point of the bisector rays
-     * @param p2 An adjacent point of the bisector rays
-     */
-    private void calculateAllBisectorRays(ArrayList<Point> nonInnerVertices, Point h, Point g, Point a1, Point p1, Point p2, double angle) {
-        ArrayList<Point> rNonInner = new ArrayList();
-        for (Point niVert : nonInnerVertices) {
-            rNonInner.add(Utility.rotatePoint(niVert, a1, angle));
-        }
-        
-        // If SL hits edge there are 2 non-inner verts at that y height
-        // The right-most non-inner vert is the "chosen" one and should
-        // Only be shown. the left-most is stored for B3S calculations
-        // But should not be displayed
-        Point[] ray;
-        if (nonInnerVertices.size() == 2) {
-            ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
-            this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
-            ray = findBisectorRay(g, a1, nonInnerVertices.get(1));
-            this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
-        }
-        
-        double tolerance = 0.00001;
-        if (nonInnerVertices.size() == 3 && Math.abs(rNonInner.get(0).y - rNonInner.get(1).y) < tolerance) {
-            if (rNonInner.get(0).x < rNonInner.get(1).x) {
-                ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
-                ray = findBisectorRay(h, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
-                this.coneID ++;
-            } else{
-                ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
-                ray = findBisectorRay(h, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
-                this.coneID ++;
-            }
-            
-            ray = findBisectorRay(g, a1, nonInnerVertices.get(2));
-            this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
-        }
-        
-        if (nonInnerVertices.size() == 3 && Math.abs(rNonInner.get(1).y - rNonInner.get(2).y) < tolerance) {
-            System.out.println("here");
-            ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
-            this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
-            
-            if (rNonInner.get(1).x < rNonInner.get(2).x) {
-                ray = findBisectorRay(g, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
-                ray = findBisectorRay(g, a1, nonInnerVertices.get(2));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
-                this.coneID ++;
-            } else{
-                ray = findBisectorRay(g, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
-                ray = findBisectorRay(g, a1, nonInnerVertices.get(2));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
-                this.coneID ++;
-            }
-        }
-        
-        if (nonInnerVertices.size() == 4) {
-            if (rNonInner.get(0).x < rNonInner.get(1).x) {
-                ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
-                ray = findBisectorRay(h, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
-                this.coneID ++;
-            } else{
-                ray = findBisectorRay(h, a1, nonInnerVertices.get(0));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
-                ray = findBisectorRay(h, a1, nonInnerVertices.get(1));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
-                this.coneID ++;
-            }
-            
-            if (rNonInner.get(2).x < rNonInner.get(3).x) {
-                ray = findBisectorRay(g, a1, nonInnerVertices.get(2));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
-                ray = findBisectorRay(g, a1, nonInnerVertices.get(3));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
-                this.coneID ++;
-            } else{
-                ray = findBisectorRay(g, a1, nonInnerVertices.get(2));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
-                ray = findBisectorRay(g, a1, nonInnerVertices.get(3));
-                this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
-                this.coneID ++;
-            }
-        }
-    }
-    
-    /**
-     * Determine which point is left and right based on normal
-     * 
-     * @param p1 First point to consider
-     * @param p2 Second  point to consider
-     * @param left Point object to assign as left point
-     * @param right Point object to assign as right point
-     * @param axisRotation Angle of slope p1p2
-     */
-    private void setLeftAndRightPoint(Point p1, Point p2, Point left, Point right, double angle) {
-        
-        //System.out.println("Rotating " + p1 + " and " + p2 + " by " + Math.toDegrees(angle) + " degrees");
-        Point r1 = Utility.rotatePoint(p1, Utility.midpoint(p1, p2), angle);
-        Point r2 = Utility.rotatePoint(p2, Utility.midpoint(p1, p2), angle);
-        //System.out.println("Rotated points: " + r1 + ", " + r2);
-        
-        if (Math.min(r1.x, r2.x) == r1.x) {
-            left.x = p1.x;
-            left.y = p1.y;
-            right.x = p2.x;
-            right.y = p2.y;
-        } else {
-            left.x = p2.x;
-            left.y = p2.y;
-            right.x = p1.x;
-            right.y = p1.y;
-        }
-        
-    }
-    
-    /**
-     * Find the two vertices of a quad that do not have max or min y values wrt an angle
-     * 
-     * @param q A quadrilateral to iterate over
-     * @param angle Angle to rotate quad by such that a1a2 is parallel to x axis
-     * @return Array of inner vertices of size 2
-     */
-    private Point[] findInnerVertices(Quadrilateral q, double angle) {
-        Point[] innerVerts = new Point[2], rVerts = new Point[4];
-        System.out.print("Rotated quad: ");
-        // Rotate all quad vertices
-        for (int i = 0; i < 4; i ++) {
-            rVerts[i] = Utility.rotatePoint(q.getVertices()[i], q.getCenter(), angle);
-            System.out.print(rVerts[i] + " ");
-        }
-        System.out.println();
-        
-        // Sort rotated quad vertices by ascending y value (more or less sweep line)
-        Arrays.sort(rVerts, new Comparator<Point>() {
-            @Override
-            public int compare(Point p1, Point p2) {
-                if (p1.y > p2.y) {
-                    return +1;
-                } else if (p1.y < p2.y) {
-                     return -1;
-                } else {
-                    return 0;
-                }
-            }
-        });
-        
-        innerVerts[0] = rVerts[1];
-        innerVerts[1] = rVerts[2];
-        
-        //System.out.println("Inner verts: " + innerVerts[0] + " " + innerVerts[1]);
-        return innerVerts;
-    }
-    
-    /**
-     * Find the two vertices of a quad that have max and min y values wrt an angle
-     * 
-     * @param q A quadrilateral to iterate over
-     * @param angle Angle to rotate quad by such that a1a2 is parallel to x axis
-     * @return Array of nonInner vertices of size 2
-     */
-    private ArrayList<Point> findNonInnerVertices(Quadrilateral q, Point a1, Point a2, double angle) {
-        ArrayList<Point> nonInnerVerts = new ArrayList();
-        Point[] rVerts = new Point[4];
-        
-        // Rotate all quad vertices
-        //System.out.print("Non-Inner Vertices rVerts: ");
-        for (int i = 0; i < 4; i ++) {
-            rVerts[i] = Utility.rotatePoint(q.getVertices()[i], Utility.midpoint(a1, a2), angle);
-            //System.out.print(rVerts[i] + ", ");
-        }
-        //System.out.println();
-        
-        // Sort rotated quad vertices by ascending y value (more or less sweep line)
-        Arrays.sort(rVerts, new Comparator<Point>() {
-            @Override
-            public int compare(Point p1, Point p2) {
-                if (p1.y > p2.y) {
-                    return +1;
-                } else if (p1.y < p2.y) {
-                     return -1;
-                } else {
-                    return 0;
-                }
-            }
-        });
-        
-        //System.out.println("rVerts: " + rVerts[0] + ", " + rVerts[1] + ", " + rVerts[2] + ", " + rVerts[3]);
-        double tolerance = 0.00001;
-        // Check for SL hitting an edge
-        if (Math.abs(rVerts[0].y - rVerts[1].y) < tolerance /*&& rVerts[0].x < rVerts[1].x*/) {
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[0], Utility.midpoint(a1, a2), -angle));
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[1], Utility.midpoint(a1, a2), -angle));
-        } else {
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[0], Utility.midpoint(a1, a2), -angle));
-        }
-        
-        if (Math.abs(rVerts[2].y - rVerts[3].y) < tolerance /*&& rVerts[2].x > rVerts[3].x*/) {
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[2], Utility.midpoint(a1, a2), -angle));
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[3], Utility.midpoint(a1, a2), -angle));
-        } else {
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[3], Utility.midpoint(a1, a2), -angle));
-        }
-        
-        System.out.print("Non-inner vertices ");
-        for (Point p : nonInnerVerts) {
-            System.out.print(p + " ");
-        }
-        System.out.println();
-        
-        //System.out.println("nonInner verts: " + nonInnerVerts[0] + " " + nonInnerVerts[1]);
-        return nonInnerVerts;
-    }
-    
-    /**
-     * Find intersection points of lines through inner vertices with the right side of the quad around the left point a1
-     * 
-     * @param h1 Will be assigned. Intersection point of line through upper inner vertex with right side of quad
-     * @param g1 Will be assigned. Intersection point of line through lower inner vertex with right side of quad
-     * @param h2 Will be assigned. Intersection point of line through upper inner vertex with left side of quad
-     * @param g2 Will be assigned. Intersection point of line through lower inner vertex with left side of quad
-     * @param a1 Left point
-     * @param a1 Right point
-     * @param q Quadrilateral to iterate over
-     * @param innerVerts Array of size two holding the inner vertices on the quad
-     * @param slope Slope of the lines through inner vertices
-     */
-    private void findh12g12(Point h1, Point h2, Point g1, Point g2, Point a1, Point a2, Quadrilateral q, Point[] innerVerts, double angle) {
-        Point temph1 = null, temph2 = null, tempg1 = null, tempg2 = null;
-        
-        // If inner vertex is to the right of center of quad
-        if (innerVerts[0].x > q.getCenter().x) {
-            temph1 = innerVerts[0];
-        } else {
-            temph2 = innerVerts[0];
-        }
-        
-        // If inner vertex is to the right of center of quad
-        if (innerVerts[1].x > q.getCenter().x) {
-            tempg1 = innerVerts[1];
-        } else {
-            tempg2 = innerVerts[1];
-        }
-        
-        //System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
-        //System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
-        
-        Point[] rVerts = new Point[4];
-        // Rotate all quad vertices
-        for (int i = 0; i < 4; i ++) {
-            rVerts[i] = Utility.rotatePoint(q.getVertices()[i], q.getCenter(), angle);
-        }
-        
-        // Horizontal lines going through the inner vertices
-        Point[] l1 = {new Point(-this.raySize, innerVerts[0].y), new Point(this.raySize, innerVerts[0].y)};
-        Point[] l2 = {new Point(-this.raySize, innerVerts[1].y), new Point(this.raySize, innerVerts[1].y)};
-        
-        // Find other h and g points and rotate quad back to its original place
-        int j;
-        for (int i = 0; i < 4; i ++) {
-            if (i == 3) {
-                j = 0;
-            } else {
-                j = i + 1;
-            }
-            Point intersectionPoint1;
-            // Found an h
-            if ((intersectionPoint1 = doLineSegmentsIntersect(l1[0], l1[1], rVerts[i], rVerts[j])) != null && !intersectionPoint1.equals(innerVerts[0])) {
-                if (temph1 == null && intersectionPoint1.x > temph2.x) {
-                    temph1 = intersectionPoint1;
-                } else if (temph2 == null) {
-                    temph2 = intersectionPoint1;
-                }
-            }
-            
-            Point intersectionPoint2;
-            
-            // found a g
-            if ((intersectionPoint2 = doLineSegmentsIntersect(l2[0], l2[1], rVerts[i], rVerts[j])) != null && !intersectionPoint2.equals(innerVerts[1])) {
-                if (tempg1 == null && intersectionPoint2.x > tempg2.x) {
-                    tempg1 = intersectionPoint2;
-                } else if (tempg2 == null) {
-                    tempg2 = intersectionPoint2;
-                }
-            }
-        }
-        
-        //System.out.println("temph1 = " + temph1 + ", temph2 = " + temph2);
-        //System.out.println("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
-        
-        // Assert that temph1.x > temph2.x and tempg1.x > tempg2.x
-        if (temph1.x < temph2.x) {
-            Point temp = new Point(temph1.x, temph1.y);
-            
-            temph1.x = temph2.x;
-            temph1.y = temph2.y;
-            
-            temph2.x = temp.x;
-            temph2.y = temp.y;
-        }
-        if (tempg1.x < tempg2.x) {
-            Point temp = new Point(tempg1.x, tempg1.y);
-            
-            tempg1.x = tempg2.x;
-            tempg1.y = tempg2.y;
-            
-            tempg2.x = temp.x;
-            tempg2.y = temp.y;
-        }
-        
-        // Rotate points back to original coordinate system and translate to a1 and a2
-        temph1 = Utility.rotatePoint(temph1, q.getCenter(), -angle);
-        temph2 = Utility.rotatePoint(temph2, q.getCenter(), -angle);
-        tempg1 = Utility.rotatePoint(tempg1, q.getCenter(), -angle);
-        tempg2 = Utility.rotatePoint(tempg2, q.getCenter(), -angle);
-        
-        h1.x = a1.x + temph1.x - q.getCenter().x;
-        h1.y = a1.y + temph1.y - q.getCenter().y;
-        g1.x = a1.x + tempg1.x - q.getCenter().x;
-        g1.y = a1.y + tempg1.y - q.getCenter().y;
-        
-        h2.x = a2.x + temph2.x - q.getCenter().x;
-        h2.y = a2.y + temph2.y - q.getCenter().y;
-        g2.x = a2.x + tempg2.x - q.getCenter().x;
-        g2.y = a2.y + tempg2.y - q.getCenter().y;
-        
-    }
-    
-    /**
-     * Determine point where rays through h1 and h2 and through g1 and g2 intersect
-     * 
-     * @param a1 Enpoint of new ray
-     * @param h1 Point on new ray
-     * @param a2 Enpoint of new ray
-     * @param h2 Point on new ray
-     * @return Intersection point of rays
-     */
-    private Point doRaysIntersect(Point a1, Point h1, Point a2, Point h2) {
-        
-        // Rotate a1h1 to be horizontal with x axis
-        double angle = Utility.calculateAngle(a1, h1); // Angle that slope(a1h1) makes with x axis
-        
-        Point ra1 = Utility.rotatePoint(a1, Utility.midpoint(a1, h1), angle);
-        Point rh1 = Utility.rotatePoint(h1, Utility.midpoint(a1, h1), angle);
-        
-        // Define the ray a1h1 and rotate back to original position
-        double rayEndx1 = this.raySize;
-        double rayEndy1 = rh1.y;
-        if (a1.x > h1.x) {
-            rayEndx1 = -this.raySize;
-        }
-        
-        //System.out.println("raya1h1 end = " + new Point(rayEndx1, rayEndy1));
-        Point[] raya1h1 = new Point[2];
-        if (a1.x == h1.x) {
-            raya1h1[0] = new Point(a1.x, a1.y);
-            raya1h1[1] = new Point(a1.x, (a1.y < h1.y) ? this.raySize : -this.raySize);
-        } else {
-            raya1h1[0] = Utility.rotatePoint(new Point(ra1.x, ra1.y), Utility.midpoint(a1, h1), -angle);
-            raya1h1[1] = Utility.rotatePoint(new Point(rayEndx1, rayEndy1), Utility.midpoint(a1, h1), -angle);
-        }
-        
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, raya1h1[0], raya1h1[1], "b2s_step"));
-        
-        // Rotate a2h2 to be horizontal with x axis
-        angle = Utility.calculateAngle(a2, h2);
-        
-        Point ra2 = Utility.rotatePoint(a2, Utility.midpoint(a2, h2), angle);
-        Point rh2 = Utility.rotatePoint(h2, Utility.midpoint(a2, h2), angle);
-        
-        // Define the ray a1h1 and rotate back to original position
-        double rayEndx2 = this.raySize;
-        double rayEndy2 = rh2.y;
-        if (a2.x > h2.x) {
-            rayEndx2 = -this.raySize;
-        }
-        
-        //System.out.println("raya2h2 end = " + new Point(rayEndx2, rayEndy2));
-        Point[] raya2h2 = new Point[2];
-        if (a2.x == h2.x) {
-            raya2h2[0] = new Point(a2.x, a2.y);
-            raya2h2[1] = new Point(a2.x, (a2.y < h2.y) ? this.raySize : -this.raySize);
-        } else {
-            raya2h2[0] = Utility.rotatePoint(new Point(ra2.x, ra2.y), Utility.midpoint(a2, h2), -angle);
-            raya2h2[1] = Utility.rotatePoint(new Point(rayEndx2, rayEndy2), Utility.midpoint(a2, h2), -angle);
-        }
-        
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, raya2h2[0], raya2h2[1], "b2s_step"));
-        
-        //System.out.println("comparing " + raya1h1[0] + ", " + raya1h1[1] + " and " + raya2h2[0] + ", " + raya2h2[1]);
-        //System.out.println(slope(a1, h1) + " : " + slope(a2, h2));
-        double tolerance = 0.00001;
-        if (Math.abs(Utility.slope(a1, h1) - Utility.slope(a2, h2)) < tolerance || (Utility.slope(a1, h1) == Double.POSITIVE_INFINITY && Utility.slope(a2, h2) == Double.NEGATIVE_INFINITY) || (Utility.slope(a1, h1) == Double.NEGATIVE_INFINITY && Utility.slope(a2, h2) == Double.POSITIVE_INFINITY)) {
-            System.out.println("Handling degenerate case for main bisector segment !!!");
-            ra1 = Utility.rotatePoint(a1, Utility.midpoint(a1, a2), angle);
-            ra2 = Utility.rotatePoint(a2, Utility.midpoint(a1, a2), angle);
-            rh1 = Utility.rotatePoint(h1, Utility.midpoint(a1, a2), angle);
-            rh2 = Utility.rotatePoint(h2, Utility.midpoint(a1, a2), angle);
-            
-            /*System.out.println("Points before 1st rotation: a1.x = " + a1.x + ", h1.x = " + h1.x + " a2.x = " + a2.x + ", h2.x = " + h2.x);
-            System.out.println("Points before 2nd rotation: a1.x = " + ra1.x + ", h1.x = " + rh1.x + " a2.x = " + ra2.x + ", h2.x = " + rh2.x);
-            System.out.println("Point before 2nd rotation: " + new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y));
-            System.out.println(rotatePoint(new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y), midpoint(a1, a2), -angle));*/
-            
-            return Utility.rotatePoint(new Point((ra1.x*rh2.x - rh1.x*ra2.x) / (ra1.x - rh1.x + rh2.x - ra2.x), rh2.y), Utility.midpoint(a1, a2), -angle);
-        } else {
-            return doLineSegmentsIntersect(raya1h1[0], raya1h1[1], raya2h2[0], raya2h2[1]);
-        }
-    }
-    
-    /**
-     * Constructs a ray from a through nonInnerVertex then translated to endPt
-     * 
-     * @param endPt Endpoint of main bisector
-     * @param a Point in a quad
-     * @param nonInnerVertex A vertex of the quad with an extreme y value
-     */
-    private Point[] findBisectorRay(Point endPt, Point a, Point niVertex) {
-        // NonInnerVertex is relative to Quadrilateral. Translate relative to a
-        Point nonInnerVertex = new Point(niVertex.x, niVertex.y);
-        nonInnerVertex.x += a.x - this.quad.getCenter().x;
-        nonInnerVertex.y += a.y - this.quad.getCenter().y;
-        
-        //System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
-        
-        // Define the direction of the ray starting at a
-        double rayEndx = this.raySize;
-        //System.out.println(a + " : " + nonInnerVertex);
-        if (a.x > nonInnerVertex.x || (a.x == nonInnerVertex.x && a.y > nonInnerVertex.y)) {
-            rayEndx = -this.raySize;
-        }
-        Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
-        
-        double angle = Utility.calculateAngle(a, nonInnerVertex); // Angle that slope(a, nonInnerVertex) makes with x axis
-        
-        // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
-        Point[] ray = {new Point(a.x, a.y), Utility.rotatePoint(rayEnd, new Point(0,0), -angle)};
-        
-        //System.out.println("ray = " + ray[0] + ", " + ray[1]);
-        
-        //Translate ray so that it starts at endPt
-        ray[0].x += endPt.x - a.x;
-        ray[0].y += endPt.y - a.y;
-        ray[1].x += endPt.x - a.x;
-        ray[1].y += endPt.y - a.y;
-        
-        //this.voronoiEdges.add(new VoronoiBisector(ray[0], ray[1]));
-        return new Point[]{ray[0], ray[1]};
-    }
     
     
     
@@ -631,13 +132,13 @@ public class VoronoiDiagram extends JPanel {
      * @param p2 A point to find bisector of
      * @param p3 A point to find bisector of
      */
-    private void findBisectorOfThreeSites(Quadrilateral q, Point p1, Point p2, Point p3) {
+    private void findBisectorOfThreeSites(Quadrilateral q, VoronoiBisector[] voronoiEdgesB2S, Point p1, Point p2, Point p3) {
         System.out.println("a1 = " + p1 + " a2 = " + p2 + " a3 = " + p3);
         int bisectorCase = caseBisectorBetween3Points(q, p1, p2, p3);
         
         // If case is 1, ignore. Means there is no bisector point
         if (bisectorCase == 2) { // case 2: single point is bisector of 3 
-            VoronoiBisector bisector = findIntersectionB3S(p1, p2, p3);
+            VoronoiBisector bisector = findIntersectionB3S(voronoiEdgesB2S, p1, p2, p3);
             if (bisector != null) {
                 this.voronoiEdgesB3S.add(bisector);
             } else {
@@ -652,7 +153,7 @@ public class VoronoiDiagram extends JPanel {
                 isReflected = true;
             }
             
-            ArrayList<VoronoiBisector> bisectors = findOverlapsB3S(p1, p2, p3, isReflected);
+            ArrayList<VoronoiBisector> bisectors = findOverlapsB3S(voronoiEdgesB2S, p1, p2, p3, isReflected);
             if (!bisectors.isEmpty()) {
                 for (VoronoiBisector bisector : bisectors) {
                     this.voronoiEdgesB3S.add(bisector);
@@ -663,7 +164,7 @@ public class VoronoiDiagram extends JPanel {
         } else if (bisectorCase == 3 && Utility.isCollinear(p1, p2, p3)) {
             System.out.println("Handling case 3 - collinear");
             //BC(a1; a2; a3) consists of one or two cones
-            ArrayList<VoronoiBisector[]> cones = findConeIntersectionsB3S(p1, p2, p3);
+            ArrayList<VoronoiBisector[]> cones = findConeIntersectionsB3S(voronoiEdgesB2S, p1, p2, p3);
             if (!cones.isEmpty()) {
                 for (VoronoiBisector[] cone : cones) {
                     this.voronoiEdgesB3S.add(cone[0]);
@@ -821,7 +322,7 @@ public class VoronoiDiagram extends JPanel {
         double angle = Utility.calculateAngle(a1, a2);
         //System.out.print("finduv(): ");
         Point[] td = new Point[2];
-        ArrayList<Point> niVerts = findNonInnerVertices(q, a1, a2, angle);
+        ArrayList<Point> niVerts = Utility.findNonInnerVertices(q, a1, a2, angle);
         
         switch (niVerts.size()) {
             case 2:
@@ -884,8 +385,8 @@ public class VoronoiDiagram extends JPanel {
         Point[] v2 = findB3SUVRays(Utility.rotatePoint(td[1], Utility.midpoint(a1, a2), angle), Utility.rotatePoint(a2, Utility.midpoint(a1, a2), angle), Utility.rotatePoint(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle));
         //System.out.println("v2: " + td[1] + ", " + q.prevVertex(td[1]));
         
-        Point u = doLineSegmentsIntersect(Utility.rotatePoint(u1[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u1[1], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u2[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u2[1], Utility.midpoint(a1, a2), -angle));
-        Point v = doLineSegmentsIntersect(Utility.rotatePoint(v1[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v1[1], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v2[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v2[1], Utility.midpoint(a1, a2), -angle));
+        Point u = Utility.doLineSegmentsIntersect(Utility.rotatePoint(u1[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u1[1], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u2[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u2[1], Utility.midpoint(a1, a2), -angle));
+        Point v = Utility.doLineSegmentsIntersect(Utility.rotatePoint(v1[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v1[1], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v2[0], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v2[1], Utility.midpoint(a1, a2), -angle));
         //System.out.println("u = " + u + ", v = " + v);
         
         //below lines only for debugging when u or v is null (shouldn't happen)
@@ -924,10 +425,10 @@ public class VoronoiDiagram extends JPanel {
         //System.out.println("endPt = " + p1 + ", a = " + a + ", nextPt = " + p2);
         
         // Define the direction of the ray starting at a
-        double rayEndx = this.raySize;
+        double rayEndx = Utility.RAY_SIZE;
         //System.out.println(a + " : " + nonInnerVertex);
         if (p1.x > p2.x || (p1.x == p2.x && p1.y > p2.y)) {
-            rayEndx = -this.raySize;
+            rayEndx = -Utility.RAY_SIZE;
         }
         Point rayEnd = new Point(rayEndx, a.y); // End point of ray which is basically + or - infinity
         Point rayEnd2 = new Point(-rayEndx, a.y);
@@ -961,27 +462,27 @@ public class VoronoiDiagram extends JPanel {
      * @param a3 A point
      * @return VoronoiBisector representing the intersection point between bisector of a1a3 and a2a3. case 2
      */
-    private VoronoiBisector findIntersectionB3S(Point a1, Point a2, Point a3) {
-        //System.out.println("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + this.voronoiEdgesB2S.size());
-        //printEdges(this.voronoiEdgesB2S);
-        for (int i = 0; i < this.voronoiEdgesB2S.size(); i ++) {
+    private VoronoiBisector findIntersectionB3S(VoronoiBisector[] voronoiEdgesB2S, Point a1, Point a2, Point a3) {
+        //System.out.println("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + voronoiEdgesB2S.length);
+        //printEdges(voronoiEdgesB2S);
+        for (int i = 0; i < voronoiEdgesB2S.length; i ++) {
             
             // If the voronoi edge segment belongs to a1a3
-            if (this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a1) &&
-                    this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a3)) {
+            if (voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a1) &&
+                    voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a3)) {
                 
-                //System.out.println("Considering " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(1));
-                for (int j = 0; j < this.voronoiEdgesB2S.size(); j ++) {
-                    //System.out.println("Comparing with " + this.voronoiEdgesB2S.get(j).getAdjacentPts());
+                //System.out.println("Considering " + voronoiEdgesB2S[i].getAdjacentPts().get(0) + " and " + voronoiEdgesB2S[i].getAdjacentPts().get(1));
+                for (int j = 0; j < voronoiEdgesB2S.length; j ++) {
+                    //System.out.println("Comparing with " + voronoiEdgesB2S[j].getAdjacentPts());
                     
-                    //System.out.println("Considering " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(1));
+                    //System.out.println("Considering " + voronoiEdgesB2S[j].getAdjacentPts().get(0) + " and " + voronoiEdgesB2S[j].getAdjacentPts().get(1));
                     // If the voronoi edge segment belongs to a2a3
-                    if (this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a2) &&
-                            this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a3)) {
+                    if (voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a2) &&
+                            voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a3)) {
                         
                         // Look for intersection between the 2 edge segments
-                        Point b3s = doLineSegmentsIntersect(this.voronoiEdgesB2S.get(i).startPoint, this.voronoiEdgesB2S.get(i).endPoint, 
-                                this.voronoiEdgesB2S.get(j).startPoint, this.voronoiEdgesB2S.get(j).endPoint);
+                        Point b3s = Utility.doLineSegmentsIntersect(voronoiEdgesB2S[i].startPoint, voronoiEdgesB2S[i].endPoint, 
+                                voronoiEdgesB2S[j].startPoint, voronoiEdgesB2S[j].endPoint);
                         if (b3s != null) {
                             System.out.println("Found intersection point: " + b3s);
                             return new VoronoiBisector(new Point[]{a1, a2, a3}, b3s, b3s, "b3s_chosen");
@@ -1000,23 +501,23 @@ public class VoronoiDiagram extends JPanel {
      * @param a3 A point
      * @return ArrayList of VoronoiBisector representing the overlapping segments between bisector of a1a3 and a2a3. case 3 non-collinear
      */
-    private ArrayList<VoronoiBisector> findOverlapsB3S(Point a1, Point a2, Point a3, boolean isReflected) {
+    private ArrayList<VoronoiBisector> findOverlapsB3S(VoronoiBisector[] voronoiEdgesB2S, Point a1, Point a2, Point a3, boolean isReflected) {
         ArrayList<VoronoiBisector> overlaps = new ArrayList();
         
-        for (int i = 0; i < this.voronoiEdgesB2S.size(); i ++) {
-            //System.out.println("Considering " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(i).getAdjacentPts().get(1));
+        for (int i = 0; i < voronoiEdgesB2S.length; i ++) {
+            //System.out.println("Considering " + voronoiEdgesB2S[i].getAdjacentPts().get(0) + " and " + voronoiEdgesB2S[i].getAdjacentPts().get(1));
             // If bisector belongs to a1a2, a1a3, or a2a3
-            if (this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a1) && this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a2) ||
-                    this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a1) && this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a3) ||
-                    this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a2) && this.voronoiEdgesB2S.get(i).getAdjacentPtsArrayList().contains(a3)) {
-                for (int j = i+1; j < this.voronoiEdgesB2S.size(); j ++) {
-                    //System.out.println("Considering " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(0) + " and " + this.voronoiEdgesB2S.get(j).getAdjacentPts().get(1));
+            if (voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a1) && voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a2) ||
+                    voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a1) && voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a3) ||
+                    voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a2) && voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a3)) {
+                for (int j = i+1; j < voronoiEdgesB2S.length; j ++) {
+                    //System.out.println("Considering " + voronoiEdgesB2S[j].getAdjacentPts().get(0) + " and " + voronoiEdgesB2S[j].getAdjacentPts().get(1));
                     // If bisector belongs to a1a2, a1a3, or a2a3
-                    if (this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a1) && this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a2) ||
-                            this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a1) && this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a3) ||
-                            this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a2) && this.voronoiEdgesB2S.get(j).getAdjacentPtsArrayList().contains(a3)) {
-                        Point[] overlap = doLineSegmentsOverlap(this.voronoiEdgesB2S.get(i).startPoint, this.voronoiEdgesB2S.get(i).endPoint, 
-                                this.voronoiEdgesB2S.get(j).startPoint, this.voronoiEdgesB2S.get(j).endPoint);
+                    if (voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a1) && voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a2) ||
+                            voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a1) && voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a3) ||
+                            voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a2) && voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a3)) {
+                        Point[] overlap = doLineSegmentsOverlap(voronoiEdgesB2S[i].startPoint, voronoiEdgesB2S[i].endPoint, 
+                                voronoiEdgesB2S[j].startPoint, voronoiEdgesB2S[j].endPoint);
 
                         if (overlap != null) {
                             //System.out.println("Found overlap: " + overlap[0] + ", " + overlap[1]);
@@ -1048,9 +549,9 @@ public class VoronoiDiagram extends JPanel {
      * @param a3 A point
      * @return ArrayList of VoronoiBisector representing the overlapping cones between bisector of a1a3 and a2a3. case 3 collinear
      */
-    private ArrayList<VoronoiBisector[]> findConeIntersectionsB3S(Point a1, Point a2, Point a3) {
+    private ArrayList<VoronoiBisector[]> findConeIntersectionsB3S(VoronoiBisector[] voronoiEdgesB2S, Point a1, Point a2, Point a3) {
         ArrayList<VoronoiBisector[]> coneIntersections = new ArrayList();
-        ArrayList<VoronoiBisector[]> cones = getCones(); // List of VoronoiBisector tuples representing cones
+        ArrayList<VoronoiBisector[]> cones = getCones(voronoiEdgesB2S); // List of VoronoiBisector tuples representing cones
         
         for (int i = 0; i < cones.size(); i ++) {
             // If cone belongs to a1a2, a1a3, or a2a3
@@ -1071,7 +572,7 @@ public class VoronoiDiagram extends JPanel {
                         VoronoiBisector[] coneIntersection;
                         if ((coneIntersection = doConesIntersect(cones.get(i), cones.get(j))) != null) {
                             // Add chosen B3S point to list (apex of cone)
-                            Point chosenPt = doLineSegmentsIntersect(coneIntersection[0].startPoint, coneIntersection[0].endPoint, 
+                            Point chosenPt = Utility.doLineSegmentsIntersect(coneIntersection[0].startPoint, coneIntersection[0].endPoint, 
                                     coneIntersection[1].startPoint, coneIntersection[1].endPoint);
                             if (!pointIsInfinite(chosenPt)) {
                                 Point[] adjacentUnion = Utility.pointArrayUnion(coneIntersection[0].getAdjacentPtsArray(), coneIntersection[1].getAdjacentPtsArray());
@@ -1094,12 +595,12 @@ public class VoronoiDiagram extends JPanel {
      * 
      * @return ArrayList of cones represented by VoronoiBisector tuples
      */
-    private ArrayList<VoronoiBisector[]> getCones() {
+    private ArrayList<VoronoiBisector[]> getCones(VoronoiBisector[] voronoiEdgesB2S) {
         ArrayList<VoronoiBisector[]> cones = new ArrayList();
         int index = 0; // Also coneID
         boolean isFirstRay = true;
         
-        for (VoronoiBisector cone : this.voronoiEdgesB2S) {
+        for (VoronoiBisector cone : voronoiEdgesB2S) {
             if (cone.getTag().contains("cone")) {
                 String curConeID = cone.getTag().substring(cone.getTag().indexOf("=")+1, cone.getTag().length());
                 
@@ -1137,7 +638,7 @@ public class VoronoiDiagram extends JPanel {
             
             for (VoronoiBisector coneEdge2 : cone2) {
                 Point intersection;
-                if ((intersection = doLineSegmentsIntersect(coneEdge1.getStartPoint(), coneEdge1.getEndPoint(), coneEdge2.getStartPoint(), coneEdge2.getEndPoint())) != null) {
+                if ((intersection = Utility.doLineSegmentsIntersect(coneEdge1.getStartPoint(), coneEdge1.getEndPoint(), coneEdge2.getStartPoint(), coneEdge2.getEndPoint())) != null) {
                     return new VoronoiBisector[]{new VoronoiBisector(cone1[0].getAdjacentPtsArray(), intersection, coneEdge1.getEndPoint(), "b3s_cone"), 
                         new VoronoiBisector(cone2[0].getAdjacentPtsArray(), intersection, coneEdge2.getEndPoint(), "b3s_cone")};
                 }
@@ -1174,8 +675,8 @@ public class VoronoiDiagram extends JPanel {
         Point[] overlap = {null, null};
         
         Point pl = new Point(), pr = new Point(), ql = new Point(), qr = new Point();
-        setLeftAndRightPoint(p1, p2, pl, pr, Utility.calculateAngle(p1, p2));
-        setLeftAndRightPoint(q1, q2, ql, qr, Utility.calculateAngle(q1, q2));
+        Utility.setLeftAndRightPoint(p1, p2, pl, pr, Utility.calculateAngle(p1, p2));
+        Utility.setLeftAndRightPoint(q1, q2, ql, qr, Utility.calculateAngle(q1, q2));
         //System.out.println("\nInitial points: " + pl + ", " + pr + " : " + ql + ", " + qr);
         // Adjust ray endpoints to be at screen boundary
         if (pointIsInfinite(pl)) {
@@ -1258,16 +759,16 @@ public class VoronoiDiagram extends JPanel {
         
         Point boundary;
         // Left side of screen will intersect ray
-        if ((boundary = doLineSegmentsIntersect(p1, p2, leftScreen[0], leftScreen[1])) != null) {
+        if ((boundary = Utility.doLineSegmentsIntersect(p1, p2, leftScreen[0], leftScreen[1])) != null) {
             //System.out.println("boundary point: " + boundary);
             return boundary;
-        } else if ((boundary = doLineSegmentsIntersect(p1, p2, rightScreen[0], rightScreen[1])) != null) { // Right side of screen will intersect ray
+        } else if ((boundary = Utility.doLineSegmentsIntersect(p1, p2, rightScreen[0], rightScreen[1])) != null) { // Right side of screen will intersect ray
             //System.out.println("boundary point: " + boundary);
             return boundary;        
-        } else if ((boundary = doLineSegmentsIntersect(p1, p2, topScreen[0], topScreen[1])) != null) { // Right side of screen will intersect ray
+        } else if ((boundary = Utility.doLineSegmentsIntersect(p1, p2, topScreen[0], topScreen[1])) != null) { // Right side of screen will intersect ray
             //System.out.println("boundary point: " + boundary);
             return boundary;        
-        } else if ((boundary = doLineSegmentsIntersect(p1, p2, bottomScreen[0], bottomScreen[1])) != null) { // Right side of screen will intersect ray
+        } else if ((boundary = Utility.doLineSegmentsIntersect(p1, p2, bottomScreen[0], bottomScreen[1])) != null) { // Right side of screen will intersect ray
             //System.out.println("boundary point: " + boundary);
             return boundary;        
         } else {
@@ -1337,11 +838,11 @@ public class VoronoiDiagram extends JPanel {
                 //this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay[0], intersectionRay[1], "debug"));
                 //System.out.println("ray: " + intersectionRay[0] + ", " + intersectionRay[1]);
                 Point scalePoint;
-                if ((scalePoint = doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray1[0], ray1[1])) != null) {
+                if ((scalePoint = Utility.doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray1[0], ray1[1])) != null) {
                     System.out.println("Found scalePt: " + scalePoint);
                     //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
                     return Utility.euclideanDistance(scalePoint, chosenB3S.endPoint) / Utility.euclideanDistance(qVerts[i], chosenB3S.endPoint);
-                } else if ((scalePoint = doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray2[0], ray2[1])) != null) {
+                } else if ((scalePoint = Utility.doLineSegmentsIntersect(intersectionRay[0], intersectionRay[1], ray2[0], ray2[1])) != null) {
                     System.out.println("Found scalePt: " + scalePoint);
                     //this.displayEdges.add(new VoronoiBisector(new Point[]{}, chosenB3S.endPoint, scalePoint, "debug"));
                     return Utility.euclideanDistance(scalePoint, chosenB3S.endPoint) / Utility.euclideanDistance(qVerts[ii], chosenB3S.endPoint);
@@ -1384,10 +885,10 @@ public class VoronoiDiagram extends JPanel {
         //System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
         
         // Define the direction of the ray starting at a
-        double rayEndx = this.raySize;
+        double rayEndx = Utility.RAY_SIZE;
         //System.out.println(a + " : " + nonInnerVertex);
         if (startPt.x > throughPt.x || (startPt.x == throughPt.x && startPt.y > throughPt.y)) {
-            rayEndx = -this.raySize;
+            rayEndx = -Utility.RAY_SIZE;
         }
         Point rayEnd = new Point(rayEndx, startPt.y); // End point of ray which is basically + or - infinity
         
@@ -1472,96 +973,13 @@ public class VoronoiDiagram extends JPanel {
                 //System.out.println("i = " + i + ", k = " + k + ", j = " + j + ", l = " + l);
                 //System.out.println("Comparing line segments: (" + quad1[i].x + ", " + quad1[i].y + ") ("+ quad1[k].x + ", " + quad1[k].y + ") and (" + quad2[j].x + ", " + quad2[j].y + ") ("+ quad2[l].x + ", " + quad2[l].y + ")");
                 Point intersectionPoint;
-                if ((intersectionPoint = doLineSegmentsIntersect(quad1[i], quad1[k], quad2[j], quad2[l])) != null) {
+                if ((intersectionPoint = Utility.doLineSegmentsIntersect(quad1[i], quad1[k], quad2[j], quad2[l])) != null) {
                     //System.out.println("Found intersection at (" + intersectionPoint.x + ", " + intersectionPoint.y + ")");
                     this.voronoiPoints.add(intersectionPoint);
                 }
             }
         }
 
-    }
-
-    /**
-     * Determine whether two line segments intersect using vector cross product
-     * approach Method outlined in http://stackoverflow.com/a/565282/786339
-     *
-     * @param p1 First point of first line segment
-     * @param p2 Second point of first line segment
-     * @param q1 First point of second line segment
-     * @param q2Second point of second line segment
-     * @return Intersection point if the line segments intersect, null otherwise
-     */
-    private Point doLineSegmentsIntersect(Point p1, Point p2, Point q1, Point q2) {
-        //System.out.println("DoLineSegmentsIntersect: " + p1 + ", " + p2 + " : " + q1 + ", " + q2);
-        Point r = Utility.subtractPoints(p2, p1);
-        Point s = Utility.subtractPoints(q2, q1);
-
-        double numerator = Utility.crossProduct(Utility.subtractPoints(q1, p1), r);
-        double denominator = Utility.crossProduct(r, s);
-        
-        // Lines are collinear
-        if (numerator == 0 && denominator == 0) {
-            double tolerance = 0.01;
-            // If line segments share an endpoint, line segments intersect
-            if (Utility.equalPoints(p1, q1, tolerance) || Utility.equalPoints(p1, q2, tolerance) || Utility.equalPoints(p2, q1, tolerance) || Utility.equalPoints(p2, q2, tolerance)) {
-                Point intersection;
-                if (Utility.equalPoints(p1, q1, tolerance) || Utility.equalPoints(p1, q2, tolerance)) {
-                    intersection = p1;
-                } else {
-                    intersection = p2;
-                }
-                //System.out.println("1Found intersection at (" + intersection.x + ", " + intersection.y + ")");
-                return intersection;
-            }
-
-            // Line segments overlap if all point differences in either direction do not have the same sign
-            if (!allEqual(new boolean[]{(q1.x - p1.x < 0), (q1.x - p2.x < 0),
-                (q2.x - p1.x < 0), (q2.x - p2.x < 0)}) || !allEqual(new boolean[]{(q1.y - p1.y < 0),
-                (q1.y - p2.y < 0), (q2.y - p1.y < 0), (q2.y - p2.y < 0)})) 
-            {
-                // Need to return multiple points or a line segment?
-                return null;
-            } else {
-                return null;
-            }
-        }
-
-        // Lines are parallel and do not intersect
-        if (denominator == 0) {
-            return null;
-        }
-
-        double u = numerator / denominator;
-        double t = Utility.crossProduct(Utility.subtractPoints(q1, p1), s) / denominator;
-        
-        // Lines are not parallel but intersect
-        if ((t >= 0) && (t <= 1) && (u >= 0) && (u <= 1)) {
-            Point intersection;
-            r.x *= t;
-            r.y *= t;
-            intersection = Utility.addPoints(p1, r);
-            //System.out.println("2Found intersection at (" + intersection.x + ", " + intersection.y + ")");
-            return intersection;
-        }
-
-        return null;
-    }
-
-    /**
-     * Determine whether an array of boolean values all have the same value
-     *
-     * @param arguments Array of boolean values
-     * @return True if all array elements are the same, false otherwise
-     */
-    private boolean allEqual(boolean[] arguments) {
-        boolean firstValue = arguments[0];
-
-        for (int i = 1; i < arguments.length; i++) {
-            if (arguments[i] != firstValue) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**
@@ -1608,7 +1026,7 @@ public class VoronoiDiagram extends JPanel {
         painter.drawBisectorRayPoints(g2d, yMax, voronoiPointRadius);
         
         // Draw bisector segments between 2 sites
-        painter.drawB2S(g2d, yMax, this.showB2S, this.showB2S_hiddenCones);
+        painter.drawB2S(g2d, b2s.getVoronoiEdges(), yMax, this.showB2S, this.showB2S_hiddenCones);
         
         // Draw bisector segments between 3 sites
         g2d.setStroke(new BasicStroke(5));
@@ -1621,7 +1039,7 @@ public class VoronoiDiagram extends JPanel {
         g2d.setStroke(new BasicStroke(1));
         painter.drawDisplayEdges(g2d, yMax, this.showB2S_hgRegion, this.showB3S_fgRegion);
         
-        painter.drawB2S_hgPoints(g2d, yMax, pointRadius, this.showB2S_hgPoints);
+        painter.drawB2S_hgPoints(g2d, b2s.geth1(), b2s.geth2(), b2s.getg1(), b2s.getg2(), yMax, pointRadius, this.showB2S_hgPoints);
     }
 
 }
