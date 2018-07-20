@@ -102,7 +102,6 @@ public class Painter {
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * vd.pixelFactor), (int)Math.round(bisector.endPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * vd.pixelFactor));
                 g2d.setStroke(new BasicStroke(2));
                 //vd.quad.drawQuad(g2d, bisector.startPoint, 1.0, vd.pixelFactor, yMax/*, bisector.isReflected()*/); // Original quad
-                System.out.println("painter: " + bisector.getMinQuadScale());
                 vd.quad.drawQuad(g2d, bisector.startPoint, bisector.getMinQuadScale(), vd.pixelFactor, yMax/*, bisector.isReflected()*/);
                 //vd.quad.drawQuad(g2d, bisector.startPoint, vd.curScale, vd.pixelFactor, yMax/*, false*/);
             }

@@ -443,6 +443,7 @@ public class Utility {
         for (int i = 0; i < vbArr.length; i ++) {
             newVB[i] = new VoronoiBisector(vbArr[i].getAdjacentPtsArray(), vbArr[i].getStartPoint(), 
                     vbArr[i].getEndPoint(), vbArr[i].getTag());
+            newVB[i].setMinQuadScale(vbArr[i].getMinQuadScale());
         }
         return newVB;
     }
