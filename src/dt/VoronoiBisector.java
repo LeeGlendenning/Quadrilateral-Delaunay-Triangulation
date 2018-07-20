@@ -114,4 +114,16 @@ public class VoronoiBisector {
         return new Point(this.endPoint.x, this.endPoint.y);
     }
     
+    /**
+     * 
+     * @return Deep copy of this VoronoiBisector
+     */
+    public VoronoiBisector deepCopy() {
+        VoronoiBisector copy = new VoronoiBisector(Utility.deepCopyPointArray(this.getAdjacentPtsArray()), 
+                new Point(this.startPoint.x, this.startPoint.y), new Point(this.endPoint.x, this.endPoint.y), this.tag);
+        copy.setMinQuadScale(this.minQuadScale);
+        
+        return copy;
+    }
+    
 }

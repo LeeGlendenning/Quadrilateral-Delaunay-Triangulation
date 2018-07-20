@@ -426,9 +426,7 @@ public class Utility {
     public static Point[] deepCopyPointArray(Point[] ptArr) {
         Point[] newSet = new Point[ptArr.length];
         for (int i = 0; i < ptArr.length; i ++) {
-            newSet[i] = new Point();
-            newSet[i].x = ptArr[i].x;
-            newSet[i].y = ptArr[i].y;
+            newSet[i] = ptArr[i].deepCopy();
         }
         return newSet;
     }
@@ -441,9 +439,7 @@ public class Utility {
     public static VoronoiBisector[] deepCopyVBArray(VoronoiBisector[] vbArr) {
         VoronoiBisector[] newVB = new VoronoiBisector[vbArr.length];
         for (int i = 0; i < vbArr.length; i ++) {
-            newVB[i] = new VoronoiBisector(vbArr[i].getAdjacentPtsArray(), vbArr[i].getStartPoint(), 
-                    vbArr[i].getEndPoint(), vbArr[i].getTag());
-            newVB[i].setMinQuadScale(vbArr[i].getMinQuadScale());
+            newVB[i] = vbArr[i].deepCopy();
         }
         return newVB;
     }
