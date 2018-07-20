@@ -433,4 +433,18 @@ public class Utility {
         return newSet;
     }
     
+    /**
+     * 
+     * @param vbArr Array of VoronoiBisector objects
+     * @return Deep copy of vbArr
+     */
+    public static VoronoiBisector[] deepCopyVBArray(VoronoiBisector[] vbArr) {
+        VoronoiBisector[] newVB = new VoronoiBisector[vbArr.length];
+        for (int i = 0; i < vbArr.length; i ++) {
+            newVB[i] = new VoronoiBisector(vbArr[i].getAdjacentPtsArray(), vbArr[i].getStartPoint(), 
+                    vbArr[i].getEndPoint(), vbArr[i].getTag());
+        }
+        return newVB;
+    }
+    
 }

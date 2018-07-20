@@ -73,11 +73,12 @@ public class Painter {
      * Draw bisectors between 3 sites
      * 
      * @param g2d Graphics2D object used to draw to the screen
+     * @param voronoiEdgesB3S Array of VoronoiBisector objects to draw to screen
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param showB3S_hidden If true, show bisectors between 3 sites that are marked "hidden"
      */
-    public void drawB3S(Graphics2D g2d, int yMax, boolean showB3S_hidden) {
-        for (VoronoiBisector bisector : vd.voronoiEdgesB3S.toArray(new VoronoiBisector[vd.voronoiEdgesB3S.size()])) {
+    public void drawB3S(Graphics2D g2d, VoronoiBisector[] voronoiEdgesB3S, int yMax, boolean showB3S_hidden) {
+        for (VoronoiBisector bisector : voronoiEdgesB3S) {
             if (bisector.getTag().startsWith("b3s") && showB3S_hidden){
                 g2d.setColor(Color.red);
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * vd.pixelFactor), (int)Math.round(bisector.endPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * vd.pixelFactor));
@@ -90,16 +91,18 @@ public class Painter {
      * Draw chosen bisectors between 3 points and their corresponding min quads in blue
      * 
      * @param g2d Graphics2D object used to draw to the screen
+     * @param voronoiEdgesB3S Array of VoronoiBisector objects to draw to screen
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param showB3S If true, show bisectors between 3 sites that are marked "chosen"
      */
-    public void drawChosenB3SAndMinQuads(Graphics2D g2d, int yMax, boolean showB3S) {
-        for (VoronoiBisector bisector : vd.voronoiEdgesB3S.toArray(new VoronoiBisector[vd.voronoiEdgesB3S.size()])) {
+    public void drawChosenB3SAndMinQuads(Graphics2D g2d, VoronoiBisector[] voronoiEdgesB3S, int yMax, boolean showB3S) {
+        for (VoronoiBisector bisector : voronoiEdgesB3S) {
             if (bisector.getTag().startsWith("b3s_chosen") && showB3S) {
                 g2d.setStroke(new BasicStroke(7));
                 g2d.drawLine((int)Math.round(bisector.startPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.startPoint.y * vd.pixelFactor), (int)Math.round(bisector.endPoint.x * vd.pixelFactor), yMax - (int)Math.round(bisector.endPoint.y * vd.pixelFactor));
                 g2d.setStroke(new BasicStroke(2));
-                vd.quad.drawQuad(g2d, bisector.startPoint, 1.0, vd.pixelFactor, yMax/*, bisector.isReflected()*/); // Original quad
+                //vd.quad.drawQuad(g2d, bisector.startPoint, 1.0, vd.pixelFactor, yMax/*, bisector.isReflected()*/); // Original quad
+                System.out.println("painter: " + bisector.getMinQuadScale());
                 vd.quad.drawQuad(g2d, bisector.startPoint, bisector.getMinQuadScale(), vd.pixelFactor, yMax/*, bisector.isReflected()*/);
                 //vd.quad.drawQuad(g2d, bisector.startPoint, vd.curScale, vd.pixelFactor, yMax/*, false*/);
             }

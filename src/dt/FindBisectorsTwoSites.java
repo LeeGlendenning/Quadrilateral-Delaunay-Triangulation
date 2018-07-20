@@ -22,8 +22,9 @@ public class FindBisectorsTwoSites {
         this.g1 = new ArrayList();
         this.g2 = new ArrayList();
         
-        this.voronoiEdgesB2S = Collections.synchronizedList(new ArrayList<VoronoiBisector>());
-        this.displayEdges = Collections.synchronizedList(new ArrayList<VoronoiBisector>());
+        this.voronoiEdgesB2S = Collections.synchronizedList(new ArrayList());
+        // TODO: pass displayEdges to VoronoiDiagram so that they can be passed to Painter
+        this.displayEdges = Collections.synchronizedList(new ArrayList());
     }
     
     /**
@@ -442,7 +443,7 @@ public class FindBisectorsTwoSites {
      * @return Deep copy of the VoronoiBisector List for B2S
      */
     public VoronoiBisector[] getVoronoiEdges() {
-        return deepCopyVBArray(this.voronoiEdgesB2S.toArray(new VoronoiBisector[this.voronoiEdgesB2S.size()]));
+        return Utility.deepCopyVBArray(this.voronoiEdgesB2S.toArray(new VoronoiBisector[this.voronoiEdgesB2S.size()]));
     }
     
     /**
@@ -475,20 +476,6 @@ public class FindBisectorsTwoSites {
      */
     public Point[] getg2() {
         return Utility.deepCopyPointArray(this.g2.toArray(new Point[this.g2.size()]));
-    }
-    
-    /**
-     * 
-     * @param vbArr Array of VoronoiBisector objects
-     * @return Deep copy of vbArr
-     */
-    private VoronoiBisector[] deepCopyVBArray(VoronoiBisector[] vbArr) {
-        VoronoiBisector[] newVB = new VoronoiBisector[vbArr.length];
-        for (int i = 0; i < vbArr.length; i ++) {
-            newVB[i] = new VoronoiBisector(vbArr[i].getAdjacentPtsArray(), vbArr[i].getStartPoint(), 
-                    vbArr[i].getEndPoint(), vbArr[i].getTag());
-        }
-        return newVB;
     }
     
 }
