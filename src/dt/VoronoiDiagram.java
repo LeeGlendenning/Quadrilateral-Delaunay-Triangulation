@@ -9,6 +9,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +25,7 @@ import javax.swing.Timer;
  */
 public class VoronoiDiagram extends JPanel {
 
-    protected final List<Point> points, voronoiPoints; // voronoiPoints used for animation
+    protected List<Point> points, voronoiPoints; // voronoiPoints used for animation
     protected final Quadrilateral quad;
     // Consider using synchronized list to avoid concurrent modification...
     protected List<VoronoiBisector> displayEdges;
@@ -32,8 +34,8 @@ public class VoronoiDiagram extends JPanel {
     protected final int pixelFactor = 1;
     private int scaleIterations;
     private Timer timer;
-    private final FindBisectorsTwoSites b2s;
-    private final FindBisectorsThreeSites b3s;
+    private FindBisectorsTwoSites b2s;
+    private FindBisectorsThreeSites b3s;
     
     private boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = false, showB2S = false;
     private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = true;
@@ -50,17 +52,20 @@ public class VoronoiDiagram extends JPanel {
      * @param p Point set
      */
     public VoronoiDiagram(Quadrilateral q, ArrayList<Point> p) {
-        this.points = p;
+        this.points = new ArrayList();
         this.quad = q;
         
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiPoints = Collections.synchronizedList(new ArrayList());
         this.scaleIterations = 0;
         
-        b2s = new FindBisectorsTwoSites();
-        b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
+        this.b2s = new FindBisectorsTwoSites();
+        this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
         
-        findB2SAndB3S();
+        // Construct VD for initial point set
+        addInitialPoints(p);
+        
+        //findB2SAndB3S();
         
         //displayVoronoiDiagram();
         //constructVoronoi();
@@ -94,9 +99,9 @@ public class VoronoiDiagram extends JPanel {
     /**
      * Find all bisectors between 2 points and bisectors between 3 points
      */
-    private void findB2SAndB3S() {
+    /*private void findB2SAndB3S() {
         System.out.println("Finding Bisectors Between 2 Sites:\n");
-        
+        //System.out.println(this.points.size());
         // For each pair of points, find bisector
         for (int i = 0; i < this.points.size(); i++) {
             for (int j = i + 1; j < this.points.size(); j++) {
@@ -113,9 +118,7 @@ public class VoronoiDiagram extends JPanel {
             for (int j = i + 1; j < this.points.size(); j++) {
                 for (int k = j + 1; k < this.points.size(); k++) {
                     //System.out.println("i = " + i + ", j = " + j + ", k = " + k);
-                    Point left = new Point(), right = new Point();
-                    Utility.setLeftAndRightPoint(this.points.get(i), this.points.get(j), left, right, Utility.calculateAngle(this.points.get(i), this.points.get(j)));
-                    b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, left, right, this.points.get(k));
+                    b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.points.get(i), this.points.get(j), this.points.get(k));
                     System.out.println();
                 }
             }
@@ -124,7 +127,56 @@ public class VoronoiDiagram extends JPanel {
         System.out.println("Drawing minimum quads");
         this.chosenB3S = b3s.getChosenBisectors();
         calculateMinQuads();
+    }*/
+    
+    /**
+     * Calls addPoint for initial point set passed to constructor
+     */
+    private void addInitialPoints(ArrayList<Point> pts) {
+        for (int i = 0; i < pts.size(); i ++) {
+            addPoint(pts.get(i));
+        }
     }
+    
+    public void addPoint(Point p) {
+        // Find B2S between p and other points
+        for (int i = 0; i < this.points.size(); i++) {
+            
+            this.b2s.findBisectorOfTwoSites(this.quad, this.points.get(i), p);
+        }
+        
+        VoronoiBisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
+        
+        // Find B3S between p and all other pairs of points
+        for (int i = 0; i < this.points.size(); i ++) {
+            for (int j = i + 1; j < this.points.size(); j++) {
+                this.b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.points.get(i), this.points.get(j), p);
+            }
+        }
+        
+        this.points.add(p);
+        
+        this.chosenB3S = b3s.getChosenBisectors();
+        calculateMinQuads();
+        repaint();
+    }
+    
+    /**
+     * Reset all instance variables
+     */
+    public void reset() {
+        this.points = Collections.synchronizedList(new ArrayList());
+        this.displayEdges = Collections.synchronizedList(new ArrayList());
+        this.voronoiPoints = Collections.synchronizedList(new ArrayList());
+        this.scaleIterations = 0;
+        this.chosenB3S = new VoronoiBisector[]{};
+        
+        this.b2s = new FindBisectorsTwoSites();
+        this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
+        this.repaint();
+    }
+    
+    
     
     
     
@@ -135,7 +187,7 @@ public class VoronoiDiagram extends JPanel {
      * Find and apply the scaling for each of the minimum quads
      */
     public void calculateMinQuads() {
-        for (VoronoiBisector bisector : chosenB3S) {
+        for (VoronoiBisector bisector : this.chosenB3S) {
             Double scale;
             if (bisector.getTag().contains("chosen") && (scale = findMinimumQuadScaling(bisector, this.curScale, this.pixelFactor)) != null) {
                 System.out.println("Scale = " + scale + "\n");
@@ -373,15 +425,6 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
-     * 
-     * @param setting Boolean to set
-     */
-    /*public void setShowFG(boolean setting) {
-        this.showB3S_fgRegion = setting;
-        this.repaint();
-    }*/
-    
-    /**
      * Draws the Voronoi diagram to the window
      *
      * @param g Graphics object used to draw to the screen
@@ -409,7 +452,9 @@ public class VoronoiDiagram extends JPanel {
         painter.drawB3S(g2d, b3s.getVoronoiEdges(), yMax, this.showB3S_hidden);
         
         g2d.setColor(Color.blue);
-        painter.drawChosenB3SAndMinQuads(g2d, this.chosenB3S, yMax, this.showB3S);
+        if (this.chosenB3S != null) {
+            painter.drawChosenB3SAndMinQuads(g2d, this.chosenB3S, yMax, this.showB3S);
+        }
         
         g2d.setColor(Color.black);
         g2d.setStroke(new BasicStroke(1));

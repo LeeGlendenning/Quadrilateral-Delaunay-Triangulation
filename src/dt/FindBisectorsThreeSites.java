@@ -33,6 +33,8 @@ public class FindBisectorsThreeSites {
      * @param p3 A point to find bisector of
      */
     public void findBisectorOfThreeSites(Quadrilateral q, VoronoiBisector[] voronoiEdgesB2S, Point p1, Point p2, Point p3) {
+        Utility.setLeftAndRightPoint(p1, p2, p1, p2, Utility.calculateAngle(p1, p2));
+                    
         System.out.println("a1 = " + p1 + " a2 = " + p2 + " a3 = " + p3);
         int bisectorCase = caseBisectorBetween3Points(q, p1, p2, p3);
         

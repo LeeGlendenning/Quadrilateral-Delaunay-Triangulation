@@ -91,7 +91,7 @@ public class Painter {
      * Draw chosen bisectors between 3 points and their corresponding min quads in blue
      * 
      * @param g2d Graphics2D object used to draw to the screen
-     * @param voronoiEdgesB3S Array of VoronoiBisector objects to draw to screen
+     * @param chosenB3S Array of VoronoiBisector objects to draw to screen
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param showB3S If true, show bisectors between 3 sites that are marked "chosen"
      */

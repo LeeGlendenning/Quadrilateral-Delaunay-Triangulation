@@ -6,6 +6,8 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
@@ -22,7 +24,7 @@ public class UI implements ActionListener{
     private JFrame frame;
     private JMenuBar menuBar;
     private JMenu fileMenu, editMenu, viewMenu;
-    private JMenuItem loadPointMenuItem, savePointMenuItem, loadQuadMenuItem, saveQuadMenuItem;
+    private JMenuItem newMenuItem, loadPointMenuItem, savePointMenuItem, loadQuadMenuItem, saveQuadMenuItem;
     private JMenuItem newQuadMenuItem, deletePointMenuItem;
     private JMenuItem showDTMenuItem, showVDMenuItem;
     private JMenu showVDMenu;
@@ -30,13 +32,20 @@ public class UI implements ActionListener{
     
     private VoronoiDiagram voronoiDiagram;
     private Quadrilateral quad;
-    private ArrayList<Point> pointSet;
+    //private ArrayList<Point> pointSet;
     
-    public UI(Quadrilateral q, ArrayList<Point> pts) {
+    public UI(Quadrilateral q, ArrayList<Point> pointSet) {
         
         this.quad = q;
-        this.pointSet = pts;
-        this.voronoiDiagram = new VoronoiDiagram(this.quad, this.pointSet);
+        //this.pointSet = pts;
+        this.voronoiDiagram = new VoronoiDiagram(this.quad, pointSet);
+        this.voronoiDiagram.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                System.out.println(e.getX() + "," + e.getY());
+                addVoronoiPoint(e.getX(), e.getY());
+            }
+        });
         createFrame();
     }
     
@@ -66,6 +75,9 @@ public class UI implements ActionListener{
     {
         System.out.println(ev.getActionCommand());
         switch(ev.getActionCommand()) {
+            case "New":
+                this.voronoiDiagram.reset();
+                break;
             case "Load Point Set":
                 
                 break;
@@ -88,7 +100,7 @@ public class UI implements ActionListener{
                 
                 break;
             case "Voronoi Diagram":
-                loadVoronoiDiagram();
+                //reloadVoronoiDiagram();
                 break;
             case "Show Bisectors 2 Sites":
                 this.voronoiDiagram.setShowB2S(this.showB2SMenuItem.getState());
@@ -111,9 +123,15 @@ public class UI implements ActionListener{
     /**
      * Create new Voronoi Diagram and display it
      */
-    private void loadVoronoiDiagram() {
-        this.voronoiDiagram = new VoronoiDiagram(this.quad, this.pointSet);
+    /*private void reloadVoronoiDiagram() {
+        this.voronoiDiagram = new VoronoiDiagram(this.quad, new ArrayList());
+        this.frame.getContentPane().removeAll();
         this.frame.getContentPane().add(this.voronoiDiagram, BorderLayout.CENTER);
+    }*/
+    
+    private void addVoronoiPoint(int x, int y) {
+        System.out.println("Adding point (" + x + ", " + y + ")");
+        this.voronoiDiagram.addPoint(new Point(x, this.voronoiDiagram.getBounds().getSize().height - y));
     }
     
     /**
@@ -136,16 +154,21 @@ public class UI implements ActionListener{
     private void createFileMenu() {
         fileMenu = new JMenu("File");
         
+        newMenuItem = new JMenuItem("New");
         loadPointMenuItem = new JMenuItem("Load Point Set");
         savePointMenuItem = new JMenuItem("Save Point Set");
         loadQuadMenuItem = new JMenuItem("Load Quadrilateral");
         saveQuadMenuItem = new JMenuItem("Save Quadrilateral");
         
+        newMenuItem.addActionListener(this);
         loadPointMenuItem.addActionListener(this);
         savePointMenuItem.addActionListener(this);
         loadQuadMenuItem.addActionListener(this);
         saveQuadMenuItem.addActionListener(this);
         
+        
+        
+        fileMenu.add(newMenuItem);
         fileMenu.add(loadPointMenuItem);
         fileMenu.add(savePointMenuItem);
         fileMenu.add(loadQuadMenuItem);
