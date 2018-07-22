@@ -39,6 +39,8 @@ public class VoronoiDiagram extends JPanel {
     private final boolean showB3S_fgRegion = false, showB3S_hidden = true, showB3S = true;
     private final boolean doAnimation = false;
     
+    UI userInterface;
+    
     //protected final ArrayList<Point> h1, h2, g1, g2;
 
     /**
@@ -60,7 +62,7 @@ public class VoronoiDiagram extends JPanel {
         
         findB2SAndB3S();
         
-        displayVoronoiDiagram();
+        //displayVoronoiDiagram();
         //constructVoronoi();
         if (this.doAnimation) {
             doVoronoiAnimation(40, 1000, b2s, b3s);
@@ -269,27 +271,6 @@ public class VoronoiDiagram extends JPanel {
     }
     
     
-    /**
-     * 
-     * @param pointSet Point array of which one point will be returned as furthest from the refPoint
-     * @param refPoint Reference Point to find distance with pointSet
-     * @return Point in pointSet having largest Euclidean distance to refPoint
-     */
-    /*public Point findFurthestPoint(Point[] pointSet, Point refPoint) {
-        Point furthest = null;
-        double furthestDist = -1;
-        for (Point p : pointSet) {
-            if (furthest == null) {
-                furthest = p;
-                furthestDist = Utility.euclideanDistance(p, refPoint);
-            } else if (Utility.euclideanDistance(p, refPoint) > furthestDist) {
-                furthest = p;
-                furthestDist = Utility.euclideanDistance(p, refPoint);
-            }
-        }
-        return furthest;
-    }*/
-    
     
     
     
@@ -354,25 +335,11 @@ public class VoronoiDiagram extends JPanel {
     /**
      * Create a window to draw the Voronoi diagram to the screen
      */
-    private void displayVoronoiDiagram() {
+    /*private void displayVoronoiDiagram() {
         System.out.println("\nDrawing Voronoi diagram\n");
 
-        // Set up display window
-        JFrame window = new JFrame("Voronoi Diagram");
-        window.setSize(800, 700);
-        window.setResizable(false);
-        window.setLocation(375, 25);
-        window.getContentPane().setBackground(Color.BLACK);
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        Container contentPane = window.getContentPane();
-        contentPane.setLayout(new BorderLayout());
-        contentPane.add(this, BorderLayout.CENTER);
-        window.setPreferredSize(new Dimension(800, 700));
-        window.setLocationRelativeTo(null);
-        window.pack();
-        window.setVisible(true);
-    }
+        this.userInterface = new UI(this);
+    }*/
     
     /**
      * Draws the Voronoi diagram to the window
