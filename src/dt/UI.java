@@ -221,9 +221,12 @@ public class UI implements ActionListener{
     private void createVDSubMenu() {
         showVDMenuItem = new JMenuItem("Voronoi Diagram");
         showB2SMenuItem = new JCheckBoxMenuItem("Show Bisectors 2 Sites");
+        showB2SMenuItem.setState(true);
         showOnlyChosenB2SMenuItem = new JCheckBoxMenuItem("Only Show Chosen Bisectors 2 Sites");
         showB3SMenuItem = new JCheckBoxMenuItem("Show Bisectors 3 Sites");
+        showB3SMenuItem.setState(true);
         showOnlyChosenB3SMenuItem = new JCheckBoxMenuItem("Only Show Chosen Bisectors 3 Sites");
+        showOnlyChosenB3SMenuItem.setState(true);
         //showB3SFGMenuItem = new JCheckBoxMenuItem("Show FG For Bisectors 3 Sites");
         
         showVDMenuItem.addActionListener(this);

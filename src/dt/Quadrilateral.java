@@ -167,15 +167,13 @@ public class Quadrilateral {
      * 
      * @param p Reference point
      * @param scale Amount to scale quad by
-     * @param pixelFactor Factor to scale pixels by
-     * @param isReflected If true, reflect quad vertices about x coordinate of p
      * @return Pixel coordinates
      */
-    public Point[] getPixelVertsForPoint(Point p, double scale, int pixelFactor/*, boolean isReflected*/) {
-        Point[] distToCenter = computeVertDistToPoint(scaleQuad(scale), this.center/*, isReflected*/);
+    public Point[] getPixelVertsForPoint(Point p, double scale) {
+        Point[] distToCenter = computeVertDistToPoint(scaleQuad(scale), this.center);
         Point[] verts = new Point[4];
         for (int i = 0; i < 4; i ++) {
-            verts[i] = new Point( (p.x + distToCenter[i].x)*pixelFactor, (p.y + distToCenter[i].y)*pixelFactor);
+            verts[i] = new Point( (p.x + distToCenter[i].x), (p.y + distToCenter[i].y));
         }
         return verts;
     }
@@ -229,18 +227,16 @@ public class Quadrilateral {
      * @param g2d Graphics 2D object used to draw to the screen
      * @param p Point to draw quad around
      * @param scale Amount to scale quad by
-     * @param pixelFactor Factor to scale pixels by
      * @param yMax Height of screen. Used to draw from bottom left corner
-     * @param isReflected If true, reflect quad vertices about x coordinate of p
      */
-    public void drawQuad(Graphics2D g2d, Point p, double scale, int pixelFactor, int yMax/*, boolean isReflected*/) {
-        Point[] distToCenter = computeVertDistToPoint(scaleQuad(scale), this.center/*, isReflected*/);
+    public void drawQuad(Graphics2D g2d, Point p, double scale, int yMax) {
+        Point[] distToCenter = computeVertDistToPoint(scaleQuad(scale), this.center);
         
         int j = 1;
         for (int i = 0; i < 4; i ++) {
             j = (j==3) ? 0 : i+1; // Wrap around to draw edge from vertices[3] to vertices[0]
-            g2d.drawLine(((int)Math.round(p.x + distToCenter[i].x))*pixelFactor, yMax - ((int)Math.round(p.y + distToCenter[i].y))*pixelFactor, 
-                    ((int)Math.round(p.x + distToCenter[j].x))*pixelFactor, yMax - ((int)Math.round(p.y + distToCenter[j].y))*pixelFactor); // x1, y1, x2, y2
+            g2d.drawLine(((int)Math.round(p.x + distToCenter[i].x)), yMax - ((int)Math.round(p.y + distToCenter[i].y)), 
+                    ((int)Math.round(p.x + distToCenter[j].x)), yMax - ((int)Math.round(p.y + distToCenter[j].y))); // x1, y1, x2, y2
         }
         
     }

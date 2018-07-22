@@ -30,14 +30,14 @@ public class VoronoiDiagram extends JPanel {
     // Consider using synchronized list to avoid concurrent modification...
     protected List<VoronoiBisector> displayEdges;
     private VoronoiBisector[] chosenB3S;
-    protected double curScale = 1.0;
-    protected final int pixelFactor = 1;
+    protected double curScale;
     private int scaleIterations;
     private Timer timer;
     private FindBisectorsTwoSites b2s;
     private FindBisectorsThreeSites b3s;
+    private final Painter painter;
     
-    private boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = false, showB2S = false;
+    private boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
     private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = true;
     private final boolean doAnimation = false;
     
@@ -54,6 +54,7 @@ public class VoronoiDiagram extends JPanel {
     public VoronoiDiagram(Quadrilateral q, ArrayList<Point> p) {
         this.points = new ArrayList();
         this.quad = q;
+        this.painter = new Painter();
         
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiPoints = Collections.synchronizedList(new ArrayList());
@@ -81,6 +82,7 @@ public class VoronoiDiagram extends JPanel {
      */
     private void doVoronoiAnimation(int delay, int maxScaleIterations, FindBisectorsTwoSites b2s, FindBisectorsThreeSites b3s) {
         // Consider having a method which checks whether all quad segments are off the screen and stop animation only if true
+        this.curScale = 1.0;
         timer = new Timer(delay, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -189,7 +191,7 @@ public class VoronoiDiagram extends JPanel {
     public void calculateMinQuads() {
         for (VoronoiBisector bisector : this.chosenB3S) {
             Double scale;
-            if (bisector.getTag().contains("chosen") && (scale = findMinimumQuadScaling(bisector, this.curScale, this.pixelFactor)) != null) {
+            if (bisector.getTag().contains("chosen") && (scale = findMinimumQuadScaling(bisector, this.curScale)) != null) {
                 System.out.println("Scale = " + scale + "\n");
                 bisector.setMinQuadScale(scale);
             }
@@ -200,8 +202,8 @@ public class VoronoiDiagram extends JPanel {
      * @param chosenB3S Chosen VoronoiBisector between 3 sites
      * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S points
      */
-    private Double findMinimumQuadScaling(VoronoiBisector chosenB3S, double curScale, int pixelFactor) {
-        Point[] qVerts = this.quad.getPixelVertsForPoint(chosenB3S.getEndPoint(), curScale, pixelFactor/*, chosenB3S.isReflected()*/);
+    private Double findMinimumQuadScaling(VoronoiBisector chosenB3S, double curScale) {
+        Point[] qVerts = this.quad.getPixelVertsForPoint(chosenB3S.getEndPoint(), curScale);
         /*System.out.println("qVerts for " + chosenB3S.getEndPoint());
         for (Point p : qVerts) {
             System.out.print(p + " ");
@@ -356,8 +358,8 @@ public class VoronoiDiagram extends JPanel {
      * @param p2 Second point
      */
     public void findQuadIntersections(Quadrilateral q, Point p1, Point p2) {
-        Point[] quad1 = q.getPixelVertsForPoint(p1, this.curScale, this.pixelFactor/*, false*/);
-        Point[] quad2 = q.getPixelVertsForPoint(p2, this.curScale, this.pixelFactor/*, false*/);
+        Point[] quad1 = q.getPixelVertsForPoint(p1, this.curScale);
+        Point[] quad2 = q.getPixelVertsForPoint(p2, this.curScale);
 
         int k, l;
         for (int i = 0; i < 4; i++) {
@@ -390,7 +392,6 @@ public class VoronoiDiagram extends JPanel {
      */
     public void setShowB2S(boolean setting) {
         this.showB2S = setting;
-        this.showB2S_hiddenCones = setting;
         this.repaint();
     }
     
@@ -400,7 +401,6 @@ public class VoronoiDiagram extends JPanel {
      */
     public void setShowB3S(boolean setting) {
         this.showB3S = setting;
-        this.showB3S_hidden = setting;
         this.repaint();
     }
     
@@ -409,8 +409,7 @@ public class VoronoiDiagram extends JPanel {
      * @param setting Boolean to set
      */
     public void setOnlyShowChosenB2S(boolean setting) {
-        this.showB2S = setting;
-        this.showB2S_hiddenCones = false;
+        this.showB2S_hiddenCones = !setting;
         this.repaint();
     }
     
@@ -419,8 +418,7 @@ public class VoronoiDiagram extends JPanel {
      * @param setting Boolean to set
      */
     public void setOnlyShowChosenB3S(boolean setting) {
-        this.showB3S = setting;
-        this.showB3S_hidden = false;
+        this.showB3S_hidden = !setting;
         this.repaint();
     }
     
@@ -433,16 +431,15 @@ public class VoronoiDiagram extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
-        Painter painter = new Painter(g2d, this);
 
         int pointRadius = 3, voronoiPointRadius = 1;
         int yMax = this.getBounds().getSize().height;
 
         
-        painter.drawPointsAndQuads(g2d, yMax, pointRadius);
+        painter.drawPointsAndQuads(g2d, this.points, this.quad, yMax, pointRadius, this.curScale);
 
         g2d.setColor(Color.black);
-        painter.drawBisectorRayPoints(g2d, yMax, voronoiPointRadius);
+        painter.drawBisectorRayPoints(g2d, this.voronoiPoints, yMax, voronoiPointRadius);
         
         // Draw bisector segments between 2 sites
         painter.drawB2S(g2d, b2s.getVoronoiEdges(), yMax, this.showB2S, this.showB2S_hiddenCones);
@@ -453,12 +450,12 @@ public class VoronoiDiagram extends JPanel {
         
         g2d.setColor(Color.blue);
         if (this.chosenB3S != null) {
-            painter.drawChosenB3SAndMinQuads(g2d, this.chosenB3S, yMax, this.showB3S);
+            painter.drawChosenB3SAndMinQuads(g2d, this.quad, this.chosenB3S, yMax, this.showB3S);
         }
         
         g2d.setColor(Color.black);
         g2d.setStroke(new BasicStroke(1));
-        painter.drawDisplayEdges(g2d, yMax, this.showB2S_hgRegion, this.showB3S_fgRegion);
+        painter.drawDisplayEdges(g2d, this.displayEdges, yMax, this.showB2S_hgRegion, this.showB3S_fgRegion);
         
         painter.drawB2S_hgPoints(g2d, b2s.geth1(), b2s.geth2(), b2s.getg1(), b2s.getg2(), yMax, pointRadius, this.showB2S_hgPoints);
     }
