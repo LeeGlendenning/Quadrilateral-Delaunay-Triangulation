@@ -22,11 +22,11 @@ public class Painter {
      * Draw points in point set and the Quadrilateral around each point
      * 
      * @param g2d Graphics2D object used to draw to the screen
-     * @param points
-     * @param quad
+     * @param points List of points to draw
+     * @param quad Quadrilateral to draw around the points
      * @param pointRadius Visual radius of points in point set
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
-     * @param curScale
+     * @param curScale Current scaling factor to draw Quadrilateral at
      */
     public void drawPointsAndQuads(Graphics2D g2d, List<Point> points, Quadrilateral quad, int yMax, int pointRadius, double curScale) {
         for (Point p : points) {
@@ -39,10 +39,10 @@ public class Painter {
     }
     
     /**
-     * TODO: what does this actually draw?
+     * Draw animation points
      * 
      * @param g2d Graphics2D object used to draw to the screen
-     * @param voronoiPoints
+     * @param voronoiPoints Intersection points of quads as they blow up
      * @param voronoiPointRadius Visual radius of bisector ray points
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      */
@@ -77,11 +77,12 @@ public class Painter {
      * @param g2d Graphics2D object used to draw to the screen
      * @param voronoiEdgesB3S Array of VoronoiBisector objects to draw to screen
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
+     * @param showB3S If true, show bisectors between 3 sites
      * @param showB3S_hidden If true, show bisectors between 3 sites that are marked "hidden"
      */
-    public void drawB3S(Graphics2D g2d, VoronoiBisector[] voronoiEdgesB3S, int yMax, boolean showB3S_hidden) {
+    public void drawB3S(Graphics2D g2d, VoronoiBisector[] voronoiEdgesB3S, int yMax, boolean showB3S, boolean showB3S_hidden) {
         for (VoronoiBisector bisector : voronoiEdgesB3S) {
-            if (bisector.getTag().startsWith("b3s") && showB3S_hidden){
+            if (bisector.getTag().startsWith("b3s") && showB3S && showB3S_hidden){
                 g2d.setColor(Color.red);
                 g2d.drawLine((int)Math.round(bisector.getStartPoint().x), yMax - (int)Math.round(bisector.getStartPoint().y),
                         (int)Math.round(bisector.getEndPoint().x), yMax - (int)Math.round(bisector.getEndPoint().y));
@@ -94,19 +95,20 @@ public class Painter {
      * Draw chosen bisectors between 3 points and their corresponding min quads in blue
      * 
      * @param g2d Graphics2D object used to draw to the screen
-     * @param quad
+     * @param quad Quadrilateral to draw through 3 points
      * @param chosenB3S Array of VoronoiBisector objects to draw to screen
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param showB3S If true, show bisectors between 3 sites that are marked "chosen"
      */
     public void drawChosenB3SAndMinQuads(Graphics2D g2d, Quadrilateral quad, VoronoiBisector[] chosenB3S, int yMax, boolean showB3S) {
         for (VoronoiBisector bisector : chosenB3S) {
-            if (bisector.getTag().startsWith("b3s_chosen") && showB3S) {
+            if (showB3S) {
                 g2d.setStroke(new BasicStroke(7));
                 g2d.drawLine((int)Math.round(bisector.getStartPoint().x), yMax - (int)Math.round(bisector.getStartPoint().y),
                         (int)Math.round(bisector.getEndPoint().x), yMax - (int)Math.round(bisector.getEndPoint().y));
                 g2d.setStroke(new BasicStroke(2));
                 //vd.quad.drawQuad(g2d, bisector.startPoint, 1.0, yMax); // Original quad
+                //System.out.println(bisector.getMinQuadScale());
                 quad.drawQuad(g2d, bisector.getStartPoint(), bisector.getMinQuadScale(), yMax);
                 //vd.quad.drawQuad(g2d, bisector.startPoint, vd.curScale, yMax);
             }
@@ -117,7 +119,7 @@ public class Painter {
      * Draw lines for debugging that show the process of the triangulation
      * 
      * @param g2d Graphics2D object used to draw to the screen
-     * @param displayEdges
+     * @param displayEdges List of line segments to draw
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param showB2S_hgRegion If true, show lines corresponding to the hg region of b2s
      * @param showB3S_fgRegion If true, show lines corresponding to the fg region of b3s

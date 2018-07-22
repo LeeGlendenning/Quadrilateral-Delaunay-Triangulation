@@ -59,6 +59,7 @@ public class VoronoiDiagram extends JPanel {
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiPoints = Collections.synchronizedList(new ArrayList());
         this.scaleIterations = 0;
+        this.curScale = 1.0;
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
@@ -66,10 +67,6 @@ public class VoronoiDiagram extends JPanel {
         // Construct VD for initial point set
         addInitialPoints(p);
         
-        //findB2SAndB3S();
-        
-        //displayVoronoiDiagram();
-        //constructVoronoi();
         if (this.doAnimation) {
             doVoronoiAnimation(40, 1000, b2s, b3s);
         } else {
@@ -82,7 +79,6 @@ public class VoronoiDiagram extends JPanel {
      */
     private void doVoronoiAnimation(int delay, int maxScaleIterations, FindBisectorsTwoSites b2s, FindBisectorsThreeSites b3s) {
         // Consider having a method which checks whether all quad segments are off the screen and stop animation only if true
-        this.curScale = 1.0;
         timer = new Timer(delay, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -99,39 +95,6 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
-     * Find all bisectors between 2 points and bisectors between 3 points
-     */
-    /*private void findB2SAndB3S() {
-        System.out.println("Finding Bisectors Between 2 Sites:\n");
-        //System.out.println(this.points.size());
-        // For each pair of points, find bisector
-        for (int i = 0; i < this.points.size(); i++) {
-            for (int j = i + 1; j < this.points.size(); j++) {
-                b2s.findBisectorOfTwoSites(this.quad, this.points.get(i), this.points.get(j));
-                System.out.println();
-            }
-        }
-        
-        VoronoiBisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
-        
-        System.out.println("\nFinding Bisectors Between 3 Sites:\n");
-        // For each triplet of points, find bisector
-        for (int i = 0; i < this.points.size(); i ++) {
-            for (int j = i + 1; j < this.points.size(); j++) {
-                for (int k = j + 1; k < this.points.size(); k++) {
-                    //System.out.println("i = " + i + ", j = " + j + ", k = " + k);
-                    b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.points.get(i), this.points.get(j), this.points.get(k));
-                    System.out.println();
-                }
-            }
-        }
-        
-        System.out.println("Drawing minimum quads");
-        this.chosenB3S = b3s.getChosenBisectors();
-        calculateMinQuads();
-    }*/
-    
-    /**
      * Calls addPoint for initial point set passed to constructor
      */
     private void addInitialPoints(ArrayList<Point> pts) {
@@ -140,13 +103,17 @@ public class VoronoiDiagram extends JPanel {
         }
     }
     
+    /**
+     * Find B2S, B3S and min quad for point set now including a new point p
+     * @param p A Point
+     */
     public void addPoint(Point p) {
         // Find B2S between p and other points
         for (int i = 0; i < this.points.size(); i++) {
             
             this.b2s.findBisectorOfTwoSites(this.quad, this.points.get(i), p);
         }
-        
+        System.out.println();
         VoronoiBisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
         
         // Find B3S between p and all other pairs of points
@@ -155,11 +122,12 @@ public class VoronoiDiagram extends JPanel {
                 this.b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.points.get(i), this.points.get(j), p);
             }
         }
-        
+        System.out.println();
         this.points.add(p);
         
         this.chosenB3S = b3s.getChosenBisectors();
         calculateMinQuads();
+        System.out.println();
         repaint();
     }
     
@@ -191,7 +159,7 @@ public class VoronoiDiagram extends JPanel {
     public void calculateMinQuads() {
         for (VoronoiBisector bisector : this.chosenB3S) {
             Double scale;
-            if (bisector.getTag().contains("chosen") && (scale = findMinimumQuadScaling(bisector, this.curScale)) != null) {
+            if (bisector.getTag().contains("chosen") && (scale = findMinimumQuadScaling(bisector)) != null) {
                 System.out.println("Scale = " + scale + "\n");
                 bisector.setMinQuadScale(scale);
             }
@@ -202,8 +170,8 @@ public class VoronoiDiagram extends JPanel {
      * @param chosenB3S Chosen VoronoiBisector between 3 sites
      * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S points
      */
-    private Double findMinimumQuadScaling(VoronoiBisector chosenB3S, double curScale) {
-        Point[] qVerts = this.quad.getPixelVertsForPoint(chosenB3S.getEndPoint(), curScale);
+    private Double findMinimumQuadScaling(VoronoiBisector chosenB3S) {
+        Point[] qVerts = this.quad.getPixelVertsForPoint(chosenB3S.getEndPoint(), this.curScale);
         /*System.out.println("qVerts for " + chosenB3S.getEndPoint());
         for (Point p : qVerts) {
             System.out.print(p + " ");
@@ -219,6 +187,7 @@ public class VoronoiDiagram extends JPanel {
         Double scale = null, tempScale;
         for (Point adj : chosenB3S.getAdjacentPtsArray()) {
             tempScale = findScaleForAdjacentB3SPt(adj, quadRays, qVerts, chosenB3S.getEndPoint());
+            //System.out.println(tempScale);
             if (scale == null || tempScale > scale) {
                 scale = tempScale;
             }
@@ -446,7 +415,7 @@ public class VoronoiDiagram extends JPanel {
         
         // Draw bisector segments between 3 sites
         g2d.setStroke(new BasicStroke(5));
-        painter.drawB3S(g2d, b3s.getVoronoiEdges(), yMax, this.showB3S_hidden);
+        painter.drawB3S(g2d, b3s.getVoronoiEdges(), yMax, this.showB3S, this.showB3S_hidden);
         
         g2d.setColor(Color.blue);
         if (this.chosenB3S != null) {
