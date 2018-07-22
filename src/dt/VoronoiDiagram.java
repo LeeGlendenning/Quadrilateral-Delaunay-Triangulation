@@ -35,8 +35,8 @@ public class VoronoiDiagram extends JPanel {
     private final FindBisectorsTwoSites b2s;
     private final FindBisectorsThreeSites b3s;
     
-    private final boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
-    private final boolean showB3S_fgRegion = false, showB3S_hidden = true, showB3S = true;
+    private boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = false, showB2S = false;
+    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = true;
     private final boolean doAnimation = false;
     
     UI userInterface;
@@ -333,12 +333,52 @@ public class VoronoiDiagram extends JPanel {
     }
 
     /**
-     * Create a window to draw the Voronoi diagram to the screen
+     * 
+     * @param setting Boolean to set
      */
-    /*private void displayVoronoiDiagram() {
-        System.out.println("\nDrawing Voronoi diagram\n");
-
-        this.userInterface = new UI(this);
+    public void setShowB2S(boolean setting) {
+        this.showB2S = setting;
+        this.showB2S_hiddenCones = setting;
+        this.repaint();
+    }
+    
+    /**
+     * 
+     * @param setting Boolean to set
+     */
+    public void setShowB3S(boolean setting) {
+        this.showB3S = setting;
+        this.showB3S_hidden = setting;
+        this.repaint();
+    }
+    
+    /**
+     * 
+     * @param setting Boolean to set
+     */
+    public void setOnlyShowChosenB2S(boolean setting) {
+        this.showB2S = setting;
+        this.showB2S_hiddenCones = false;
+        this.repaint();
+    }
+    
+    /**
+     * 
+     * @param setting Boolean to set
+     */
+    public void setOnlyShowChosenB3S(boolean setting) {
+        this.showB3S = setting;
+        this.showB3S_hidden = false;
+        this.repaint();
+    }
+    
+    /**
+     * 
+     * @param setting Boolean to set
+     */
+    /*public void setShowFG(boolean setting) {
+        this.showB3S_fgRegion = setting;
+        this.repaint();
     }*/
     
     /**

@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -25,8 +26,9 @@ public class UI implements ActionListener{
     private JMenuItem newQuadMenuItem, deletePointMenuItem;
     private JMenuItem showDTMenuItem, showVDMenuItem;
     private JMenu showVDMenu;
-    private JMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
+    private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
     
+    private VoronoiDiagram voronoiDiagram;
     private Quadrilateral quad;
     private ArrayList<Point> pointSet;
     
@@ -34,14 +36,15 @@ public class UI implements ActionListener{
         
         this.quad = q;
         this.pointSet = pts;
-        createFrame(new VoronoiDiagram(q, pts));
+        this.voronoiDiagram = new VoronoiDiagram(this.quad, this.pointSet);
+        createFrame();
     }
     
-    private void createFrame(VoronoiDiagram vd) {
+    private void createFrame() {
         // Set up display window
         this.frame = new JFrame("Voronoi Diagram");
         
-        addMenuBar(this.frame);
+        addMenuBar();
         
         this.frame.setSize(800, 700);
         this.frame.setResizable(false);
@@ -51,7 +54,7 @@ public class UI implements ActionListener{
 
         Container contentPane = this.frame.getContentPane();
         contentPane.setLayout(new BorderLayout());
-        contentPane.add(vd, BorderLayout.CENTER);
+        contentPane.add(this.voronoiDiagram, BorderLayout.CENTER);
         this.frame.setPreferredSize(new Dimension(800, 700));
         this.frame.setLocationRelativeTo(null);
         this.frame.pack();
@@ -85,27 +88,38 @@ public class UI implements ActionListener{
                 
                 break;
             case "Voronoi Diagram":
-                
+                loadVoronoiDiagram();
                 break;
             case "Show Bisectors 2 Sites":
-                
+                this.voronoiDiagram.setShowB2S(this.showB2SMenuItem.getState());
                 break;
             case "Only Show Chosen Bisectors 2 Sites":
-                
+                this.voronoiDiagram.setOnlyShowChosenB2S(this.showOnlyChosenB2SMenuItem.getState());
                 break;
             case "Show Bisectors 3 Sites":
-                
+                this.voronoiDiagram.setShowB3S(this.showB3SMenuItem.getState());
                 break;
             case "Only Show Chosen Bisectors 3 Sites":
-                
+                this.voronoiDiagram.setOnlyShowChosenB3S(this.showOnlyChosenB3SMenuItem.getState());
                 break;
-            case "Show FG For Bisectors 3 Sites":
-                
-                break;
+            /*case "Show FG For Bisectors 3 Sites":
+                this.voronoiDiagram.setShowFG(this.showB3SFGMenuItem.getState());
+                break;*/
         }
     }
     
-    private void addMenuBar(JFrame frame) {
+    /**
+     * Create new Voronoi Diagram and display it
+     */
+    private void loadVoronoiDiagram() {
+        this.voronoiDiagram = new VoronoiDiagram(this.quad, this.pointSet);
+        this.frame.getContentPane().add(this.voronoiDiagram, BorderLayout.CENTER);
+    }
+    
+    /**
+     * Add menu bar to the JFrame
+     */
+    private void addMenuBar() {
         menuBar = new JMenuBar();
    
         createFileMenu();
@@ -183,25 +197,25 @@ public class UI implements ActionListener{
      */
     private void createVDSubMenu() {
         showVDMenuItem = new JMenuItem("Voronoi Diagram");
-        showB2SMenuItem = new JMenuItem("Show Bisectors 2 Sites");
-        showOnlyChosenB2SMenuItem = new JMenuItem("Only Show Chosen Bisectors 2 Sites");
-        showB3SMenuItem = new JMenuItem("Show Bisectors 3 Sites");
-        showOnlyChosenB3SMenuItem = new JMenuItem("Only Show Chosen Bisectors 3 Sites");
-        showB3SFGMenuItem = new JMenuItem("Show FG For Bisectors 3 Sites");
+        showB2SMenuItem = new JCheckBoxMenuItem("Show Bisectors 2 Sites");
+        showOnlyChosenB2SMenuItem = new JCheckBoxMenuItem("Only Show Chosen Bisectors 2 Sites");
+        showB3SMenuItem = new JCheckBoxMenuItem("Show Bisectors 3 Sites");
+        showOnlyChosenB3SMenuItem = new JCheckBoxMenuItem("Only Show Chosen Bisectors 3 Sites");
+        //showB3SFGMenuItem = new JCheckBoxMenuItem("Show FG For Bisectors 3 Sites");
         
         showVDMenuItem.addActionListener(this);
         showB2SMenuItem.addActionListener(this);
         showOnlyChosenB2SMenuItem.addActionListener(this);
         showB3SMenuItem.addActionListener(this);
         showOnlyChosenB3SMenuItem.addActionListener(this);
-        showB3SFGMenuItem.addActionListener(this);
+        //showB3SFGMenuItem.addActionListener(this);
         
         showVDMenu.add(showVDMenuItem);
         showVDMenu.add(showB2SMenuItem);
         showVDMenu.add(showOnlyChosenB2SMenuItem);
         showVDMenu.add(showB3SMenuItem);
         showVDMenu.add(showOnlyChosenB3SMenuItem);
-        showVDMenu.add(showB3SFGMenuItem);
+        //showVDMenu.add(showB3SFGMenuItem);
     }
     
 }
