@@ -4,13 +4,16 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
+import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -32,13 +35,22 @@ public class UI implements ActionListener{
     
     private VoronoiDiagram voronoiDiagram;
     private Quadrilateral quad;
-    //private ArrayList<Point> pointSet;
+    
+    private int mouseX, mouseY;
     
     public UI(Quadrilateral q, ArrayList<Point> pointSet) {
-        
         this.quad = q;
-        //this.pointSet = pts;
         this.voronoiDiagram = new VoronoiDiagram(this.quad, pointSet);
+        this.mouseX = 0;
+        this.mouseY = 0;
+        createFrame();
+    }
+    
+    private void createFrame() {
+        // Set up display window
+        this.frame = new JFrame("Voronoi Diagram");
+        
+        // Mouse listener for handling adding points when mouse clicks
         this.voronoiDiagram.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -46,12 +58,15 @@ public class UI implements ActionListener{
                 addVoronoiPoint(e.getX(), e.getY());
             }
         });
-        createFrame();
-    }
-    
-    private void createFrame() {
-        // Set up display window
-        this.frame = new JFrame("Voronoi Diagram");
+        
+        // Mouse listener for showing mouse coordinates
+        this.voronoiDiagram.addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent me)
+            {
+                displayCoordinates(me.getX(), me.getY());
+            }
+        });
         
         addMenuBar();
         
@@ -120,18 +135,13 @@ public class UI implements ActionListener{
         }
     }
     
-    /**
-     * Create new Voronoi Diagram and display it
-     */
-    /*private void reloadVoronoiDiagram() {
-        this.voronoiDiagram = new VoronoiDiagram(this.quad, new ArrayList());
-        this.frame.getContentPane().removeAll();
-        this.frame.getContentPane().add(this.voronoiDiagram, BorderLayout.CENTER);
-    }*/
-    
     private void addVoronoiPoint(int x, int y) {
         System.out.println("Adding point (" + x + ", " + y + ")");
         this.voronoiDiagram.addPoint(new Point(x, this.voronoiDiagram.getBounds().getSize().height - y));
+    }
+    
+    private void displayCoordinates(int x, int y) {
+        this.voronoiDiagram.setMouseCoordinates(x, y);
     }
     
     /**

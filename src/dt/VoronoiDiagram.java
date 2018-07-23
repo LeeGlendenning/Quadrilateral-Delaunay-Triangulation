@@ -1,20 +1,14 @@
 package dt;
 
 import java.awt.BasicStroke;
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
@@ -42,6 +36,7 @@ public class VoronoiDiagram extends JPanel {
     private final boolean doAnimation = false;
     
     UI userInterface;
+    int mouseX, mouseY;
     
     //protected final ArrayList<Point> h1, h2, g1, g2;
 
@@ -55,6 +50,7 @@ public class VoronoiDiagram extends JPanel {
         this.points = new ArrayList();
         this.quad = q;
         this.painter = new Painter();
+        this.mouseX = this.mouseY = 0;
         
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiPoints = Collections.synchronizedList(new ArrayList());
@@ -181,7 +177,7 @@ public class VoronoiDiagram extends JPanel {
         Point[][] quadRays = new Point[4][2]; // Rays from quad center through each vertex
         for (int i = 0; i < 4; i ++) {
             quadRays[i] = findMinQuadRay(chosenB3S.getEndPoint(), chosenB3S.getEndPoint(), qVerts[i]);
-            //this.displayEdges.add(new VoronoiBisector(new Point[]{}, quadRays[i][0], quadRays[i][1], "debug"));
+            this.displayEdges.add(new VoronoiBisector(new Point[]{}, quadRays[i][0], quadRays[i][1], "debug"));
         }
         
         Double scale = null, tempScale;
@@ -220,16 +216,16 @@ public class VoronoiDiagram extends JPanel {
             double tempScale;
             // Create ray from adj parallel to quad edge
             Point[] intersectionRay1 = findMinQuadRay(adj, qVerts[i], qVerts[ii]);
-            //this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay1[0], intersectionRay1[1], "debug"));
+            this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay1[0], intersectionRay1[1], "debug"));
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay1[0], intersectionRay1[1], quadRays[i][0], quadRays[i][1])) != null) {
-                //System.out.println("1dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
+                System.out.println("1dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[i], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
                 }
             }
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay1[0], intersectionRay1[1], quadRays[ii][0], quadRays[ii][1])) != null) {
-                //System.out.println("2dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
+                System.out.println("2dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[ii], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
@@ -238,16 +234,16 @@ public class VoronoiDiagram extends JPanel {
             
             // Create ray from adj parallel to quad edge in other direction
             Point[] intersectionRay2 = findMinQuadRay(adj, qVerts[ii], qVerts[i]);
-            //this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay2[0], intersectionRay2[1], "debug"));
+            this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay2[0], intersectionRay2[1], "debug"));
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay2[0], intersectionRay2[1], quadRays[i][0], quadRays[i][1])) != null) {
-                //System.out.println("3dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
+                System.out.println("3dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[i], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
                 }
             }
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay2[0], intersectionRay2[1], quadRays[ii][0], quadRays[ii][1])) != null) {
-                //System.out.println("4dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
+                System.out.println("4dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[ii], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
@@ -392,6 +388,17 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
+     * 
+     * @param x X coordinate of mouse
+     * @param y Y coordinate of mouse
+     */
+    public void setMouseCoordinates(int x, int y) {
+        this.mouseX = x;
+        this.mouseY = y;
+        this.repaint();
+    }
+    
+    /**
      * Draws the Voronoi diagram to the window
      *
      * @param g Graphics object used to draw to the screen
@@ -427,6 +434,11 @@ public class VoronoiDiagram extends JPanel {
         painter.drawDisplayEdges(g2d, this.displayEdges, yMax, this.showB2S_hgRegion, this.showB3S_fgRegion);
         
         painter.drawB2S_hgPoints(g2d, b2s.geth1(), b2s.geth2(), b2s.getg1(), b2s.getg2(), yMax, pointRadius, this.showB2S_hgPoints);
+        
+        // Draw mouse coordinates to screen
+        String s = mouseX + ", " + mouseY;
+        g.setColor(Color.red);
+        g.drawString(s, mouseX, mouseY);
     }
 
 }
