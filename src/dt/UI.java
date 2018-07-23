@@ -136,7 +136,7 @@ public class UI implements ActionListener{
     }
     
     private void addVoronoiPoint(int x, int y) {
-        System.out.println("Adding point (" + x + ", " + y + ")");
+        System.out.println("Adding point (" + x + ", " + (this.voronoiDiagram.getBounds().getSize().height - y) + ")");
         this.voronoiDiagram.addPoint(new Point(x, this.voronoiDiagram.getBounds().getSize().height - y));
     }
     

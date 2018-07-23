@@ -436,9 +436,9 @@ public class VoronoiDiagram extends JPanel {
         painter.drawB2S_hgPoints(g2d, b2s.geth1(), b2s.geth2(), b2s.getg1(), b2s.getg2(), yMax, pointRadius, this.showB2S_hgPoints);
         
         // Draw mouse coordinates to screen
-        String s = mouseX + ", " + mouseY;
+        String s = mouseX + ", " + (this.getBounds().getSize().height - mouseY);
         g.setColor(Color.red);
-        g.drawString(s, mouseX, mouseY);
+        g.drawString(s, mouseX, (/*this.getBounds().getSize().height -*/ mouseY));
     }
 
 }
