@@ -385,14 +385,19 @@ public class VoronoiDiagram extends JPanel {
      *  User Interface methods
      */
     
-    public void newQuad(Point p1, Point p2, Point p3, Point p4) {
-        this.quad = new Quadrilateral(new Point[]{p1, p2, p3, p4});
+    public void newQuad(Point[] verts) {
+        this.quad = new Quadrilateral(verts);
         Point[] tempPts = this.points.toArray(new Point[this.points.size()]);
         reset();
         // Reconstruct VoronoiDiagram with new quad
         for (Point tempP : tempPts) {
             addPoint(tempP);
         }
+    }
+    
+    public void newPointSet(List<Point> points) {
+        reset();
+        addInitialPoints(points);
     }
     
     /**
