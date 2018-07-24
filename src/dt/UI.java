@@ -4,18 +4,23 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
+import javax.swing.Box;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 /**
  *
@@ -32,11 +37,9 @@ public class UI implements ActionListener{
     private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
     
     private VoronoiDiagram voronoiDiagram;
-    private Quadrilateral quad;
     
     public UI(Quadrilateral q, ArrayList<Point> pointSet) {
-        this.quad = q;
-        this.voronoiDiagram = new VoronoiDiagram(this.quad, pointSet);
+        this.voronoiDiagram = new VoronoiDiagram(q, pointSet);
         createFrame();
     }
     
@@ -102,15 +105,81 @@ public class UI implements ActionListener{
                 this.voronoiDiagram.reset();
                 break;
             case "Remove Point":
-                String rmPt = JOptionPane.showInputDialog(frame.getContentPane(), "Expecting \"x,y\"");
-                try {
-                    this.voronoiDiagram.removePoint(new Point(Double.parseDouble(rmPt.split(",")[0]), Double.parseDouble(rmPt.split(",")[1])));
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid format for point removal. Expecting \"x,y\"");
+                JTextField xField = new JTextField(5);
+                JTextField yField = new JTextField(5);
+
+                JPanel rmPtPanel = new JPanel();
+                rmPtPanel.add(new JLabel("x:"));
+                rmPtPanel.add(xField);
+                rmPtPanel.add(Box.createHorizontalStrut(15));
+                rmPtPanel.add(new JLabel("y:"));
+                rmPtPanel.add(yField);
+
+                int rmPtResult = JOptionPane.showConfirmDialog(null, rmPtPanel, 
+                         "Enter X and Y Coordinates", JOptionPane.OK_CANCEL_OPTION);
+                if (rmPtResult == JOptionPane.OK_OPTION) {
+                    try {
+                        this.voronoiDiagram.removePoint(new Point(Double.parseDouble(xField.getText()), Double.parseDouble(yField.getText())));
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid point format. X and Y coordinates must be numbers.");
+                    }
                 }
                 break;
             case "New Quadrilateral":
+                JTextField newQuadFieldx1 = new JTextField(5);
+                JTextField newQuadFieldx2 = new JTextField(5);
+                JTextField newQuadFieldx3 = new JTextField(5);
+                JTextField newQuadFieldx4 = new JTextField(5);
                 
+                JTextField newQuadFieldy1 = new JTextField(5);
+                JTextField newQuadFieldy2 = new JTextField(5);
+                JTextField newQuadFieldy3 = new JTextField(5);
+                JTextField newQuadFieldy4 = new JTextField(5);
+
+                JPanel newQuadPanel = new JPanel();
+                newQuadPanel.setLayout(new GridLayout(4,2));
+                newQuadPanel.add(new JLabel("x1:"));
+                newQuadPanel.add(newQuadFieldx1);
+                newQuadPanel.add(Box.createHorizontalStrut(15));
+                newQuadPanel.add(new JLabel("y1:"));
+                newQuadPanel.add(newQuadFieldy1);
+                
+                newQuadPanel.add(new JLabel("x2:"));
+                newQuadPanel.add(newQuadFieldx2);
+                newQuadPanel.add(Box.createHorizontalStrut(15));
+                newQuadPanel.add(new JLabel("y2:"));
+                newQuadPanel.add(newQuadFieldy2);
+                
+                newQuadPanel.add(new JLabel("x3:"));
+                newQuadPanel.add(newQuadFieldx3);
+                newQuadPanel.add(Box.createHorizontalStrut(15));
+                newQuadPanel.add(new JLabel("y3:"));
+                newQuadPanel.add(newQuadFieldy3);
+                
+                newQuadPanel.add(new JLabel("x4:"));
+                newQuadPanel.add(newQuadFieldx4);
+                newQuadPanel.add(Box.createHorizontalStrut(15));
+                newQuadPanel.add(new JLabel("y4:"));
+                newQuadPanel.add(newQuadFieldy4);
+
+                int newQuadResult = JOptionPane.showConfirmDialog(null, newQuadPanel, 
+                         "Enter Vertices in Clockwise Order", JOptionPane.OK_CANCEL_OPTION);
+                if (newQuadResult == JOptionPane.OK_OPTION &&
+                        !newQuadFieldx1.getText().isEmpty() && !newQuadFieldy1.getText().isEmpty() &&
+                        !newQuadFieldx2.getText().isEmpty() && !newQuadFieldy2.getText().isEmpty() &&
+                        !newQuadFieldx3.getText().isEmpty() && !newQuadFieldy3.getText().isEmpty() &&
+                        !newQuadFieldx4.getText().isEmpty() && !newQuadFieldy4.getText().isEmpty()) {
+                    try {
+                        this.voronoiDiagram.newQuad(new Point(Double.parseDouble(newQuadFieldx1.getText()), Double.parseDouble(newQuadFieldy1.getText())),
+                                new Point(Double.parseDouble(newQuadFieldx2.getText()), Double.parseDouble(newQuadFieldy2.getText())),
+                                new Point(Double.parseDouble(newQuadFieldx3.getText()), Double.parseDouble(newQuadFieldy3.getText())),
+                                new Point(Double.parseDouble(newQuadFieldx4.getText()), Double.parseDouble(newQuadFieldy4.getText())));
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid format for new quad point. X and Y coordinates must be numbers.");
+                    }
+                } else if (newQuadResult == JOptionPane.OK_OPTION ) {
+                    System.out.println("All fields must not be empty.");
+                }
                 break;
             // View menu
             case "Delaunay Triangulation":

@@ -20,7 +20,7 @@ import javax.swing.Timer;
 public class VoronoiDiagram extends JPanel {
 
     protected List<Point> points, voronoiPoints; // voronoiPoints used for animation
-    protected final Quadrilateral quad;
+    protected Quadrilateral quad;
     // Consider using synchronized list to avoid concurrent modification...
     protected List<VoronoiBisector> displayEdges;
     private VoronoiBisector[] chosenB3S;
@@ -317,7 +317,9 @@ public class VoronoiDiagram extends JPanel {
     
     
     
-    
+    /* 
+     *  Animation methods
+     */
     
     /**
      * Applies one step for the animation
@@ -371,6 +373,26 @@ public class VoronoiDiagram extends JPanel {
             }
         }
 
+    }
+    
+    
+    
+    
+    
+    
+    
+    /*
+     *  User Interface methods
+     */
+    
+    public void newQuad(Point p1, Point p2, Point p3, Point p4) {
+        this.quad = new Quadrilateral(new Point[]{p1, p2, p3, p4});
+        Point[] tempPts = this.points.toArray(new Point[this.points.size()]);
+        reset();
+        // Reconstruct VoronoiDiagram with new quad
+        for (Point tempP : tempPts) {
+            addPoint(tempP);
+        }
     }
     
     /**
