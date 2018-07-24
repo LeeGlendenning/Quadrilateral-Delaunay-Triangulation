@@ -34,6 +34,7 @@ public class VoronoiDiagram extends JPanel {
     private boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
     private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = true;
     private final boolean doAnimation = false;
+    private boolean showCoordinates = true;
     
     UI userInterface;
     int mouseX, mouseY;
@@ -94,7 +95,7 @@ public class VoronoiDiagram extends JPanel {
     /**
      * Calls addPoint for initial point set passed to constructor
      */
-    private void addInitialPoints(ArrayList<Point> pts) {
+    private void addInitialPoints(List<Point> pts) {
         for (int i = 0; i < pts.size(); i ++) {
             addPoint(pts.get(i));
         }
@@ -115,15 +116,16 @@ public class VoronoiDiagram extends JPanel {
             p = new Point(200, 350);
         }*/
         if (this.points.contains(p)) {
+            System.out.println("Point not added. Already exists.");
             return;
         }
         
-        System.out.println("Adding point " + p);
+        System.out.println("Adding point " + p + "\n");
         
         // Find B2S between p and other points
         for (int i = 0; i < this.points.size(); i++) {
             
-            this.b2s.findBisectorOfTwoSites(this.quad, this.points.get(i), p);
+            this.b2s.findBisectorOfTwoSites(this.quad, this.points.get(i).deepCopy(), p);
         }
         System.out.println();
         VoronoiBisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
@@ -131,7 +133,7 @@ public class VoronoiDiagram extends JPanel {
         // Find B3S between p and all other pairs of points
         for (int i = 0; i < this.points.size(); i ++) {
             for (int j = i + 1; j < this.points.size(); j++) {
-                this.b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.points.get(i), this.points.get(j), p);
+                this.b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.points.get(i).deepCopy(), this.points.get(j).deepCopy(), p);
             }
         }
         System.out.println();
@@ -140,6 +142,7 @@ public class VoronoiDiagram extends JPanel {
         this.chosenB3S = b3s.getChosenBisectors();
         calculateMinQuads();
         System.out.println();
+        
         repaint();
     }
     
@@ -193,7 +196,7 @@ public class VoronoiDiagram extends JPanel {
         Point[][] quadRays = new Point[4][2]; // Rays from quad center through each vertex
         for (int i = 0; i < 4; i ++) {
             quadRays[i] = findMinQuadRay(chosenB3S.getEndPoint(), chosenB3S.getEndPoint(), qVerts[i]);
-            this.displayEdges.add(new VoronoiBisector(new Point[]{}, quadRays[i][0], quadRays[i][1], "debug"));
+            //this.displayEdges.add(new VoronoiBisector(new Point[]{}, quadRays[i][0], quadRays[i][1], "debug"));
         }
         
         Double scale = null, tempScale;
@@ -233,7 +236,7 @@ public class VoronoiDiagram extends JPanel {
             double tempScale;
             // Create ray from adj parallel to quad edge
             Point[] intersectionRay1 = findMinQuadRay(adj, qVerts[i], qVerts[ii]);
-            this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay1[0], intersectionRay1[1], "debug"));
+            //this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay1[0], intersectionRay1[1], "debug"));
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay1[0], intersectionRay1[1], quadRays[i][0], quadRays[i][1])) != null) {
                 //System.out.println("qVerts[i] = " + qVerts[i] + ", chosenB3SPt = " + chosenB3SPt);
                 //System.out.println("1dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
@@ -252,7 +255,7 @@ public class VoronoiDiagram extends JPanel {
             
             // Create ray from adj parallel to quad edge in other direction
             Point[] intersectionRay2 = findMinQuadRay(adj, qVerts[ii], qVerts[i]);
-            this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay2[0], intersectionRay2[1], "debug"));
+            //this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay2[0], intersectionRay2[1], "debug"));
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay2[0], intersectionRay2[1], quadRays[i][0], quadRays[i][1])) != null) {
                 //System.out.println("3dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[i], chosenB3SPt);
@@ -369,7 +372,23 @@ public class VoronoiDiagram extends JPanel {
         }
 
     }
-
+    
+    /**
+     * Remove point and reconstruct Voronoi Diagram
+     * @param p Point to remove from point set
+     */
+    public void removePoint(Point p) {
+        if (this.points.contains(p)) {
+            this.points.remove(p);
+            Point[] tempPts = this.points.toArray(new Point[this.points.size()]);
+            reset();
+            // Reconstruct VoronoiDiagram with remaining points
+            for (Point tempP : tempPts) {
+                addPoint(tempP);
+            }
+        }
+    }
+    
     /**
      * 
      * @param setting Boolean to set
@@ -403,6 +422,15 @@ public class VoronoiDiagram extends JPanel {
      */
     public void setOnlyShowChosenB3S(boolean setting) {
         this.showB3S_hidden = !setting;
+        this.repaint();
+    }
+    
+    /**
+     * 
+     * @param setting Boolean to set
+     */
+    public void setShowCoordinates(boolean setting) {
+        this.showCoordinates= setting;
         this.repaint();
     }
     
@@ -454,10 +482,9 @@ public class VoronoiDiagram extends JPanel {
         
         painter.drawB2S_hgPoints(g2d, b2s.geth1(), b2s.geth2(), b2s.getg1(), b2s.getg2(), yMax, pointRadius, this.showB2S_hgPoints);
         
-        // Draw mouse coordinates to screen
-        String s = mouseX + ", " + (this.getBounds().getSize().height - mouseY);
-        g.setColor(Color.red);
-        g.drawString(s, mouseX, (/*this.getBounds().getSize().height -*/ mouseY));
+        painter.drawPointCoordinates(g2d, this.points, yMax, this.showCoordinates);
+        
+        painter.drawMouseCoordinates(g2d, mouseX, mouseY, yMax);
     }
 
 }

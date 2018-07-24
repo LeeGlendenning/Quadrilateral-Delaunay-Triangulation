@@ -15,6 +15,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -24,11 +25,10 @@ public class UI implements ActionListener{
     
     private JFrame frame;
     private JMenuBar menuBar;
-    private JMenu fileMenu, editMenu, viewMenu;
-    private JMenuItem newMenuItem, loadPointMenuItem, savePointMenuItem, loadQuadMenuItem, saveQuadMenuItem;
+    private JMenu fileMenu, editMenu, viewMenu, vdMenu, dtMenu;
+    private JMenuItem clearScreenMenuItem, loadPointMenuItem, savePointMenuItem, loadQuadMenuItem, saveQuadMenuItem;
     private JMenuItem newQuadMenuItem, deletePointMenuItem;
-    private JMenuItem showDTMenuItem, showVDMenuItem;
-    private JMenu showVDMenu;
+    private JCheckBoxMenuItem showDTMenuItem, showVDMenuItem, showCoordsMenuItem;
     private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
     
     private VoronoiDiagram voronoiDiagram;
@@ -84,9 +84,7 @@ public class UI implements ActionListener{
     {
         System.out.println(ev.getActionCommand());
         switch(ev.getActionCommand()) {
-            case "New":
-                this.voronoiDiagram.reset();
-                break;
+            // File menu
             case "Load Point Set":
                 
                 break;
@@ -99,18 +97,32 @@ public class UI implements ActionListener{
             case "Save Quadrilateral":
                 
                 break;
+            // Edit menu
+            case "Clear Screen":
+                this.voronoiDiagram.reset();
+                break;
             case "Remove Point":
-                
+                String rmPt = JOptionPane.showInputDialog(frame.getContentPane(), "Expecting \"x,y\"");
+                try {
+                    this.voronoiDiagram.removePoint(new Point(Double.parseDouble(rmPt.split(",")[0]), Double.parseDouble(rmPt.split(",")[1])));
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid format for point removal. Expecting \"x,y\"");
+                }
                 break;
             case "New Quadrilateral":
                 
                 break;
+            // View menu
             case "Delaunay Triangulation":
-                
+                showVDMenuItem.setState(false);
                 break;
             case "Voronoi Diagram":
-                //reloadVoronoiDiagram();
+                showDTMenuItem.setState(false);
                 break;
+            case "Show Coordinates":
+                this.voronoiDiagram.setShowCoordinates(showCoordsMenuItem.getState());
+                break;
+            // Voronoi Diagram menu
             case "Show Bisectors 2 Sites":
                 this.voronoiDiagram.setShowB2S(this.showB2SMenuItem.getState());
                 break;
@@ -147,6 +159,8 @@ public class UI implements ActionListener{
         createFileMenu();
         createEditMenu();
         createViewMenu();
+        createVDMenu();
+        createDTMenu();
         
         // Add menubar to JFrame
         frame.setJMenuBar(menuBar);
@@ -158,21 +172,16 @@ public class UI implements ActionListener{
     private void createFileMenu() {
         fileMenu = new JMenu("File");
         
-        newMenuItem = new JMenuItem("New");
         loadPointMenuItem = new JMenuItem("Load Point Set");
         savePointMenuItem = new JMenuItem("Save Point Set");
         loadQuadMenuItem = new JMenuItem("Load Quadrilateral");
         saveQuadMenuItem = new JMenuItem("Save Quadrilateral");
         
-        newMenuItem.addActionListener(this);
         loadPointMenuItem.addActionListener(this);
         savePointMenuItem.addActionListener(this);
         loadQuadMenuItem.addActionListener(this);
         saveQuadMenuItem.addActionListener(this);
         
-        
-        
-        fileMenu.add(newMenuItem);
         fileMenu.add(loadPointMenuItem);
         fileMenu.add(savePointMenuItem);
         fileMenu.add(loadQuadMenuItem);
@@ -187,12 +196,15 @@ public class UI implements ActionListener{
     private void createEditMenu() {
         editMenu = new JMenu("Edit");
         
+        clearScreenMenuItem = new JMenuItem("Clear Screen");
         deletePointMenuItem = new JMenuItem("Remove Point");
         newQuadMenuItem = new JMenuItem("New Quadrilateral");
         
+        clearScreenMenuItem.addActionListener(this);
         deletePointMenuItem.addActionListener(this);
         newQuadMenuItem.addActionListener(this);
         
+        editMenu.add(clearScreenMenuItem);
         editMenu.add(deletePointMenuItem);
         editMenu.add(newQuadMenuItem);
         
@@ -205,25 +217,29 @@ public class UI implements ActionListener{
     private void createViewMenu() {
         viewMenu = new JMenu("View");
         
-        showDTMenuItem = new JMenuItem("Delaunay Triangulation");
-        showVDMenu = new JMenu("Voronoi Diagram");
+        showDTMenuItem = new JCheckBoxMenuItem("Delaunay Triangulation");
+        showVDMenuItem = new JCheckBoxMenuItem("Voronoi Diagram");
+        showVDMenuItem.setState(true);
+        showCoordsMenuItem = new JCheckBoxMenuItem("Show Coordinates");
+        showCoordsMenuItem.setState(true);
         
         showDTMenuItem.addActionListener(this);
-        //showVDMenuItem.addActionListener(this);
+        showVDMenuItem.addActionListener(this);
+        showCoordsMenuItem.addActionListener(this);
         
         viewMenu.add(showDTMenuItem);
-        viewMenu.add(showVDMenu);
+        viewMenu.add(showVDMenuItem);
+        viewMenu.add(showCoordsMenuItem);
         
         menuBar.add(viewMenu);
-        
-        createVDSubMenu();
     }
     
     /**
      * Create sub menu for Voronoi Diagram menu item under View menu for showing various bisectors
      */
-    private void createVDSubMenu() {
-        showVDMenuItem = new JMenuItem("Voronoi Diagram");
+    private void createVDMenu() {
+        vdMenu = new JMenu("Voronoi Diagram");
+        
         showB2SMenuItem = new JCheckBoxMenuItem("Show Bisectors 2 Sites");
         showB2SMenuItem.setState(true);
         showOnlyChosenB2SMenuItem = new JCheckBoxMenuItem("Only Show Chosen Bisectors 2 Sites");
@@ -233,19 +249,26 @@ public class UI implements ActionListener{
         showOnlyChosenB3SMenuItem.setState(true);
         //showB3SFGMenuItem = new JCheckBoxMenuItem("Show FG For Bisectors 3 Sites");
         
-        showVDMenuItem.addActionListener(this);
         showB2SMenuItem.addActionListener(this);
         showOnlyChosenB2SMenuItem.addActionListener(this);
         showB3SMenuItem.addActionListener(this);
         showOnlyChosenB3SMenuItem.addActionListener(this);
         //showB3SFGMenuItem.addActionListener(this);
         
-        showVDMenu.add(showVDMenuItem);
-        showVDMenu.add(showB2SMenuItem);
-        showVDMenu.add(showOnlyChosenB2SMenuItem);
-        showVDMenu.add(showB3SMenuItem);
-        showVDMenu.add(showOnlyChosenB3SMenuItem);
+        //vdMenu.add(showVDMenuItem);
+        vdMenu.add(showB2SMenuItem);
+        vdMenu.add(showOnlyChosenB2SMenuItem);
+        vdMenu.add(showB3SMenuItem);
+        vdMenu.add(showOnlyChosenB3SMenuItem);
         //showVDMenu.add(showB3SFGMenuItem);
+        
+        menuBar.add(vdMenu);
+    }
+    
+    private void createDTMenu() {
+        dtMenu = new JMenu("Delaunay Triangulation");
+        
+        menuBar.add(dtMenu);
     }
     
 }

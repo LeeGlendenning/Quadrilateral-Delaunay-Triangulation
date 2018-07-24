@@ -35,6 +35,7 @@ public class FindBisectorsTwoSites {
      * @param p2 A point in the point set
      */
     public void findBisectorOfTwoSites(Quadrilateral quad, Point p1, Point p2) {
+        System.out.println("\nFinding Bisector Between 2 Sites:");
         double angle = Utility.calculateAngle(p1, p2); // Angle that slope(p1p2) makes with x axis
         
         System.out.println("Angle = " + Math.toDegrees(angle));
@@ -57,7 +58,7 @@ public class FindBisectorsTwoSites {
         Point h = doRaysIntersect(a1, h1.get(h1.size()-1), a2, h2.get(h2.size()-1));
         Point g = doRaysIntersect(a1, g1.get(g1.size()-1), a2, g2.get(g2.size()-1));
         
-        System.out.println("Endpoints: " + h + ", " + g);
+        //System.out.println("Endpoints of main bisector segment: " + h + ", " + g);
         this.voronoiEdgesB2S.add(new VoronoiBisector(new Point[]{p1, p2}, h, g, "b2s_chosen"));
         
         // Find intersections between non-inner vertices

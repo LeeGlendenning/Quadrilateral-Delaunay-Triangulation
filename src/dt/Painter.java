@@ -4,7 +4,6 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,12 +28,14 @@ public class Painter {
      * @param curScale Current scaling factor to draw Quadrilateral at
      */
     public void drawPointsAndQuads(Graphics2D g2d, List<Point> points, Quadrilateral quad, int yMax, int pointRadius, double curScale) {
+        //System.out.println("Points.size() = " + points.size());
         for (Point p : points) {
             g2d.setColor(p.getColour());
+            //System.out.println("Drawing point at " + (p.x - pointRadius) + ", " + (yMax - (p.y + pointRadius)));
             // Subtract pointRadius because points are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(p.x - pointRadius, yMax - (p.y + pointRadius), pointRadius * 2, pointRadius * 2)); // x, y, width, height
             quad.drawQuad(g2d, p, 1.0, yMax); // Original quad
-            quad.drawQuad(g2d, p, curScale, yMax); // Scaled quad
+            quad.drawQuad(g2d, p, curScale, yMax); // Scaled quad for animation
         }
     }
     
@@ -162,4 +163,31 @@ public class Painter {
         }
     }
     
+    /**
+     * 
+     * @param g2d Graphics2D object used to draw to the screen
+     * @param mouseX X coordinate of mouse location
+     * @param mouseY Y coordinate of mouse location
+     */
+    public void drawMouseCoordinates(Graphics2D g2d, int mouseX, int mouseY, int yMax) {
+        String s = mouseX + ", " + (yMax- mouseY);
+        g2d.setColor(Color.red);
+        g2d.drawString(s, Math.round(mouseX), Math.round(mouseY));
+    }
+    
+    /**
+     * 
+     * @param g2d Graphics2D object used to draw to the screen
+     * @param pointSet Set of points to draw coordinates for
+     * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
+     * @param showCoordinates If true, draw point coordinates. Otherwise do nothing
+     */
+    public void drawPointCoordinates(Graphics2D g2d, List<Point> pointSet, int yMax, boolean showCoordinates) {
+        g2d.setColor(Color.red);
+        if (showCoordinates) {
+            for (Point p : pointSet) {
+                g2d.drawString((Math.round(p.x) + ", " + Math.round(p.y)), Math.round(p.x), Math.round(yMax - p.y));
+            }
+        }
+    }
 }

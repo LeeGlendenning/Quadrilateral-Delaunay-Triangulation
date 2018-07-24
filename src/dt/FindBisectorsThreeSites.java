@@ -1,7 +1,6 @@
 package dt;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,6 +33,7 @@ public class FindBisectorsThreeSites {
      * @param p3 A point to find bisector of
      */
     public void findBisectorOfThreeSites(Quadrilateral q, VoronoiBisector[] voronoiEdgesB2S, Point p1, Point p2, Point p3) {
+        System.out.println("\nFinding Bisector Between 3 sites:");
         Utility.setLeftAndRightPoint(p1, p2, p1, p2, Utility.calculateAngle(p1, p2));
                     
         System.out.println("a1 = " + p1 + " a2 = " + p2 + " a3 = " + p3);
@@ -141,7 +141,7 @@ public class FindBisectorsThreeSites {
         }
         // Non-degenerate case
         
-        System.out.println(Arrays.toString(uv));
+        //System.out.println(Arrays.toString(uv));
         
         // Case 1 split into 3 parts for debugging
         if (Utility.isLeftOfSegment(a1, uv[0], a3, caseTolerance) == -1 &&
@@ -257,11 +257,11 @@ public class FindBisectorsThreeSites {
                 break;
         }
         
-        System.out.print("td vertices ");
+        /*System.out.print("td vertices ");
         for (Point p : td) {
             System.out.print(p + " ");
         }
-        System.out.println();
+        System.out.println();*/
         
         Point[] u1 = findB3SUVRays(q, Utility.rotatePoint(td[0], Utility.midpoint(a1, a2), angle), Utility.rotatePoint(a1, Utility.midpoint(a1, a2), angle), Utility.rotatePoint(q.prevVertex(td[0]), Utility.midpoint(a1, a2), angle));
         //System.out.println("u1: " + td[0] + ", " + q.prevVertex(td[0]));
@@ -380,7 +380,7 @@ public class FindBisectorsThreeSites {
                         Point b3s = Utility.doLineSegmentsIntersect(voronoiEdgesB2S[i].getStartPoint(), voronoiEdgesB2S[i].getEndPoint(), 
                                 voronoiEdgesB2S[j].getStartPoint(), voronoiEdgesB2S[j].getEndPoint());
                         if (b3s != null) {
-                            System.out.println("Found intersection point: " + b3s);
+                            //System.out.println("Found intersection point: " + b3s);
                             return new VoronoiBisector(new Point[]{a1, a2, a3}, b3s, b3s, "b3s_chosen");
                         }
                     }
