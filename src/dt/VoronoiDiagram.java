@@ -114,6 +114,9 @@ public class VoronoiDiagram extends JPanel {
         } else if (clickCount == 3) {
             p = new Point(200, 350);
         }*/
+        if (this.points.contains(p)) {
+            return;
+        }
         
         System.out.println("Adding point " + p);
         
@@ -181,7 +184,6 @@ public class VoronoiDiagram extends JPanel {
      */
     private Double findMinimumQuadScaling(VoronoiBisector chosenB3S) {
         Point[] qVerts = this.quad.getPixelVertsForPoint(chosenB3S.getEndPoint(), this.curScale);
-        System.out.println(this.curScale);
         /*System.out.println("qVerts for " + chosenB3S.getEndPoint());
         for (Point p : qVerts) {
             System.out.print(p + " ");
