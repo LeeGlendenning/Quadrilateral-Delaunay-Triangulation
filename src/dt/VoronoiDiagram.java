@@ -65,8 +65,6 @@ public class VoronoiDiagram extends JPanel {
         
         if (this.doAnimation) {
             doVoronoiAnimation(40, 1000, b2s, b3s);
-        } else {
-            doVoronoiAnimation(40, 0, b2s, b3s);
         }
     }
     
@@ -90,6 +88,9 @@ public class VoronoiDiagram extends JPanel {
         timer.start();
     }
     
+    //TODO: remove this once bug is fixed
+    int clickCount = 0;
+    
     /**
      * Calls addPoint for initial point set passed to constructor
      */
@@ -104,6 +105,18 @@ public class VoronoiDiagram extends JPanel {
      * @param p A Point
      */
     public void addPoint(Point p) {
+        /*clickCount++;
+        // Add points automatically for debugging
+        if (clickCount == 1) {
+            p = new Point(150, 300);
+        } else if (clickCount == 2) {
+            p = new Point(400, 250);
+        } else if (clickCount == 3) {
+            p = new Point(200, 350);
+        }*/
+        
+        System.out.println("Adding point " + p);
+        
         // Find B2S between p and other points
         for (int i = 0; i < this.points.size(); i++) {
             
@@ -168,6 +181,7 @@ public class VoronoiDiagram extends JPanel {
      */
     private Double findMinimumQuadScaling(VoronoiBisector chosenB3S) {
         Point[] qVerts = this.quad.getPixelVertsForPoint(chosenB3S.getEndPoint(), this.curScale);
+        System.out.println(this.curScale);
         /*System.out.println("qVerts for " + chosenB3S.getEndPoint());
         for (Point p : qVerts) {
             System.out.print(p + " ");
@@ -201,6 +215,7 @@ public class VoronoiDiagram extends JPanel {
      */
     private Double findScaleForAdjacentB3SPt(Point adj, Point[][] quadRays, Point[] qVerts, Point chosenB3SPt) {
         Double scale = null;
+        //System.out.println("chosenB3S point = " + chosenB3SPt);
         
         Point intersectionPt;
         
@@ -218,14 +233,15 @@ public class VoronoiDiagram extends JPanel {
             Point[] intersectionRay1 = findMinQuadRay(adj, qVerts[i], qVerts[ii]);
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay1[0], intersectionRay1[1], "debug"));
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay1[0], intersectionRay1[1], quadRays[i][0], quadRays[i][1])) != null) {
-                System.out.println("1dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
+                //System.out.println("qVerts[i] = " + qVerts[i] + ", chosenB3SPt = " + chosenB3SPt);
+                //System.out.println("1dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[i], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
                 }
             }
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay1[0], intersectionRay1[1], quadRays[ii][0], quadRays[ii][1])) != null) {
-                System.out.println("2dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
+                //System.out.println("2dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[ii], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
@@ -236,14 +252,14 @@ public class VoronoiDiagram extends JPanel {
             Point[] intersectionRay2 = findMinQuadRay(adj, qVerts[ii], qVerts[i]);
             this.displayEdges.add(new VoronoiBisector(new Point[]{}, intersectionRay2[0], intersectionRay2[1], "debug"));
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay2[0], intersectionRay2[1], quadRays[i][0], quadRays[i][1])) != null) {
-                System.out.println("3dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
+                //System.out.println("3dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[i], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
                 }
             }
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay2[0], intersectionRay2[1], quadRays[ii][0], quadRays[ii][1])) != null) {
-                System.out.println("4dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
+                //System.out.println("4dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[ii], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
@@ -302,6 +318,7 @@ public class VoronoiDiagram extends JPanel {
      * Applies one step for the animation
      */
     private void animationStep() {
+        System.out.println("Doing animation step");
         this.curScale += 0.1;
         this.quad.scaleQuad(this.curScale);
 

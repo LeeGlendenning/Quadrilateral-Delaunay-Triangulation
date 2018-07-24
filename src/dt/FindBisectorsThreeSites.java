@@ -28,6 +28,7 @@ public class FindBisectorsThreeSites {
      * If it exists, find the bisector point between p1, p2, p3
      * 
      * @param q Quadrilateral around each point
+     * @param voronoiEdgesB2S Array of B2S line segments
      * @param p1 A point to find bisector of
      * @param p2 A point to find bisector of
      * @param p3 A point to find bisector of
@@ -46,16 +47,12 @@ public class FindBisectorsThreeSites {
             } else {
                 System.out.println("!!! case 2 bisector null - this shouldn't happen !!!");
             }
-        } else if ((bisectorCase == 3 || bisectorCase == 4) && !Utility.isCollinear(p1, p2, p3)) {
+        } else if (bisectorCase == 3 && !Utility.isCollinear(p1, p2, p3)) {
             System.out.println("Handling case 3 - not collinear");
             //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
-            boolean isReflected = false;
-            if (bisectorCase == 4) {
-                System.out.println("Reflecting B3S");
-                isReflected = true;
-            }
             
-            ArrayList<VoronoiBisector> bisectors = findOverlapsB3S(voronoiEdgesB2S, p1, p2, p3, isReflected);
+            
+            ArrayList<VoronoiBisector> bisectors = findOverlapsB3S(voronoiEdgesB2S, p1, p2, p3);
             if (!bisectors.isEmpty()) {
                 for (VoronoiBisector bisector : bisectors) {
                     this.voronoiEdgesB3S.add(bisector);
@@ -167,9 +164,6 @@ public class FindBisectorsThreeSites {
             System.out.println("Point inside G21 - case 1 (do nothing)");
             return 1;
             
-        } else if (Utility.isLeftOfSegment(a1, uv[0], a3, caseTolerance) == 0) {
-            System.out.println("Point on boundary a1u - case 3 reflect B3S");
-            return 4;
         } else if (Utility.isLeftOfSegment(a2, uv[0], a3, caseTolerance) == 0 ||
                 Utility.isLeftOfSegment(uv[3], a2, a3, caseTolerance) == 0 ||
                 Utility.isLeftOfSegment(uv[3], a1, a3, caseTolerance) == 0 ||
@@ -403,7 +397,7 @@ public class FindBisectorsThreeSites {
      * @param a3 A point
      * @return ArrayList of VoronoiBisector representing the overlapping segments between bisector of a1a3 and a2a3. case 3 non-collinear
      */
-    private ArrayList<VoronoiBisector> findOverlapsB3S(VoronoiBisector[] voronoiEdgesB2S, Point a1, Point a2, Point a3, boolean isReflected) {
+    private ArrayList<VoronoiBisector> findOverlapsB3S(VoronoiBisector[] voronoiEdgesB2S, Point a1, Point a2, Point a3) {
         ArrayList<VoronoiBisector> overlaps = new ArrayList();
         
         for (int i = 0; i < voronoiEdgesB2S.length; i ++) {
@@ -431,9 +425,6 @@ public class FindBisectorsThreeSites {
                             }
                             
                             VoronoiBisector bisector = new VoronoiBisector(new Point[]{a1, a2, a3}, chosenPt, chosenPt, "b3s_chosen_overlap");
-                            /*if (isReflected) {
-                                bisector.setReflected(true);
-                            }*/
                             this.voronoiEdgesB3S.add(bisector);
                             overlaps.add(new VoronoiBisector(new Point[]{a1, a2, a3}, overlap[0], overlap[1], "b3s_overlap"));
                         }

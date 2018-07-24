@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -13,7 +12,6 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
-import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -36,13 +34,9 @@ public class UI implements ActionListener{
     private VoronoiDiagram voronoiDiagram;
     private Quadrilateral quad;
     
-    private int mouseX, mouseY;
-    
     public UI(Quadrilateral q, ArrayList<Point> pointSet) {
         this.quad = q;
         this.voronoiDiagram = new VoronoiDiagram(this.quad, pointSet);
-        this.mouseX = 0;
-        this.mouseY = 0;
         createFrame();
     }
     
@@ -54,7 +48,7 @@ public class UI implements ActionListener{
         this.voronoiDiagram.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                System.out.println(e.getX() + "," + e.getY());
+                //System.out.println(e.getX() + "," + e.getY());
                 addVoronoiPoint(e.getX(), e.getY());
             }
         });
@@ -136,7 +130,7 @@ public class UI implements ActionListener{
     }
     
     private void addVoronoiPoint(int x, int y) {
-        System.out.println("Adding point (" + x + ", " + (this.voronoiDiagram.getBounds().getSize().height - y) + ")");
+        //System.out.println("Adding point (" + x + ", " + (this.voronoiDiagram.getBounds().getSize().height - y) + ")");
         this.voronoiDiagram.addPoint(new Point(x, this.voronoiDiagram.getBounds().getSize().height - y));
     }
     
