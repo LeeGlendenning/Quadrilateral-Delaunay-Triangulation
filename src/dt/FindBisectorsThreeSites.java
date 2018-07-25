@@ -34,25 +34,26 @@ public class FindBisectorsThreeSites {
      */
     public void findBisectorOfThreeSites(Quadrilateral q, VoronoiBisector[] voronoiEdgesB2S, Point p1, Point p2, Point p3) {
         System.out.println("\nFinding Bisector Between 3 sites:");
-        Utility.setLeftAndRightPoint(p1, p2, p1, p2, Utility.calculateAngle(p1, p2));
+        Point pLeft = new Point(), pRight = new Point();
+        Utility.setLeftAndRightPoint(p1, p2, pLeft, pRight, Utility.calculateAngle(p1, p2));
                     
-        System.out.println("a1 = " + p1 + " a2 = " + p2 + " a3 = " + p3);
-        int bisectorCase = caseBisectorBetween3Points(q, p1, p2, p3);
+        System.out.println("a1 = " + pLeft + " a2 = " + pRight + " a3 = " + p3);
+        int bisectorCase = caseBisectorBetween3Points(q, pLeft, pRight, p3);
         
         // If case is 1, ignore. Means there is no bisector point
         if (bisectorCase == 2) { // case 2: single point is bisector of 3 
-            VoronoiBisector bisector = findIntersectionB3S(voronoiEdgesB2S, p1, p2, p3);
+            VoronoiBisector bisector = findIntersectionB3S(voronoiEdgesB2S, pLeft, pRight, p3);
             if (bisector != null) {
                 this.voronoiEdgesB3S.add(bisector);
             } else {
                 System.out.println("!!! case 2 bisector null - this shouldn't happen !!!");
             }
-        } else if (bisectorCase == 3 && !Utility.isCollinear(p1, p2, p3)) {
+        } else if (bisectorCase == 3 && !Utility.isCollinear(pLeft, pRight, p3)) {
             System.out.println("Handling case 3 - not collinear");
             //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
             
             
-            ArrayList<VoronoiBisector> bisectors = findOverlapsB3S(voronoiEdgesB2S, p1, p2, p3);
+            ArrayList<VoronoiBisector> bisectors = findOverlapsB3S(voronoiEdgesB2S, pLeft, pRight, p3);
             if (!bisectors.isEmpty()) {
                 for (VoronoiBisector bisector : bisectors) {
                     this.voronoiEdgesB3S.add(bisector);
@@ -60,10 +61,10 @@ public class FindBisectorsThreeSites {
             } else {
                 System.out.println("!!! case 3 bisector overlaps empty - this shouldn't happen !!!");
             }
-        } else if (bisectorCase == 3 && Utility.isCollinear(p1, p2, p3)) {
+        } else if (bisectorCase == 3 && Utility.isCollinear(pLeft, pRight, p3)) {
             System.out.println("Handling case 3 - collinear");
             //BC(a1; a2; a3) consists of one or two cones
-            ArrayList<VoronoiBisector[]> cones = findConeIntersectionsB3S(voronoiEdgesB2S, p1, p2, p3);
+            ArrayList<VoronoiBisector[]> cones = findConeIntersectionsB3S(voronoiEdgesB2S, pLeft, pRight, p3);
             if (!cones.isEmpty()) {
                 for (VoronoiBisector[] cone : cones) {
                     this.voronoiEdgesB3S.add(cone[0]);

@@ -62,40 +62,19 @@ public class VoronoiDiagram extends JPanel {
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
         
         // Construct VD for initial point set
-        addInitialPoints(p);
+        addPointSet(p);
         
         if (this.doAnimation) {
             doVoronoiAnimation(40, 1000, b2s, b3s);
         }
     }
     
-    /**
-     * Animate quad scaling and intersection discovery
-     */
-    private void doVoronoiAnimation(int delay, int maxScaleIterations, FindBisectorsTwoSites b2s, FindBisectorsThreeSites b3s) {
-        // Consider having a method which checks whether all quad segments are off the screen and stop animation only if true
-        timer = new Timer(delay, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                animationStep();
-                repaint();
-                scaleIterations ++;
-                // Limit iterations such that only intersections are found within the window area
-                if (scaleIterations > maxScaleIterations) {
-                    timer.stop();
-                }
-            }
-        });
-        timer.start();
-    }
-    
-    
     //int clickCount = 0; // Debugging
     
     /**
      * Calls addPoint for initial point set passed to constructor
      */
-    private void addInitialPoints(List<Point> pts) {
+    private void addPointSet(List<Point> pts) {
         for (int i = 0; i < pts.size(); i ++) {
             addPoint(pts.get(i));
         }
@@ -134,6 +113,7 @@ public class VoronoiDiagram extends JPanel {
         // Find B3S between p and all other pairs of points
         for (int i = 0; i < this.points.size(); i ++) {
             for (int j = i + 1; j < this.points.size(); j++) {
+                System.out.println("Finding B3S between: " + this.points.get(i).deepCopy() + ", " + this.points.get(j).deepCopy() + ", and p = " + p);
                 this.b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.points.get(i).deepCopy(), this.points.get(j).deepCopy(), p);
             }
         }
@@ -327,6 +307,26 @@ public class VoronoiDiagram extends JPanel {
      */
     
     /**
+     * Animate quad scaling and intersection discovery
+     */
+    private void doVoronoiAnimation(int delay, int maxScaleIterations, FindBisectorsTwoSites b2s, FindBisectorsThreeSites b3s) {
+        // Consider having a method which checks whether all quad segments are off the screen and stop animation only if true
+        timer = new Timer(delay, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                animationStep();
+                repaint();
+                scaleIterations ++;
+                // Limit iterations such that only intersections are found within the window area
+                if (scaleIterations > maxScaleIterations) {
+                    timer.stop();
+                }
+            }
+        });
+        timer.start();
+    }
+    
+    /**
      * Applies one step for the animation
      */
     private void animationStep() {
@@ -402,7 +402,7 @@ public class VoronoiDiagram extends JPanel {
     
     public void newPointSet(List<Point> points) {
         reset();
-        addInitialPoints(points);
+        addPointSet(points);
     }
     
     /**
