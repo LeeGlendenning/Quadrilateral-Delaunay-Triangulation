@@ -680,6 +680,14 @@ public class FindBisectorsThreeSites {
     
     /**
      * 
+     * @return Deep copy of display edges as array
+     */
+    public List<VoronoiBisector> getDisplayEdges() {
+        return (List)Utility.arrayToList(Utility.deepCopyVBArray(this.displayEdges.toArray(new VoronoiBisector[this.displayEdges.size()])));
+    }
+    
+    /**
+     * 
      * @return Deep copy array of chosen bisectors between 3 points
      */
     public VoronoiBisector[] getChosenBisectors() {

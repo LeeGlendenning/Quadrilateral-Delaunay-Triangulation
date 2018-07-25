@@ -231,15 +231,15 @@ public class Utility {
     
     /**
      * 
-     * @param pts Array of Points
+     * @param arr Array of Objects
      * @return ArrayList version of given array
      */
-    public static ArrayList<Point> arrayToList(Point[] pts) {
-        ArrayList<Point> ptsList = new ArrayList();
-        for (int i = 0; i < pts.length; i ++) {
-            ptsList.add(pts[i]);
+    public static ArrayList<Object> arrayToList(Object[] arr) {
+        ArrayList<Object> list = new ArrayList();
+        for (int i = 0; i < arr.length; i ++) {
+            list.add(arr[i]);
         }
-        return ptsList;
+        return list;
     }
     
     /**

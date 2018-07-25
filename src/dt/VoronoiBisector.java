@@ -26,7 +26,7 @@ public class VoronoiBisector {
      * @param tag String describing the bisector
      */
     public VoronoiBisector(Point[] adjacentPts, Point startPt, Point endPt, String tag) {
-        this.adjacentPoints = Utility.arrayToList(adjacentPts);
+        this.adjacentPoints = (ArrayList)Utility.arrayToList(adjacentPts);
         this.startPoint = startPt;
         this.endPoint = endPt;
         this.tag = tag;

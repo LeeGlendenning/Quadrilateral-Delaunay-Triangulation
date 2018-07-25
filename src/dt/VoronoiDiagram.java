@@ -32,7 +32,7 @@ public class VoronoiDiagram extends JPanel {
     private final Painter painter;
     
     private boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
-    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = true;
+    private boolean showB3S_fgRegion = true, showB3S_hidden = false, showB3S = true;
     private final boolean doAnimation = false;
     private boolean showCoordinates = true;
     
@@ -89,8 +89,8 @@ public class VoronoiDiagram extends JPanel {
         timer.start();
     }
     
-    //TODO: remove this once bug is fixed
-    int clickCount = 0;
+    
+    //int clickCount = 0; // Debugging
     
     /**
      * Calls addPoint for initial point set passed to constructor
@@ -128,6 +128,7 @@ public class VoronoiDiagram extends JPanel {
             this.b2s.findBisectorOfTwoSites(this.quad, this.points.get(i).deepCopy(), p);
         }
         System.out.println();
+        this.displayEdges.addAll(this.b2s.getDisplayEdges());
         VoronoiBisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
         
         // Find B3S between p and all other pairs of points
@@ -138,10 +139,14 @@ public class VoronoiDiagram extends JPanel {
         }
         System.out.println();
         this.points.add(p);
+        this.displayEdges.addAll(this.b3s.getDisplayEdges());
         
         this.chosenB3S = b3s.getChosenBisectors();
         calculateMinQuads();
         System.out.println();
+        
+        
+        
         
         repaint();
     }
@@ -471,6 +476,11 @@ public class VoronoiDiagram extends JPanel {
         this.mouseY = y;
         this.repaint();
     }
+    
+    
+    
+    
+    
     
     /**
      * Draws the Voronoi diagram to the window

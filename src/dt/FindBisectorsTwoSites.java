@@ -449,6 +449,14 @@ public class FindBisectorsTwoSites {
     
     /**
      * 
+     * @return Deep copy of display edges as array
+     */
+    public List<VoronoiBisector> getDisplayEdges() {
+        return (List)Utility.arrayToList(Utility.deepCopyVBArray(this.displayEdges.toArray(new VoronoiBisector[this.displayEdges.size()])));
+    }
+    
+    /**
+     * 
      * @return Deep copy array of h1 List
      */
     public Point[] geth1() {
