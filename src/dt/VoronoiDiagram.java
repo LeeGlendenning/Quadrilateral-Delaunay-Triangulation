@@ -22,8 +22,8 @@ public class VoronoiDiagram extends JPanel {
     protected List<Point> points, voronoiPoints; // voronoiPoints used for animation
     protected Quadrilateral quad;
     // Consider using synchronized list to avoid concurrent modification...
-    protected List<VoronoiBisector> displayEdges;
-    private VoronoiBisector[] chosenB3S;
+    protected List<Bisector> displayEdges;
+    private Bisector[] chosenB3S;
     protected double curScale;
     private int scaleIterations;
     private Timer timer;
@@ -32,7 +32,7 @@ public class VoronoiDiagram extends JPanel {
     private final Painter painter;
     
     private boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
-    private boolean showB3S_fgRegion = true, showB3S_hidden = false, showB3S = true;
+    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = true;
     private final boolean doAnimation = false;
     private boolean showCoordinates = true;
     
@@ -108,7 +108,7 @@ public class VoronoiDiagram extends JPanel {
         }
         System.out.println();
         this.displayEdges.addAll(this.b2s.getDisplayEdges());
-        VoronoiBisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
+        Bisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
         
         // Find B3S between p and all other pairs of points
         for (int i = 0; i < this.points.size(); i ++) {
@@ -139,7 +139,7 @@ public class VoronoiDiagram extends JPanel {
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiPoints = Collections.synchronizedList(new ArrayList());
         this.scaleIterations = 0;
-        this.chosenB3S = new VoronoiBisector[]{};
+        this.chosenB3S = new Bisector[]{};
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
@@ -157,7 +157,7 @@ public class VoronoiDiagram extends JPanel {
      * Find and apply the scaling for each of the minimum quads
      */
     public void calculateMinQuads() {
-        for (VoronoiBisector bisector : this.chosenB3S) {
+        for (Bisector bisector : this.chosenB3S) {
             Double scale;
             if (bisector.getTag().contains("chosen") && (scale = findMinimumQuadScaling(bisector)) != null) {
                 System.out.println("Scale = " + scale + "\n");
@@ -170,7 +170,7 @@ public class VoronoiDiagram extends JPanel {
      * @param chosenB3S Chosen VoronoiBisector between 3 sites
      * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S points
      */
-    private Double findMinimumQuadScaling(VoronoiBisector chosenB3S) {
+    private Double findMinimumQuadScaling(Bisector chosenB3S) {
         Point[] qVerts = this.quad.getPixelVertsForPoint(chosenB3S.getEndPoint(), this.curScale);
         /*System.out.println("qVerts for " + chosenB3S.getEndPoint());
         for (Point p : qVerts) {

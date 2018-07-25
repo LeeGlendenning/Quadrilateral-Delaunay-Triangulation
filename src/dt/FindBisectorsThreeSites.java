@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class FindBisectorsThreeSites {
     
-    List<VoronoiBisector> voronoiEdgesB3S, displayEdges;
+    List<Bisector> voronoiEdgesB3S, displayEdges;
     int height, width;
     
     public FindBisectorsThreeSites(int height, int width) {
@@ -32,7 +32,7 @@ public class FindBisectorsThreeSites {
      * @param p2 A point to find bisector of
      * @param p3 A point to find bisector of
      */
-    public void findBisectorOfThreeSites(Quadrilateral q, VoronoiBisector[] voronoiEdgesB2S, Point p1, Point p2, Point p3) {
+    public void findBisectorOfThreeSites(Quadrilateral q, Bisector[] voronoiEdgesB2S, Point p1, Point p2, Point p3) {
         System.out.println("\nFinding Bisector Between 3 sites:");
         Point pLeft = new Point(), pRight = new Point();
         Utility.setLeftAndRightPoint(p1, p2, pLeft, pRight, Utility.calculateAngle(p1, p2));
@@ -42,7 +42,7 @@ public class FindBisectorsThreeSites {
         
         // If case is 1, ignore. Means there is no bisector point
         if (bisectorCase == 2) { // case 2: single point is bisector of 3 
-            VoronoiBisector bisector = findIntersectionB3S(voronoiEdgesB2S, pLeft, pRight, p3);
+            Bisector bisector = findIntersectionB3S(voronoiEdgesB2S, pLeft, pRight, p3);
             if (bisector != null) {
                 this.voronoiEdgesB3S.add(bisector);
             } else {
@@ -53,9 +53,9 @@ public class FindBisectorsThreeSites {
             //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
             
             
-            ArrayList<VoronoiBisector> bisectors = findOverlapsB3S(voronoiEdgesB2S, pLeft, pRight, p3);
+            ArrayList<Bisector> bisectors = findOverlapsB3S(voronoiEdgesB2S, pLeft, pRight, p3);
             if (!bisectors.isEmpty()) {
-                for (VoronoiBisector bisector : bisectors) {
+                for (Bisector bisector : bisectors) {
                     this.voronoiEdgesB3S.add(bisector);
                 }
             } else {
@@ -64,9 +64,9 @@ public class FindBisectorsThreeSites {
         } else if (bisectorCase == 3 && Utility.isCollinear(pLeft, pRight, p3)) {
             System.out.println("Handling case 3 - collinear");
             //BC(a1; a2; a3) consists of one or two cones
-            ArrayList<VoronoiBisector[]> cones = findConeIntersectionsB3S(voronoiEdgesB2S, pLeft, pRight, p3);
+            ArrayList<Bisector[]> cones = findConeIntersectionsB3S(voronoiEdgesB2S, pLeft, pRight, p3);
             if (!cones.isEmpty()) {
-                for (VoronoiBisector[] cone : cones) {
+                for (Bisector[] cone : cones) {
                     this.voronoiEdgesB3S.add(cone[0]);
                     this.voronoiEdgesB3S.add(cone[1]);
                 }
@@ -104,9 +104,9 @@ public class FindBisectorsThreeSites {
             Point[] ray1 = findB3SUVRays(q, a2, a1, a1); // Ray from a1 to left
             Point[] ray2 = findB3SUVRays(q, a1, a2, a2); // Ray from a2 to right
 
-            this.displayEdges.add(new VoronoiBisector(new Point[]{}, a1, a2, "b3s_step"));
-            this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
-            this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "b3s_step"));
+            this.displayEdges.add(new Bisector(new Point[]{}, a1, a2, "b3s_step"));
+            this.displayEdges.add(new Bisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
+            this.displayEdges.add(new Bisector(new Point[]{}, ray2[0], ray2[1], "b3s_step"));
 
             if (Utility.isLeftOfSegment(a1, a2, a3, caseTolerance) == 0 ||
                     Utility.isLeftOfSegment(ray1[0], ray1[1], a3, caseTolerance) == 0 ||
@@ -126,9 +126,9 @@ public class FindBisectorsThreeSites {
             Point[] ray1 = findB3SUVRays(q, a2, a1, a1); // Ray from a1 to left
             Point[] ray2 = findB3SUVRays(q, a1, a2, a2); // Ray from a2 to right
 
-            this.displayEdges.add(new VoronoiBisector(new Point[]{}, a1, a2, "b3s_step"));
-            this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
-            this.displayEdges.add(new VoronoiBisector(new Point[]{}, ray2[0], ray2[1], "b3s_step"));
+            this.displayEdges.add(new Bisector(new Point[]{}, a1, a2, "b3s_step"));
+            this.displayEdges.add(new Bisector(new Point[]{}, ray1[0], ray1[1], "b3s_step"));
+            this.displayEdges.add(new Bisector(new Point[]{}, ray2[0], ray2[1], "b3s_step"));
             
             if (uv[0] == null) {
                 uv[0] = Utility.midpoint(a1, a2);
@@ -294,10 +294,10 @@ public class FindBisectorsThreeSites {
         */
         
         // Draw FG region
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, Utility.rotatePoint(u1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, u, Utility.rotatePoint(u2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, v, Utility.rotatePoint(v1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Point[]{}, v, Utility.rotatePoint(v2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Point[]{}, u, Utility.rotatePoint(u1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Point[]{}, u, Utility.rotatePoint(u2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Point[]{}, v, Utility.rotatePoint(v1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Point[]{}, v, Utility.rotatePoint(v2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
                 
         return new Point[]{u, Utility.rotatePoint(u1[3], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(u2[3], Utility.midpoint(a1, a2), -angle), v, Utility.rotatePoint(v1[3], Utility.midpoint(a1, a2), -angle), Utility.rotatePoint(v2[3], Utility.midpoint(a1, a2), -angle)};
     }
@@ -359,7 +359,7 @@ public class FindBisectorsThreeSites {
      * @param a3 A point
      * @return VoronoiBisector representing the intersection point between bisector of a1a3 and a2a3. case 2
      */
-    private VoronoiBisector findIntersectionB3S(VoronoiBisector[] voronoiEdgesB2S, Point a1, Point a2, Point a3) {
+    private Bisector findIntersectionB3S(Bisector[] voronoiEdgesB2S, Point a1, Point a2, Point a3) {
         //System.out.println("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + voronoiEdgesB2S.length);
         //printEdges(voronoiEdgesB2S);
         for (int i = 0; i < voronoiEdgesB2S.length; i ++) {
@@ -382,7 +382,7 @@ public class FindBisectorsThreeSites {
                                 voronoiEdgesB2S[j].getStartPoint(), voronoiEdgesB2S[j].getEndPoint());
                         if (b3s != null) {
                             //System.out.println("Found intersection point: " + b3s);
-                            return new VoronoiBisector(new Point[]{a1, a2, a3}, b3s, b3s, "b3s_chosen");
+                            return new Bisector(new Point[]{a1, a2, a3}, b3s, b3s, "b3s_chosen");
                         }
                     }
                 }
@@ -398,8 +398,8 @@ public class FindBisectorsThreeSites {
      * @param a3 A point
      * @return ArrayList of VoronoiBisector representing the overlapping segments between bisector of a1a3 and a2a3. case 3 non-collinear
      */
-    private ArrayList<VoronoiBisector> findOverlapsB3S(VoronoiBisector[] voronoiEdgesB2S, Point a1, Point a2, Point a3) {
-        ArrayList<VoronoiBisector> overlaps = new ArrayList();
+    private ArrayList<Bisector> findOverlapsB3S(Bisector[] voronoiEdgesB2S, Point a1, Point a2, Point a3) {
+        ArrayList<Bisector> overlaps = new ArrayList();
         
         for (int i = 0; i < voronoiEdgesB2S.length; i ++) {
             //System.out.println("Considering " + voronoiEdgesB2S[i].getAdjacentPts().get(0) + " and " + voronoiEdgesB2S[i].getAdjacentPts().get(1));
@@ -425,9 +425,9 @@ public class FindBisectorsThreeSites {
                                 chosenPt = overlap[0];
                             }
                             
-                            VoronoiBisector bisector = new VoronoiBisector(new Point[]{a1, a2, a3}, chosenPt, chosenPt, "b3s_chosen_overlap");
+                            Bisector bisector = new Bisector(new Point[]{a1, a2, a3}, chosenPt, chosenPt, "b3s_chosen_overlap");
                             this.voronoiEdgesB3S.add(bisector);
-                            overlaps.add(new VoronoiBisector(new Point[]{a1, a2, a3}, overlap[0], overlap[1], "b3s_overlap"));
+                            overlaps.add(new Bisector(new Point[]{a1, a2, a3}, overlap[0], overlap[1], "b3s_overlap"));
                         }
                     }
                 }
@@ -443,9 +443,9 @@ public class FindBisectorsThreeSites {
      * @param a3 A point
      * @return ArrayList of VoronoiBisector representing the overlapping cones between bisector of a1a3 and a2a3. case 3 collinear
      */
-    private ArrayList<VoronoiBisector[]> findConeIntersectionsB3S(VoronoiBisector[] voronoiEdgesB2S, Point a1, Point a2, Point a3) {
-        ArrayList<VoronoiBisector[]> coneIntersections = new ArrayList();
-        ArrayList<VoronoiBisector[]> cones = getCones(voronoiEdgesB2S); // List of VoronoiBisector tuples representing cones
+    private ArrayList<Bisector[]> findConeIntersectionsB3S(Bisector[] voronoiEdgesB2S, Point a1, Point a2, Point a3) {
+        ArrayList<Bisector[]> coneIntersections = new ArrayList();
+        ArrayList<Bisector[]> cones = getCones(voronoiEdgesB2S); // List of VoronoiBisector tuples representing cones
         
         for (int i = 0; i < cones.size(); i ++) {
             // If cone belongs to a1a2, a1a3, or a2a3
@@ -463,7 +463,7 @@ public class FindBisectorsThreeSites {
                         //System.out.println("and " + cones.get(i)[1].getStartPoint() + ", " + cones.get(i)[1].getEndPoint());
                         //System.out.println("to " + cones.get(j)[0].getStartPoint() + ", " + cones.get(j)[0].getEndPoint());
                         //System.out.println("and " + cones.get(j)[1].getStartPoint() + ", " + cones.get(j)[1].getEndPoint());
-                        VoronoiBisector[] coneIntersection;
+                        Bisector[] coneIntersection;
                         if ((coneIntersection = doConesIntersect(cones.get(i), cones.get(j))) != null) {
                             // Add chosen B3S point to list (apex of cone)
                             Point chosenPt = Utility.doLineSegmentsIntersect(coneIntersection[0].getStartPoint(), coneIntersection[0].getEndPoint(), 
@@ -471,7 +471,7 @@ public class FindBisectorsThreeSites {
                             if (!pointIsInfinite(chosenPt)) {
                                 Point[] adjacentUnion = Utility.pointArrayUnion(coneIntersection[0].getAdjacentPtsArray(), coneIntersection[1].getAdjacentPtsArray());
                                 //System.out.println("Found cone intersection at " + chosenPt + "\n");
-                                this.voronoiEdgesB3S.add(new VoronoiBisector(adjacentUnion, chosenPt, chosenPt, "b3s_chosen_cone"));
+                                this.voronoiEdgesB3S.add(new Bisector(adjacentUnion, chosenPt, chosenPt, "b3s_chosen_cone"));
 
                                 // Add entire cone to list for displaying
                                 coneIntersections.add(coneIntersection);
@@ -489,18 +489,18 @@ public class FindBisectorsThreeSites {
      * 
      * @return ArrayList of cones represented by VoronoiBisector tuples
      */
-    private ArrayList<VoronoiBisector[]> getCones(VoronoiBisector[] voronoiEdgesB2S) {
-        ArrayList<VoronoiBisector[]> cones = new ArrayList();
+    private ArrayList<Bisector[]> getCones(Bisector[] voronoiEdgesB2S) {
+        ArrayList<Bisector[]> cones = new ArrayList();
         int index = 0; // Also coneID
         boolean isFirstRay = true;
         
-        for (VoronoiBisector cone : voronoiEdgesB2S) {
+        for (Bisector cone : voronoiEdgesB2S) {
             if (cone.getTag().contains("cone")) {
                 String curConeID = cone.getTag().substring(cone.getTag().indexOf("=")+1, cone.getTag().length());
                 
                 if (Integer.parseInt(curConeID) == index) {
                     if (isFirstRay) {
-                        cones.add(new VoronoiBisector[2]);
+                        cones.add(new Bisector[2]);
                         cones.get(index)[0] = cone;
                         //System.out.println("Adding cone " + curConeID + " at index " + index + " [0]");
                         //System.out.println(cone.getStartPoint() + ", " + cone.getEndPoint());
@@ -526,15 +526,15 @@ public class FindBisectorsThreeSites {
      * @param cone2 VoronoiBisector array of size 2 representing a cone
      * @return VoronoiBisector array of size 2 representing the intersection of cone1 and cone2 if it exists, null otherwise
      */
-    private VoronoiBisector[] doConesIntersect(VoronoiBisector[] cone1, VoronoiBisector[] cone2) {
+    private Bisector[] doConesIntersect(Bisector[] cone1, Bisector[] cone2) {
         
-        for (VoronoiBisector coneEdge1 : cone1) {
+        for (Bisector coneEdge1 : cone1) {
             
-            for (VoronoiBisector coneEdge2 : cone2) {
+            for (Bisector coneEdge2 : cone2) {
                 Point intersection;
                 if ((intersection = Utility.doLineSegmentsIntersect(coneEdge1.getStartPoint(), coneEdge1.getEndPoint(), coneEdge2.getStartPoint(), coneEdge2.getEndPoint())) != null) {
-                    return new VoronoiBisector[]{new VoronoiBisector(cone1[0].getAdjacentPtsArray(), intersection, coneEdge1.getEndPoint(), "b3s_cone"), 
-                        new VoronoiBisector(cone2[0].getAdjacentPtsArray(), intersection, coneEdge2.getEndPoint(), "b3s_cone")};
+                    return new Bisector[]{new Bisector(cone1[0].getAdjacentPtsArray(), intersection, coneEdge1.getEndPoint(), "b3s_cone"), 
+                        new Bisector(cone2[0].getAdjacentPtsArray(), intersection, coneEdge2.getEndPoint(), "b3s_cone")};
                 }
             }
         }
@@ -546,8 +546,8 @@ public class FindBisectorsThreeSites {
      * 
      * @param edges ArrayList of Voronoi Bisectors to print formatted
      */
-    private void printVoronoiEdges(ArrayList<VoronoiBisector> edges) {
-        for (VoronoiBisector vb : edges) {
+    private void printVoronoiEdges(ArrayList<Bisector> edges) {
+        for (Bisector vb : edges) {
             System.out.println(" " + /*vb.adjacentPoints.get(0) + ", " + vb.adjacentPoints.get(1) + ": " +*/ vb.getStartPoint() + ", " + vb.getEndPoint());
         }
     }
@@ -675,30 +675,30 @@ public class FindBisectorsThreeSites {
      * 
      * @return Deep copy of the VoronoiBisector List for B2S
      */
-    public VoronoiBisector[] getVoronoiEdges() {
-        return Utility.deepCopyVBArray(this.voronoiEdgesB3S.toArray(new VoronoiBisector[this.voronoiEdgesB3S.size()]));
+    public Bisector[] getVoronoiEdges() {
+        return Utility.deepCopyVBArray(this.voronoiEdgesB3S.toArray(new Bisector[this.voronoiEdgesB3S.size()]));
     }
     
     /**
      * 
      * @return Deep copy of display edges as array
      */
-    public List<VoronoiBisector> getDisplayEdges() {
-        return (List)Utility.arrayToList(Utility.deepCopyVBArray(this.displayEdges.toArray(new VoronoiBisector[this.displayEdges.size()])));
+    public List<Bisector> getDisplayEdges() {
+        return (List)Utility.arrayToList(Utility.deepCopyVBArray(this.displayEdges.toArray(new Bisector[this.displayEdges.size()])));
     }
     
     /**
      * 
      * @return Deep copy array of chosen bisectors between 3 points
      */
-    public VoronoiBisector[] getChosenBisectors() {
-        List<VoronoiBisector> chosenBisectors = new ArrayList();
-        for (VoronoiBisector chosenB3S : this.voronoiEdgesB3S) {
+    public Bisector[] getChosenBisectors() {
+        List<Bisector> chosenBisectors = new ArrayList();
+        for (Bisector chosenB3S : this.voronoiEdgesB3S) {
             if (chosenB3S.getTag().contains("chosen")) {
                 chosenBisectors.add(chosenB3S);
             }
         }
-        return Utility.deepCopyVBArray(chosenBisectors.toArray(new VoronoiBisector[chosenBisectors.size()]));
+        return Utility.deepCopyVBArray(chosenBisectors.toArray(new Bisector[chosenBisectors.size()]));
     }
     
 }

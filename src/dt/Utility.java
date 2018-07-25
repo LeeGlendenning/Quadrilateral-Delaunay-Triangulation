@@ -436,8 +436,8 @@ public class Utility {
      * @param vbArr Array of VoronoiBisector objects
      * @return Deep copy of vbArr
      */
-    public static VoronoiBisector[] deepCopyVBArray(VoronoiBisector[] vbArr) {
-        VoronoiBisector[] newVB = new VoronoiBisector[vbArr.length];
+    public static Bisector[] deepCopyVBArray(Bisector[] vbArr) {
+        Bisector[] newVB = new Bisector[vbArr.length];
         for (int i = 0; i < vbArr.length; i ++) {
             newVB[i] = vbArr[i].deepCopy();
         }

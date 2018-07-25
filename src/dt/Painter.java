@@ -62,8 +62,8 @@ public class Painter {
      * @param showB2S If true, draw bisectors between 2 sites that are marked "chosen"
      * @param showB2S_hiddenCones If true, draw bisectors between 2 sites that are marked "hidden"
      */
-    public void drawB2S(Graphics2D g2d, VoronoiBisector[] voronoiEdgesB2S, int yMax, boolean showB2S, boolean showB2S_hiddenCones) {
-        for (VoronoiBisector bisector : voronoiEdgesB2S) {
+    public void drawB2S(Graphics2D g2d, Bisector[] voronoiEdgesB2S, int yMax, boolean showB2S, boolean showB2S_hiddenCones) {
+        for (Bisector bisector : voronoiEdgesB2S) {
             if (bisector.getTag().startsWith("b2s_chosen") && showB2S ||
                     bisector.getTag().startsWith("b2s_hidden") && showB2S_hiddenCones){
                 g2d.drawLine((int)Math.round(bisector.getStartPoint().x), yMax - (int)Math.round(bisector.getStartPoint().y),
@@ -81,8 +81,8 @@ public class Painter {
      * @param showB3S If true, show bisectors between 3 sites
      * @param showB3S_hidden If true, show bisectors between 3 sites that are marked "hidden"
      */
-    public void drawB3S(Graphics2D g2d, VoronoiBisector[] voronoiEdgesB3S, int yMax, boolean showB3S, boolean showB3S_hidden) {
-        for (VoronoiBisector bisector : voronoiEdgesB3S) {
+    public void drawB3S(Graphics2D g2d, Bisector[] voronoiEdgesB3S, int yMax, boolean showB3S, boolean showB3S_hidden) {
+        for (Bisector bisector : voronoiEdgesB3S) {
             if (bisector.getTag().startsWith("b3s") && showB3S && showB3S_hidden){
                 g2d.setColor(Color.red);
                 g2d.drawLine((int)Math.round(bisector.getStartPoint().x), yMax - (int)Math.round(bisector.getStartPoint().y),
@@ -101,8 +101,8 @@ public class Painter {
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param showB3S If true, show bisectors between 3 sites that are marked "chosen"
      */
-    public void drawChosenB3SAndMinQuads(Graphics2D g2d, Quadrilateral quad, VoronoiBisector[] chosenB3S, int yMax, boolean showB3S) {
-        for (VoronoiBisector bisector : chosenB3S) {
+    public void drawChosenB3SAndMinQuads(Graphics2D g2d, Quadrilateral quad, Bisector[] chosenB3S, int yMax, boolean showB3S) {
+        for (Bisector bisector : chosenB3S) {
             if (showB3S) {
                 g2d.setStroke(new BasicStroke(7));
                 g2d.drawLine((int)Math.round(bisector.getStartPoint().x), yMax - (int)Math.round(bisector.getStartPoint().y),
@@ -125,8 +125,8 @@ public class Painter {
      * @param showB2S_hgRegion If true, show lines corresponding to the hg region of b2s
      * @param showB3S_fgRegion If true, show lines corresponding to the fg region of b3s
      */
-    public void drawDisplayEdges(Graphics2D g2d, List<VoronoiBisector> displayEdges, int yMax, boolean showB2S_hgRegion, boolean showB3S_fgRegion) {
-        for (VoronoiBisector bisector : displayEdges.toArray(new VoronoiBisector[displayEdges.size()])) {
+    public void drawDisplayEdges(Graphics2D g2d, List<Bisector> displayEdges, int yMax, boolean showB2S_hgRegion, boolean showB3S_fgRegion) {
+        for (Bisector bisector : displayEdges.toArray(new Bisector[displayEdges.size()])) {
             // TODO: sometimes the bisector start or end point are null and I don't know why
             if (bisector.getStartPoint() != null && bisector.getEndPoint() != null &&
                     (bisector.getTag().equals("b2s_step") && showB2S_hgRegion ||
