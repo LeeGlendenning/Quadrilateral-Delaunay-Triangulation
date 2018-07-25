@@ -23,7 +23,6 @@ public class FindBisectorsTwoSites {
         this.g2 = new ArrayList();
         
         this.voronoiEdgesB2S = Collections.synchronizedList(new ArrayList());
-        // TODO: pass displayEdges to VoronoiDiagram so that they can be passed to Painter
         this.displayEdges = Collections.synchronizedList(new ArrayList());
     }
     
