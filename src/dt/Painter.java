@@ -190,4 +190,19 @@ public class Painter {
             }
         }
     }
+
+    /**
+     * 
+     * @param g2d Graphics2D object used to draw to the screen
+     * @param delaunayEdges List of point tuples representing edges of the Delaunay triangulation
+     * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
+     */
+    public void drawDelaunayEdges(Graphics2D g2d, List<Point[]> delaunayEdges, int yMax) {
+        g2d.setColor(Color.black);
+        for (Point[] edge : delaunayEdges.toArray(new Point[delaunayEdges.size()][])) {
+            g2d.drawLine((int)Math.round(edge[0].x), yMax - (int)Math.round(edge[0].y), 
+                    (int)Math.round(edge[1].x), yMax - (int)Math.round(edge[1].y));
+        }
+    }
+    
 }

@@ -20,6 +20,7 @@ import javax.swing.Timer;
 public class VoronoiDiagram extends JPanel {
 
     protected List<Point> points, voronoiPoints; // voronoiPoints used for animation
+    private List<Point[]> delaunayEdges; // List of Point tuples representing edges in the Delaunay triangulation
     protected Quadrilateral quad;
     // Consider using synchronized list to avoid concurrent modification...
     protected List<Bisector> displayEdges;
@@ -31,8 +32,8 @@ public class VoronoiDiagram extends JPanel {
     private FindBisectorsThreeSites b3s;
     private final Painter painter;
     
-    private boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = true, showB2S = true;
-    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = true;
+    private boolean showB2S_hgRegion = false, showB2S_hgPoints = false, showB2S_hiddenCones = false, showB2S = false;
+    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
     private final boolean doAnimation = false;
     private boolean showCoordinates = true;
     
@@ -55,6 +56,7 @@ public class VoronoiDiagram extends JPanel {
         
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiPoints = Collections.synchronizedList(new ArrayList());
+        this.delaunayEdges = Collections.synchronizedList(new ArrayList());
         this.scaleIterations = 0;
         this.curScale = 1.0;
         
@@ -81,6 +83,30 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
+     * Reset all instance variables
+     */
+    public void reset() {
+        this.points = Collections.synchronizedList(new ArrayList());
+        this.displayEdges = Collections.synchronizedList(new ArrayList());
+        this.voronoiPoints = Collections.synchronizedList(new ArrayList());
+        this.delaunayEdges = Collections.synchronizedList(new ArrayList());
+        this.scaleIterations = 0;
+        this.chosenB3S = new Bisector[]{};
+        
+        this.b2s = new FindBisectorsTwoSites();
+        this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
+        this.repaint();
+    }
+    
+    
+    
+    
+    
+    /**
+     * Delaunay triangulation methods
+     */
+    
+    /**
      * Find B2S, B3S and min quad for point set now including a new point p
      * @param p A Point
      */
@@ -103,7 +129,6 @@ public class VoronoiDiagram extends JPanel {
         
         // Find B2S between p and other points
         for (int i = 0; i < this.points.size(); i++) {
-            
             this.b2s.findBisectorOfTwoSites(this.quad, this.points.get(i).deepCopy(), p);
         }
         System.out.println();
@@ -122,48 +147,80 @@ public class VoronoiDiagram extends JPanel {
         this.displayEdges.addAll(this.b3s.getDisplayEdges());
         
         this.chosenB3S = b3s.getChosenBisectors();
-        calculateMinQuads();
+        
+        //calculateMinQuads();
+        for (Bisector chosenBisector : this.chosenB3S) {
+            if (!pointInsideQuad(calculateMinQuad(chosenBisector))) {
+                triangulatePoints(chosenBisector.getAdjacentPtsArray());
+            }
+        }
+        
         System.out.println();
-        
-        
-        
-        
         repaint();
     }
     
     /**
-     * Reset all instance variables
+     * 
+     * @return True if a point in the point set lies inside quad. False otherwise
      */
-    public void reset() {
-        this.points = Collections.synchronizedList(new ArrayList());
-        this.displayEdges = Collections.synchronizedList(new ArrayList());
-        this.voronoiPoints = Collections.synchronizedList(new ArrayList());
-        this.scaleIterations = 0;
-        this.chosenB3S = new Bisector[]{};
+    private boolean pointInsideQuad(Point[] quad) {
         
-        this.b2s = new FindBisectorsTwoSites();
-        this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
-        this.repaint();
+        /*System.out.println("pointInsideQuad: ");
+        int ii;
+        for (int i = 0; i < quad.length; i ++) {
+            if (i == quad.length-1) {
+                ii = 0;
+            } else {
+                ii = i+1;
+            }
+            System.out.println(quad[i] + " " + quad[ii]);
+        }*/
+        
+        for (Point p : this.points) {
+            
+            if (Utility.isLeftOfSegment(quad[0], quad[1], p, 0.1) == -1 &&
+                    Utility.isLeftOfSegment(quad[1], quad[2], p, 0.1) == -1 &&
+                    Utility.isLeftOfSegment(quad[2], quad[3], p, 0.1) == -1 &&
+                    Utility.isLeftOfSegment(quad[3], quad[0], p, 0.1) == -1) {
+                //System.out.println("Point " + p + " inside");
+                return true;
+            }
+            
+        }
+        return false;
     }
     
-    
-    
-    
-    
-    
-    
-    
     /**
-     * Find and apply the scaling for each of the minimum quads
+     * 
+     * @param pts Array of 3 points to connect
      */
-    public void calculateMinQuads() {
-        for (Bisector bisector : this.chosenB3S) {
-            Double scale;
-            if (bisector.getTag().contains("chosen") && (scale = findMinimumQuadScaling(bisector)) != null) {
-                System.out.println("Scale = " + scale + "\n");
-                bisector.setMinQuadScale(scale);
+    private void triangulatePoints(Point[] pts) {
+        int ii;
+        for (int i = 0; i < pts.length; i ++) {
+            if (i == pts.length-1) {
+                ii = 0;
+            } else {
+                ii = i+1;
+            }
+            // If the edge doesn't already exist
+            if (!this.delaunayEdges.contains(new Point[]{pts[i], pts[ii]})) {
+                this.delaunayEdges.add(new Point[]{pts[i], pts[ii]});
             }
         }
+    }
+    
+    /**
+     * @param chosenB3S Chosen Bisector between 3 points
+     * @return Min quad around given chosenB3S
+     */
+    public Point[] calculateMinQuad(Bisector chosenB3S) {
+        Double scale;
+        if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(chosenB3S)) != null) {
+            System.out.println("Scale = " + scale + "\n");
+            chosenB3S.setMinQuadScale(scale);
+            return this.quad.getPixelVertsForPoint(chosenB3S.getEndPoint(), scale);
+        }
+        return null;
     }
     
     /**
@@ -300,8 +357,6 @@ public class VoronoiDiagram extends JPanel {
     
     
     
-    
-    
     /* 
      *  Animation methods
      */
@@ -385,7 +440,6 @@ public class VoronoiDiagram extends JPanel {
     
     
     
-    
     /*
      *  User Interface methods
      */
@@ -432,11 +486,27 @@ public class VoronoiDiagram extends JPanel {
     
     /**
      * 
+     * @return Boolean showB2S
+     */
+    public boolean getShowB2S() {
+        return this.showB2S;
+    }
+    
+    /**
+     * 
      * @param setting Boolean to set
      */
     public void setShowB3S(boolean setting) {
         this.showB3S = setting;
         this.repaint();
+    }
+    
+    /**
+     * 
+     * @return Boolean showB3S
+     */
+    public boolean getShowB3S() {
+        return this.showB3S;
     }
     
     /**
@@ -450,11 +520,27 @@ public class VoronoiDiagram extends JPanel {
     
     /**
      * 
+     * @return Boolean showB2S_hiddenCones
+     */
+    public boolean getShowB2SHidden() {
+        return this.showB2S_hiddenCones;
+    }
+    
+    /**
+     * 
      * @param setting Boolean to set
      */
     public void setOnlyShowChosenB3S(boolean setting) {
         this.showB3S_hidden = !setting;
         this.repaint();
+    }
+    
+    /**
+     * 
+     * @return Boolean showB3S_hidden
+     */
+    public boolean getShowB3SHidden() {
+        return this.showB3S_hidden;
     }
     
     /**
@@ -468,6 +554,14 @@ public class VoronoiDiagram extends JPanel {
     
     /**
      * 
+     * @return Boolean showCoordinates
+     */
+    public boolean getShowCoordinates() {
+        return this.showCoordinates;
+    }
+    
+    /**
+     * 
      * @param x X coordinate of mouse
      * @param y Y coordinate of mouse
      */
@@ -476,7 +570,6 @@ public class VoronoiDiagram extends JPanel {
         this.mouseY = y;
         this.repaint();
     }
-    
     
     
     
@@ -522,6 +615,8 @@ public class VoronoiDiagram extends JPanel {
         painter.drawPointCoordinates(g2d, this.points, yMax, this.showCoordinates);
         
         painter.drawMouseCoordinates(g2d, mouseX, mouseY, yMax);
+        
+        painter.drawDelaunayEdges(g2d, this.delaunayEdges, yMax);
     }
 
 }

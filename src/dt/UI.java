@@ -17,8 +17,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.Box;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
@@ -473,12 +471,12 @@ public class UI implements ActionListener{
         vdMenu = new JMenu("Voronoi Diagram");
         
         showB2SMenuItem = new JCheckBoxMenuItem("Show Bisectors 2 Sites");
-        showB2SMenuItem.setState(true);
+        showB2SMenuItem.setState(this.voronoiDiagram.getShowB2S());
         showOnlyChosenB2SMenuItem = new JCheckBoxMenuItem("Only Show Chosen Bisectors 2 Sites");
         showB3SMenuItem = new JCheckBoxMenuItem("Show Bisectors 3 Sites");
-        showB3SMenuItem.setState(true);
+        showB3SMenuItem.setState(this.voronoiDiagram.getShowB3S());
         showOnlyChosenB3SMenuItem = new JCheckBoxMenuItem("Only Show Chosen Bisectors 3 Sites");
-        showOnlyChosenB3SMenuItem.setState(true);
+        showOnlyChosenB3SMenuItem.setState(!this.voronoiDiagram.getShowB3SHidden());
         //showB3SFGMenuItem = new JCheckBoxMenuItem("Show FG For Bisectors 3 Sites");
         
         showB2SMenuItem.addActionListener(this);
