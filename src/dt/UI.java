@@ -39,15 +39,15 @@ public class UI implements ActionListener{
     private JFrame frame;
     private JMenuBar menuBar;
     private JMenu fileMenu, editMenu, viewMenu, vdMenu, dtMenu;
-    private JMenuItem clearScreenMenuItem, loadPointMenuItem, savePointMenuItem, loadQuadMenuItem, saveQuadMenuItem;
-    private JMenuItem newQuadMenuItem, deletePointMenuItem;
+    private JMenuItem clearScreenMenuItem, loadVertexMenuItem, saveVertexMenuItem, loadQuadMenuItem, saveQuadMenuItem;
+    private JMenuItem newQuadMenuItem, deleteVertexMenuItem;
     private JCheckBoxMenuItem showDTMenuItem, showVDMenuItem, showCoordsMenuItem;
     private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
     
     private final VoronoiDiagram voronoiDiagram;
     
-    public UI(Quadrilateral q, ArrayList<Point> pointSet) {
-        this.voronoiDiagram = new VoronoiDiagram(q, pointSet);
+    public UI(Quadrilateral q, ArrayList<Vertex> vertexSet) {
+        this.voronoiDiagram = new VoronoiDiagram(q, vertexSet);
         createFrame();
     }
     
@@ -55,12 +55,12 @@ public class UI implements ActionListener{
         // Set up display window
         this.frame = new JFrame("Voronoi Diagram");
         
-        // Mouse listener for handling adding points when mouse clicks
+        // Mouse listener for handling adding vertexs when mouse clicks
         this.voronoiDiagram.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 //System.out.println(e.getX() + "," + e.getY());
-                addVoronoiPoint(e.getX(), e.getY());
+                addVoronoiVertex(e.getX(), e.getY());
             }
         });
         
@@ -96,16 +96,16 @@ public class UI implements ActionListener{
         //System.out.println(ev.getActionCommand());
         switch(ev.getActionCommand()) {
             // File menu
-            case "Load Point Set":
-                loadPointSet();
+            case "Load Vertex Set":
+                loadVertexSet();
                 break;
-            case "Save Point Set":
+            case "Save Vertex Set":
                 try {
-                    savePointSet();
+                    saveVertexSet();
                 } catch (FileNotFoundException ex) {
-                    System.out.println("Something went wrong while saving point set");
+                    System.out.println("Something went wrong while saving vertex set");
                 } catch (UnsupportedEncodingException ex) {
-                    System.out.println("Something went wrong while saving point set");
+                    System.out.println("Something went wrong while saving vertex set");
                 }
                 break;
             case "Load Quadrilateral":
@@ -124,8 +124,8 @@ public class UI implements ActionListener{
             case "Clear Screen":
                 this.voronoiDiagram.reset();
                 break;
-            case "Remove Point":
-                removePoint();
+            case "Remove Vertex":
+                removeVertex();
                 break;
             case "New Quadrilateral":
                 newQuadrilateral();
@@ -160,16 +160,16 @@ public class UI implements ActionListener{
     }
     
     /**
-     * Allow user to load point set from a file containing points and reconstruct VD
+     * Allow user to load vertex set from a file containing vertexs and reconstruct VD
      */
-    private void loadPointSet() {
+    private void loadVertexSet() {
         JFileChooser jfcLoadPts = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
                 
         if (jfcLoadPts.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             File selectedFile = jfcLoadPts.getSelectedFile();
             System.out.println(selectedFile.getAbsolutePath());
             try {
-                loadPointSetFile(selectedFile);
+                loadVertexSetFile(selectedFile);
             } catch (FileNotFoundException ex) {
                 System.out.println("File not found");
             }
@@ -177,49 +177,49 @@ public class UI implements ActionListener{
     }
     
     /**
-     * Load new point set and reconstruct Voronoi Diagram
-     * @param file File containing new point set
+     * Load new vertex set and reconstruct Voronoi Diagram
+     * @param file File containing new vertex set
      * @throws FileNotFoundException Thrown if file not found
      */
-    private void loadPointSetFile(File file) throws FileNotFoundException {
+    private void loadVertexSetFile(File file) throws FileNotFoundException {
         try (Scanner input = new Scanner(file)) {
-            List<Point> newPointSet = new ArrayList();
+            List<Vertex> newVertexSet = new ArrayList();
             while(input.hasNext()) {
                 String nextLine = input.nextLine();
                 try {
-                    newPointSet.add(new Point(Double.parseDouble(nextLine.split(",")[0]), Double.parseDouble(nextLine.split(",")[1])));
+                    newVertexSet.add(new Vertex(Double.parseDouble(nextLine.split(",")[0]), Double.parseDouble(nextLine.split(",")[1])));
                 } catch(NumberFormatException e) {
-                    System.out.println("Point set file not correct format.");
+                    System.out.println("Vertex set file not correct format.");
                     return;
                 }
             }
-            this.voronoiDiagram.newPointSet(newPointSet);
+            this.voronoiDiagram.newVertexSet(newVertexSet);
         }
     }
     
     /**
-     * Allow user to save the point set currently on screen to a file
+     * Allow user to save the vertex set currently on screen to a file
      */
-    private void savePointSet() throws FileNotFoundException, UnsupportedEncodingException {
+    private void saveVertexSet() throws FileNotFoundException, UnsupportedEncodingException {
         JFileChooser jfcSavePts = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
                 
         if (jfcSavePts.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
             File selectedFile = jfcSavePts.getSelectedFile();
             System.out.println(selectedFile.getAbsolutePath());
             
-            savePointSetFile(selectedFile);
+            saveVertexSetFile(selectedFile);
         }
     }
     
     /**
-     * Write the point set file
-     * @param file File to write point set to
+     * Write the vertex set file
+     * @param file File to write vertex set to
      * @throws FileNotFoundException
      * @throws UnsupportedEncodingException 
      */
-    private void savePointSetFile(File file) throws FileNotFoundException, UnsupportedEncodingException {
+    private void saveVertexSetFile(File file) throws FileNotFoundException, UnsupportedEncodingException {
         try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
-            for (Point p : this.voronoiDiagram.points) {
+            for (Vertex p : this.voronoiDiagram.vertices) {
                 writer.println(p.x + "," + p.y);
             }
         }
@@ -240,7 +240,7 @@ public class UI implements ActionListener{
     
     private void saveQuadrilateralFile(File file) throws FileNotFoundException, UnsupportedEncodingException {
         try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
-            for (Point p : this.voronoiDiagram.quad.getVertices()) {
+            for (Vertex p : this.voronoiDiagram.quad.getVertices()) {
                 writer.println(p.x + "," + p.y);
             }
         }
@@ -270,14 +270,14 @@ public class UI implements ActionListener{
      */
     private void loadQuadFile(File file) throws FileNotFoundException {
         try (Scanner input = new Scanner(file)) {
-            Point[] newQuad = new Point[4];
+            Vertex[] newQuad = new Vertex[4];
             int i = 0;
             while(i < 4) {
                 String nextLine = input.nextLine();
                 try {
-                    newQuad[i] = new Point(Double.parseDouble(nextLine.split(",")[0]), Double.parseDouble(nextLine.split(",")[1]));
+                    newQuad[i] = new Vertex(Double.parseDouble(nextLine.split(",")[0]), Double.parseDouble(nextLine.split(",")[1]));
                 } catch(NumberFormatException e) {
-                    System.out.println("Point set file not correct format.");
+                    System.out.println("Vertex set file not correct format.");
                     return;
                 }
                 i ++;
@@ -334,12 +334,12 @@ public class UI implements ActionListener{
                 !newQuadFieldx3.getText().isEmpty() && !newQuadFieldy3.getText().isEmpty() &&
                 !newQuadFieldx4.getText().isEmpty() && !newQuadFieldy4.getText().isEmpty()) {
             try {
-                this.voronoiDiagram.newQuad(new Point[]{new Point(Double.parseDouble(newQuadFieldx1.getText()), Double.parseDouble(newQuadFieldy1.getText())),
-                        new Point(Double.parseDouble(newQuadFieldx2.getText()), Double.parseDouble(newQuadFieldy2.getText())),
-                        new Point(Double.parseDouble(newQuadFieldx3.getText()), Double.parseDouble(newQuadFieldy3.getText())),
-                        new Point(Double.parseDouble(newQuadFieldx4.getText()), Double.parseDouble(newQuadFieldy4.getText()))});
+                this.voronoiDiagram.newQuad(new Vertex[]{new Vertex(Double.parseDouble(newQuadFieldx1.getText()), Double.parseDouble(newQuadFieldy1.getText())),
+                        new Vertex(Double.parseDouble(newQuadFieldx2.getText()), Double.parseDouble(newQuadFieldy2.getText())),
+                        new Vertex(Double.parseDouble(newQuadFieldx3.getText()), Double.parseDouble(newQuadFieldy3.getText())),
+                        new Vertex(Double.parseDouble(newQuadFieldx4.getText()), Double.parseDouble(newQuadFieldy4.getText()))});
             } catch (NumberFormatException e) {
-                System.out.println("Invalid format for new quad point. X and Y coordinates must be numbers.");
+                System.out.println("Invalid format for new quad vertex. X and Y coordinates must be numbers.");
             }
         } else if (newQuadResult == JOptionPane.OK_OPTION ) {
             System.out.println("All fields must not be empty.");
@@ -347,9 +347,9 @@ public class UI implements ActionListener{
     }
     
     /**
-     * Allow user to specify a point in the VD to remove and reconstruct VD
+     * Allow user to specify a vertex in the VD to remove and reconstruct VD
      */
-    private void removePoint() {
+    private void removeVertex() {
         JTextField xField = new JTextField(5);
         JTextField yField = new JTextField(5);
 
@@ -364,16 +364,16 @@ public class UI implements ActionListener{
                  "Enter X and Y Coordinates", JOptionPane.OK_CANCEL_OPTION);
         if (rmPtResult == JOptionPane.OK_OPTION) {
             try {
-                this.voronoiDiagram.removePoint(new Point(Double.parseDouble(xField.getText()), Double.parseDouble(yField.getText())));
+                this.voronoiDiagram.removeVertex(new Vertex(Double.parseDouble(xField.getText()), Double.parseDouble(yField.getText())));
             } catch (NumberFormatException e) {
-                System.out.println("Invalid point format. X and Y coordinates must be numbers.");
+                System.out.println("Invalid vertex format. X and Y coordinates must be numbers.");
             }
         }
     }
     
-    private void addVoronoiPoint(int x, int y) {
-        //System.out.println("Adding point (" + x + ", " + (this.voronoiDiagram.getBounds().getSize().height - y) + ")");
-        this.voronoiDiagram.addPoint(new Point(x, this.voronoiDiagram.getBounds().getSize().height - y));
+    private void addVoronoiVertex(int x, int y) {
+        //System.out.println("Adding vertex (" + x + ", " + (this.voronoiDiagram.getBounds().getSize().height - y) + ")");
+        this.voronoiDiagram.addVertex(new Vertex(x, this.voronoiDiagram.getBounds().getSize().height - y));
     }
     
     private void displayCoordinates(int x, int y) {
@@ -397,23 +397,23 @@ public class UI implements ActionListener{
     }
     
     /**
-     * Create File menu for opening and saving point sets and quadrilaterals
+     * Create File menu for opening and saving vertex sets and quadrilaterals
      */
     private void createFileMenu() {
         fileMenu = new JMenu("File");
         
-        loadPointMenuItem = new JMenuItem("Load Point Set");
-        savePointMenuItem = new JMenuItem("Save Point Set");
+        loadVertexMenuItem = new JMenuItem("Load Vertex Set");
+        saveVertexMenuItem = new JMenuItem("Save Vertex Set");
         loadQuadMenuItem = new JMenuItem("Load Quadrilateral");
         saveQuadMenuItem = new JMenuItem("Save Quadrilateral");
         
-        loadPointMenuItem.addActionListener(this);
-        savePointMenuItem.addActionListener(this);
+        loadVertexMenuItem.addActionListener(this);
+        saveVertexMenuItem.addActionListener(this);
         loadQuadMenuItem.addActionListener(this);
         saveQuadMenuItem.addActionListener(this);
         
-        fileMenu.add(loadPointMenuItem);
-        fileMenu.add(savePointMenuItem);
+        fileMenu.add(loadVertexMenuItem);
+        fileMenu.add(saveVertexMenuItem);
         fileMenu.add(loadQuadMenuItem);
         fileMenu.add(saveQuadMenuItem);
         
@@ -421,21 +421,21 @@ public class UI implements ActionListener{
     }
     
     /**
-     * Create Edit menu to remove points or create a new quadrilateral
+     * Create Edit menu to remove vertexs or create a new quadrilateral
      */
     private void createEditMenu() {
         editMenu = new JMenu("Edit");
         
         clearScreenMenuItem = new JMenuItem("Clear Screen");
-        deletePointMenuItem = new JMenuItem("Remove Point");
+        deleteVertexMenuItem = new JMenuItem("Remove Vertex");
         newQuadMenuItem = new JMenuItem("New Quadrilateral");
         
         clearScreenMenuItem.addActionListener(this);
-        deletePointMenuItem.addActionListener(this);
+        deleteVertexMenuItem.addActionListener(this);
         newQuadMenuItem.addActionListener(this);
         
         editMenu.add(clearScreenMenuItem);
-        editMenu.add(deletePointMenuItem);
+        editMenu.add(deleteVertexMenuItem);
         editMenu.add(newQuadMenuItem);
         
         menuBar.add(editMenu);

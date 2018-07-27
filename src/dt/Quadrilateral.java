@@ -9,17 +9,17 @@ import java.awt.Graphics2D;
  */
 public class Quadrilateral {
     
-    private Point[] vertices = new Point[4];
-    private Point center;
+    private Vertex[] vertices = new Vertex[4];
+    private Vertex center;
 
     /**
      * Create quad using array of vertices. Center defined as average of vertices
      * 
-     * @param vertices array of Point objects defining vertices
+     * @param vertices array of Vertex objects defining vertices
      */
-    public Quadrilateral(Point[] vertices) {
+    public Quadrilateral(Vertex[] vertices) {
         this.vertices = vertices;
-        this.center = new Point();
+        this.center = new Vertex(0,0);
         computeCenter();
         printInfo();
         //minimizeQuad();
@@ -28,12 +28,12 @@ public class Quadrilateral {
     /**
      * Create quad using array of vertices and predefined center
      * 
-     * @param vertices Array of Point objects defining vertices
-     * @param center Arbitrary Point representing the center of the quad
+     * @param vertices Array of Vertex objects defining vertices
+     * @param center Arbitrary Vertex representing the center of the quad
      */
-    public Quadrilateral(Point[] vertices, Point center) {
+    public Quadrilateral(Vertex[] vertices, Vertex center) {
         this.vertices = vertices;
-        this.center = new Point();
+        this.center = new Vertex(0,0);
         this.center = center;
         printInfo();
         //minimizeQuad();
@@ -49,11 +49,11 @@ public class Quadrilateral {
     }
     
     /**
-     * Print Point array to console
+     * Print Vertex array to console
      * 
-     * @param verts Point array of vertices
+     * @param verts Vertex array of vertices
      */
-    public void printVertices(Point[] verts) {
+    public void printVertices(Vertex[] verts) {
         for (int i = 0; i < 4; i ++) {
             System.out.print("(" + verts[i].x + ", " + verts[i].y + ") ");
         }
@@ -75,24 +75,24 @@ public class Quadrilateral {
     private void computeCenter() {
         double x = (vertices[0].x + vertices[1].x + vertices[2].x + vertices[3].x) / 4;
         double y = (vertices[0].y + vertices[1].y + vertices[2].y + vertices[3].y) / 4;
-        this.center = new Point(x, y);
+        this.center = new Vertex(x, y);
     }
     
     /**
      * Compute and store the distance of each vertex to the center of the quad
      * 
-     * @param verts Point array of vertices of a quad
-     * @param p Point to draw quad around
+     * @param verts Vertex array of vertices of a quad
+     * @param p Vertex to draw quad around
      * @param isReflected If true, reflect quad vertices about x coordinate of p
-     * @return Point array with x-y distance of each vertex to the center of the quad
+     * @return Vertex array with x-y distance of each vertex to the center of the quad
      */
-    private Point[] computeVertDistToPoint(Point[] verts, Point p/*, boolean isReflected*/) {
-        Point[] distToCenter = new Point[4];
+    private Vertex[] computeVertDistToVertex(Vertex[] verts, Vertex p/*, boolean isReflected*/) {
+        Vertex[] distToCenter = new Vertex[4];
         for (int i = 0; i < 4; i ++) {
             /*if (isReflected) {
-                distToCenter[i] = new Point(verts[i].x - p.x, p.y - verts[i].y);
+                distToCenter[i] = new Vertex(verts[i].x - p.x, p.y - verts[i].y);
             } else {*/
-                distToCenter[i] = new Point(verts[i].x - p.x, verts[i].y - p.y);
+                distToCenter[i] = new Vertex(verts[i].x - p.x, verts[i].y - p.y);
             //}
         }
         return distToCenter;
@@ -104,8 +104,8 @@ public class Quadrilateral {
      * @param scaleFactor Factor to scale vertices by
      * @return Array of scaled vertices
      */
-    public Point[] scaleQuad(double scaleFactor) {
-        Point[] scaledVertices = Utility.deepCopyPointArray(this.vertices);
+    public Vertex[] scaleQuad(double scaleFactor) {
+        Vertex[] scaledVertices = Utility.deepCopyVertexArray(this.vertices);
         for (int i = 0; i < 4; i ++) {
             // Translate center of quad to origin
             scaledVertices[i].x -= this.center.x;
@@ -133,9 +133,9 @@ public class Quadrilateral {
         System.out.println("Minimizing quad");
         
         double curScale = 1.0;
-        Point[] tempVertices = Utility.deepCopyPointArray(this.vertices);
+        Vertex[] tempVertices = Utility.deepCopyVertexArray(this.vertices);
         while (edgeLengthsLargerThanMin(tempVertices, 3.0)) {
-            this.vertices = Utility.deepCopyPointArray(tempVertices);
+            this.vertices = Utility.deepCopyVertexArray(tempVertices);
             curScale -= 0.1;
             tempVertices = scaleQuad(curScale);
         }
@@ -149,7 +149,7 @@ public class Quadrilateral {
      * @param min Minimum allowed length of an edge in the quad
      * @return True if area is larger than 1, false otherwise
      */
-    private boolean edgeLengthsLargerThanMin(Point[] vertices, double min) {
+    private boolean edgeLengthsLargerThanMin(Vertex[] vertices, double min) {
         int j = 1;
         for (int i = 0; i < 4; i ++) 
         {
@@ -169,11 +169,11 @@ public class Quadrilateral {
      * @param scale Amount to scale quad by
      * @return Pixel coordinates
      */
-    public Point[] getPixelVertsForPoint(Point p, double scale) {
-        Point[] distToCenter = computeVertDistToPoint(scaleQuad(scale), this.center);
-        Point[] verts = new Point[4];
+    public Vertex[] getPixelVertsForVertex(Vertex p, double scale) {
+        Vertex[] distToCenter = computeVertDistToVertex(scaleQuad(scale), this.center);
+        Vertex[] verts = new Vertex[4];
         for (int i = 0; i < 4; i ++) {
-            verts[i] = new Point( (p.x + distToCenter[i].x), (p.y + distToCenter[i].y));
+            verts[i] = new Vertex( (p.x + distToCenter[i].x), (p.y + distToCenter[i].y));
         }
         return verts;
     }
@@ -182,19 +182,19 @@ public class Quadrilateral {
      * 
      * @return Cloned list of vertices defining the quad
      */
-    public Point[] getVertices() {
-        return Utility.deepCopyPointArray(this.vertices);
+    public Vertex[] getVertices() {
+        return Utility.deepCopyVertexArray(this.vertices);
     }
     
     /**
      * @param v A vertex of the Quadrilateral
      * @return Next clockwise vertex in the vertex array of the Quadrilateral
      */
-    public Point nextVertex(Point v) {
+    public Vertex nextVertex(Vertex v) {
         for (int i = 0; i < this.vertices.length; i ++) {
             if (v.equals(this.vertices[i])) {
                 
-                return (i != this.vertices.length-1) ? new Point(this.vertices[i+1].x, this.vertices[i+1].y) : new Point(this.vertices[0].x, this.vertices[0].y);
+                return (i != this.vertices.length-1) ? new Vertex(this.vertices[i+1].x, this.vertices[i+1].y) : new Vertex(this.vertices[0].x, this.vertices[0].y);
             }
         }
         return null; // v is an invalid vertex
@@ -204,10 +204,10 @@ public class Quadrilateral {
      * @param v A vertex of the Quadrilateral
      * @return Previous clockwise vertex in the vertex array of the Quadrilateral
      */
-    public Point prevVertex(Point v) {
+    public Vertex prevVertex(Vertex v) {
         for (int i = 0; i < this.vertices.length; i ++) {
             if (v.equals(this.vertices[i])) {
-                return (i != 0) ? new Point(this.vertices[i-1].x, this.vertices[i-1].y) : new Point(this.vertices[this.vertices.length-1].x, this.vertices[this.vertices.length-1].y);
+                return (i != 0) ? new Vertex(this.vertices[i-1].x, this.vertices[i-1].y) : new Vertex(this.vertices[this.vertices.length-1].x, this.vertices[this.vertices.length-1].y);
             }
         }
         return null; // v is an invalid vertex
@@ -217,20 +217,20 @@ public class Quadrilateral {
      * 
      * @return Center point of quad
      */
-    public Point getCenter() {
-        return new Point(this.center.x, this.center.y);
+    public Vertex getCenter() {
+        return new Vertex(this.center.x, this.center.y);
     }
     
     /**
      * Draw quad around a point
      * 
      * @param g2d Graphics 2D object used to draw to the screen
-     * @param p Point to draw quad around
+     * @param p Vertex to draw quad around
      * @param scale Amount to scale quad by
      * @param yMax Height of screen. Used to draw from bottom left corner
      */
-    public void drawQuad(Graphics2D g2d, Point p, double scale, int yMax) {
-        Point[] distToCenter = computeVertDistToPoint(scaleQuad(scale), this.center);
+    public void drawQuad(Graphics2D g2d, Vertex p, double scale, int yMax) {
+        Vertex[] distToCenter = computeVertDistToVertex(scaleQuad(scale), this.center);
         
         int j = 1;
         for (int i = 0; i < 4; i ++) {

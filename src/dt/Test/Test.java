@@ -1,12 +1,13 @@
 package dt.Test;
 
-import dt.DelaunayTriangulation;
-import dt.Point;
+import dt.Vertex;
 import dt.Quadrilateral;
+import dt.UI;
+import dt.Vertex;
 import java.util.ArrayList;
 
 /**
- * Short example to test the dt package
+ * Test cases for the dt package
  * 
  * @author Lee Glendenning
  */
@@ -17,78 +18,109 @@ public class Test {
      */
     public static void main(String[] args) {
         
-        ArrayList<Point> pts = new ArrayList();
+        ArrayList<Vertex> pts = new ArrayList();
         //b3p case example: (100,100), (400,300), (200,500), diamond, center = (23, 15)
-        pts.add(new Point(100, 100));
-        pts.add(new Point(200, 200));
-        pts.add(new Point(300, 300));
-        pts.add(new Point(150, 350));
-        pts.add(new Point(150, 300));
-        pts.add(new Point(400, 300));
-        //pts.add(new Point(600, 300));
-        pts.add(new Point(200, 320));
+        //pts.add(new Vertex(100, 100));
+        //pts.add(new Vertex(200, 200));
+        //pts.add(new Vertex(300, 300));
+        //pts.add(new Vertex(150, 350));
+        //pts.add(new Vertex(150, 300));
+        //pts.add(new Vertex(400, 300));
+        //pts.add(new Vertex(600, 300));
+        //pts.add(new Vertex(200, 320));
+        
+        
+        
+        
+        pts.add(new Vertex(548, 285));
+        pts.add(new Vertex(326, 474));
+        pts.add(new Vertex(276, 271));
+        
+        
+        // Meeting July 18 Test Cases...
+        
+        // Show working case for min quad
+        // Test case 3 - non-collinear (diamond) a3 on a1u
+        /*pts.add(new Vertex(150, 300));
+        pts.add(new Vertex(400, 250));
+        pts.add(new Vertex(200, 350));*/
+        
+        // Problem: min quad does not pass through all vertices (quad1)
+        /*pts.add(new Vertex(150, 300));
+        pts.add(new Vertex(300, 300));
+        pts.add(new Vertex(150, 350));*/
+        
+        // Test case 3 - non-collinear (quad1) a3 on a1u
+        /*pts.add(new Vertex(200, 300));
+        pts.add(new Vertex(400, 300));
+        pts.add(new Vertex(300, 325));*/
+        
+        
+        
+        
         
         
         
         // Test case 2 and 3_non-collinear (square)
-        /*pts.add(new Point(150, 350));
-        pts.add(new Point(400, 300));
-        pts.add(new Point(200, 300));
-        pts.add(new Point(300, 500));*/
+        /*pts.add(new Vertex(150, 350));
+        pts.add(new Vertex(400, 300));
+        pts.add(new Vertex(200, 300));
+        pts.add(new Vertex(300, 500));*/
         
         // Test case 2 and 3_non-collinear (quad2)
-        /*pts.add(new Point(100, 100));
-        pts.add(new Point(200, 200));
-        pts.add(new Point(150, 350));
-        pts.add(new Point(200, 300));*/
+        /*pts.add(new Vertex(100, 100));
+        pts.add(new Vertex(200, 200));
+        pts.add(new Vertex(150, 350));
+        pts.add(new Vertex(200, 300));*/
         
         
         // Case 3 - collinear square
-        /*pts.add(new Point(150, 300));
-        pts.add(new Point(400, 300));
-        pts.add(new Point(200, 300));*/
+        /*pts.add(new Vertex(150, 300));
+        pts.add(new Vertex(400, 300));
+        pts.add(new Vertex(200, 300));*/
         
         // Case 2,3 - collinear, 3 - non-collinear diamond
-        /*pts.add(new Point(150, 300));
-        pts.add(new Point(100, 100));
-        pts.add(new Point(300, 300));
-        pts.add(new Point(400, 400));*/
+        /*pts.add(new Vertex(150, 300));
+        pts.add(new Vertex(100, 100));
+        pts.add(new Vertex(300, 300));
+        pts.add(new Vertex(400, 400));*/
         
         
         // Case 3 - non collinear square
-        /*pts.add(new Point(150, 350));
-        pts.add(new Point(400, 300));
-        pts.add(new Point(200, 300));*/
+        /*pts.add(new Vertex(150, 350));
+        pts.add(new Vertex(400, 300));
+        pts.add(new Vertex(200, 350));*/
         
         // Case 3 - not collinear diamond
-        /*pts.add(new Point(150, 350));
-        pts.add(new Point(200, 200));
-        pts.add(new Point(200, 300));
-        pts.add(new Point(200, 500));*/
+        /*pts.add(new Vertex(150, 350));
+        pts.add(new Vertex(200, 200));
+        pts.add(new Vertex(200, 300));
+        pts.add(new Vertex(200, 500));*/
         
         // Quad1
-        //Point[] quad = {new Point(0,0), new Point(10,30), new Point(30,40), new Point(40,10)};
-        //Point center = new Point(13, 17);
+        //Vertex[] quad = {new Vertex(0,0), new Vertex(10,30), new Vertex(30,40), new Vertex(40,10)};
+        //Vertex center = new Vertex(13, 17);
         
         // Quad2
-        //Point[] quad = {new Point(20,0), new Point(10,30), new Point(30,40), new Point(40,10)};
+        Vertex[] quad = {new Vertex(20,0), new Vertex(10,30), new Vertex(30,40), new Vertex(40,10)};
         
-        // Quad3 - One cone for points having same y
-        //Point[] quad = {new Point(0,0), new Point(10,30), new Point(20,20), new Point(20,0)};
+        // Quad3 - One cone for vertices having same y
+        //Vertex[] quad = {new Vertex(0,0), new Vertex(10,30), new Vertex(20,20), new Vertex(20,0)};
         
-        // Quad4 - One cone for points having same y
-        //Point[] quad = {new Point(0,0), new Point(10,30), new Point(20,30), new Point(20,10)};
+        // Quad4 - One cone for vertices having same y
+        //Vertex[] quad = {new Vertex(0,0), new Vertex(10,30), new Vertex(20,30), new Vertex(20,10)};
         
         // Square
-        //Point[] quad = {new Point(20,20), new Point(20,0), new Point(0,0), new Point(0,20)};
+        //Vertex[] quad = {new Vertex(20,20), new Vertex(20,0), new Vertex(0,0), new Vertex(0,20)};
         
         // Diamond
-        Point[] quad = {new Point(0,20), new Point(20,40), new Point(40,20), new Point(20,0)};
+        //Vertex[] quad = {new Vertex(0,20), new Vertex(20,40), new Vertex(40,20), new Vertex(20,0)};
         
         Quadrilateral q = new Quadrilateral(quad);
         //Quadrilateral q = new Quadrilateral(quad, center);
         
-        DelaunayTriangulation dt = new DelaunayTriangulation(q, pts);
+        //DelaunayTriangulation dt = new DelaunayTriangulation(q, pts);
+        UI ui = new UI(q, pts);
         //dt.drawDT();
     }
 

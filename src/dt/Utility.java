@@ -14,40 +14,40 @@ public class Utility {
     
     /**
      * 
-     * @param a A Point
-     * @param b A Point
-     * @param c A Point
+     * @param a A Vertex
+     * @param b A Vertex
+     * @param c A Vertex
      * @return True if a, b, c are collinear. False otherwise
      */
-    public static boolean isCollinear(Point a, Point b, Point c) {
+    public static boolean isCollinear(Vertex a, Vertex b, Vertex c) {
         return (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x) == 0;
     }
     
     /**
      * 
-     * @param p1 Endpoint of first line segment
-     * @param p2 Endpoint of first line segment
+     * @param v1 Endpoint of first line segment
+     * @param v2 Endpoint of first line segment
      * @param p3 Endpoint of second line segment
      * @param p4 Endpoint of second line segment
      * @param floatTolerance Double tolerance for comparing two floating point numbers
-     * @return True if p1p2 is parallel (has same slope within 10 decimal places) to p3p4
+     * @return True if v1v2 is parallel (has same slope within 10 decimal places) to p3p4
      */
-    public static boolean isParallel(Point p1, Point p2, Point p3, Point p4, double floatTolerance) {
-        //System.out.println("p1 = " + p1 + "p2 = " + p2 + "p3 = " + p3 + "p4 = " + p4);
-        //System.out.println("isparallel: " + calculateAngle(p1, p2) + " : " + calculateAngle(p3, p4) + " == " + (Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < this.floatTolerance));
-        return Math.abs(calculateAngle(p1, p2) - calculateAngle(p3, p4)) < floatTolerance;
+    public static boolean isParallel(Vertex v1, Vertex v2, Vertex p3, Vertex p4, double floatTolerance) {
+        //System.out.println("v1 = " + v1 + "v2 = " + v2 + "p3 = " + p3 + "p4 = " + p4);
+        //System.out.println("isparallel: " + calculateAngle(v1, v2) + " : " + calculateAngle(p3, p4) + " == " + (Math.abs(calculateAngle(v1, v2) - calculateAngle(p3, p4)) < this.floatTolerance));
+        return Math.abs(calculateAngle(v1, v2) - calculateAngle(p3, p4)) < floatTolerance;
     }
     
     /**
      * Rotate a point around a pivot point by an angle
      * 
-     * @param pivot Pivot Point
+     * @param pivot Pivot Vertex
      * @param angle Rotation angle
-     * @param p Point to rotate
+     * @param p Vertex to rotate
      * @return New location of rotated point
      */
-    public static Point rotatePoint(Point p, Point pivot, double angle) {
-        Point r = new Point(p.x, p.y);
+    public static Vertex rotateVertex(Vertex p, Vertex pivot, double angle) {
+        Vertex r = new Vertex(p.x, p.y);
         double s = Math.sin(angle);
         double c = Math.cos(angle);
 
@@ -69,63 +69,63 @@ public class Utility {
     /**
      * Compute slope of line segment
      * 
-     * @param p1 Endpoint of line segment
-     * @param p2 Endpoint of line segment
-     * @return Slope of p1p2
+     * @param v1 Endpoint of line segment
+     * @param v2 Endpoint of line segment
+     * @return Slope of v1v2
      */
-    public static double slope(Point p1, Point p2) {
-        //System.out.println("Slope(" + p1 + ", " + p2 + ") = (" + p2.y + " - " + p1.y + ") / (" + p2.x + " - " + p1.x + ") = " + (p2.y - p1.y) / (p2.x - p1.x));
-        return (p2.y - p1.y) / (p2.x - p1.x);
+    public static double slope(Vertex v1, Vertex v2) {
+        //System.out.println("Slope(" + v1 + ", " + v2 + ") = (" + v2.y + " - " + v1.y + ") / (" + v2.x + " - " + v1.x + ") = " + (v2.y - v1.y) / (v2.x - v1.x));
+        return (v2.y - v1.y) / (v2.x - v1.x);
     }
     
     /**
      * Compute the midpoint of two points
      * 
-     * @param p1 First point
-     * @param p2 Second point
-     * @return Midpoint of p1 and p2
+     * @param v1 First point
+     * @param v2 Second point
+     * @return Midpoint of v1 and v2
      */
-    public static Point midpoint(Point p1, Point p2) {
-        return new Point((p1.x + p2.x)/2, (p1.y + p2.y)/2);
+    public static Vertex midpoint(Vertex v1, Vertex v2) {
+        return new Vertex((v1.x + v2.x)/2, (v1.y + v2.y)/2);
     }
     
     /**
      * 
-     * @param p1 A Point
-     * @param p2 A Point
-     * @return Angle p1,p2 makes with the x axis
+     * @param v1 A Vertex
+     * @param v2 A Vertex
+     * @return Angle v1,v2 makes with the x axis
      */
-    public static double calculateAngle(Point p1, Point p2) {
-        double angle; // Angle that slope(p1p2) makes with x axis
-        if (p1.x == p2.x) {
+    public static double calculateAngle(Vertex v1, Vertex v2) {
+        double angle; // Angle that slope(v1v2) makes with x axis
+        if (v1.x == v2.x) {
             angle = Math.toRadians(-90);
-            /*if (p1.y < p2.y) {
+            /*if (v1.y < v2.y) {
                 angle = Math.toRadians(90);
             } else {
                 angle = Math.toRadians(-90);
             }*/
         } else {
-            angle = Math.atan((p1.y - p2.y) / (p2.x - p1.x));
+            angle = Math.atan((v1.y - v2.y) / (v2.x - v1.x));
         }
         return angle;
     }
     
     /**
-     * NOTE: Point a should have less or equal x value to point b for sign to be correct
+     * NOTE: Vertex a should have less or equal x value to point b for sign to be correct
      * 
      * @param a Endpoint of line segment
      * @param b Endpoint of line segment
      * @param c Query point
      * @return +1 if point is left of line (ccw order), 0 if point is on line (collinear), -1 otherwise (cw order)
      */
-    public static int isLeftOfSegment(Point a, Point b, Point c, double tolerance){
+    public static int isLeftOfSegment(Vertex a, Vertex b, Vertex c, double tolerance){
         //System.out.println("a = " + a + ", b = " + b + ", c = " + c);
         double cross = (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
         //System.out.println("isLeftOfSegment: cross = " + cross);
         
-        Point ra = rotatePoint(a, midpoint(a, b), calculateAngle(a, b));
-        Point rb = rotatePoint(b, midpoint(a, b), calculateAngle(a, b));
-        Point rc = rotatePoint(c, midpoint(a, b), calculateAngle(a, b));
+        Vertex ra = rotateVertex(a, midpoint(a, b), calculateAngle(a, b));
+        Vertex rb = rotateVertex(b, midpoint(a, b), calculateAngle(a, b));
+        Vertex rc = rotateVertex(c, midpoint(a, b), calculateAngle(a, b));
         //System.out.println("ra = " + ra + "rb = " + rb + "rc = " + rc);
         
         // Test if point c is on segment ab
@@ -146,87 +146,79 @@ public class Utility {
     
     /**
      * 
-     * @param arr1 Point array
-     * @param arr2 Point array
-     * @return Point array containing the union of arr1 and arr2
+     * @param arr1 Vertex array
+     * @param arr2 Vertex array
+     * @return Vertex array containing the union of arr1 and arr2
      */
-    public static Point[] pointArrayUnion(Point[] arr1, Point[] arr2) {
-        ArrayList<Point> union = new ArrayList();
+    public static Vertex[] vertexArrayUnion(Vertex[] arr1, Vertex[] arr2) {
+        ArrayList<Vertex> union = new ArrayList();
         
-        for (Point p1 : arr1) {
-            union.add(p1);
+        for (Vertex v1 : arr1) {
+            union.add(v1);
         }
         
-        for (Point p2 : arr2) {
-            if (!union.contains(p2)) {
-                union.add(p2);
+        for (Vertex v2 : arr2) {
+            if (!union.contains(v2)) {
+                union.add(v2);
             }
         }
         
-        return union.toArray(new Point[union.size()]);
+        return union.toArray(new Vertex[union.size()]);
     }
     
     /**
      * Compute the Euclidean distance between two points
      * 
-     * @param p1 First point
-     * @param p2 Second point
-     * @return Euclidean distance between p1 and p2
+     * @param v1 First point
+     * @param v2 Second point
+     * @return Euclidean distance between v1 and v2
      */
-    public static double euclideanDistance(Point p1, Point p2) {
-        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+    public static double euclideanDistance(Vertex v1, Vertex v2) {
+        return Math.sqrt(Math.pow(v1.x - v2.x, 2) + Math.pow(v1.y - v2.y, 2));
     }
     
     /**
      * Take the cross product of two point objects
      *
-     * @param p1 First point
-     * @param p2 Second point
+     * @param v1 First point
+     * @param v2 Second point
      * @return Cross product of the two points
      */
-    public static double crossProduct(Point p1, Point p2) {
-        return (p1.x * p2.y) - (p1.y * p2.x);
+    public static double crossProduct(Vertex v1, Vertex v2) {
+        return (v1.x * v2.y) - (v1.y * v2.x);
     }
     
     /**
      * Add the x and y values of two points
      *
-     * @param p1 First point
-     * @param p2 Second point
-     * @return Result of p1 + p2
+     * @param v1 First point
+     * @param v2 Second point
+     * @return Result of v1 + v2
      */
-    public static Point addPoints(Point p1, Point p2) {
-        Point addP = new Point();
-        addP.x = p1.x + p2.x;
-        addP.y = p1.y + p2.y;
-
-        return addP;
+    public static Vertex addVertexs(Vertex v1, Vertex v2) {
+        return new Vertex(v1.x + v2.x, v1.y + v2.y);
     }
     
     /**
      * Subtract the x and y values of point object from another
      *
-     * @param p1 Point to be subtracted from
-     * @param p2 Point to subtract other point by
-     * @return Result of p1 - p2
+     * @param v1 Vertex to be subtracted from
+     * @param v2 Vertex to subtract other vertex by
+     * @return Result of v1 - v2
      */
-    public static Point subtractPoints(Point p1, Point p2) {
-        Point subP = new Point();
-        subP.x = p1.x - p2.x;
-        subP.y = p1.y - p2.y;
-
-        return subP;
+    public static Vertex subtractVertexs(Vertex v1, Vertex v2) {
+        return new Vertex(v1.x - v2.x, v1.y - v2.y);
     }
     
     /**
      * Determine whether the x and y values of two points are both equal
      *
-     * @param p1 First point to compare
-     * @param p2 Second point to compare
+     * @param v1 First point to compare
+     * @param v2 Second point to compare
      * @return True if point are equal, false otherwise
      */
-    public static boolean equalPoints(Point p1, Point p2, double tolerance) {
-        return (Math.abs(p1.x - p2.x) < tolerance && Math.abs(p1.y - p2.y) < tolerance);
+    public static boolean equalVertexs(Vertex v1, Vertex v2, double tolerance) {
+        return (Math.abs(v1.x - v2.x) < tolerance && Math.abs(v1.y - v2.y) < tolerance);
     }
     
     /**
@@ -246,39 +238,39 @@ public class Utility {
      * Determine whether two line segments intersect using vector cross product
      * approach Method outlined in http://stackoverflow.com/a/565282/786339
      *
-     * @param p1 First point of first line segment
-     * @param p2 Second point of first line segment
+     * @param v1 First point of first line segment
+     * @param v2 Second point of first line segment
      * @param q1 First point of second line segment
      * @param q2 Second point of second line segment
      * @return Intersection point if the line segments intersect, null otherwise
      */
-    public static Point doLineSegmentsIntersect(Point p1, Point p2, Point q1, Point q2) {
-        //System.out.println("DoLineSegmentsIntersect: " + p1 + ", " + p2 + " : " + q1 + ", " + q2);
-        Point r = Utility.subtractPoints(p2, p1);
-        Point s = Utility.subtractPoints(q2, q1);
+    public static Vertex doLineSegmentsIntersect(Vertex v1, Vertex v2, Vertex q1, Vertex q2) {
+        //System.out.println("DoLineSegmentsIntersect: " + v1 + ", " + v2 + " : " + q1 + ", " + q2);
+        Vertex r = Utility.subtractVertexs(v2, v1);
+        Vertex s = Utility.subtractVertexs(q2, q1);
 
-        double numerator = Utility.crossProduct(Utility.subtractPoints(q1, p1), r);
+        double numerator = Utility.crossProduct(Utility.subtractVertexs(q1, v1), r);
         double denominator = Utility.crossProduct(r, s);
         
         // Lines are collinear
         if (numerator == 0 && denominator == 0) {
             double tolerance = 0.01;
             // If line segments share an endpoint, line segments intersect
-            if (Utility.equalPoints(p1, q1, tolerance) || Utility.equalPoints(p1, q2, tolerance) || Utility.equalPoints(p2, q1, tolerance) || Utility.equalPoints(p2, q2, tolerance)) {
-                Point intersection;
-                if (Utility.equalPoints(p1, q1, tolerance) || Utility.equalPoints(p1, q2, tolerance)) {
-                    intersection = p1;
+            if (Utility.equalVertexs(v1, q1, tolerance) || Utility.equalVertexs(v1, q2, tolerance) || Utility.equalVertexs(v2, q1, tolerance) || Utility.equalVertexs(v2, q2, tolerance)) {
+                Vertex intersection;
+                if (Utility.equalVertexs(v1, q1, tolerance) || Utility.equalVertexs(v1, q2, tolerance)) {
+                    intersection = v1;
                 } else {
-                    intersection = p2;
+                    intersection = v2;
                 }
                 //System.out.println("1Found intersection at (" + intersection.x + ", " + intersection.y + ")");
                 return intersection;
             }
 
             // Line segments overlap if all point differences in either direction do not have the same sign
-            if (!allEqual(new boolean[]{(q1.x - p1.x < 0), (q1.x - p2.x < 0),
-                (q2.x - p1.x < 0), (q2.x - p2.x < 0)}) || !allEqual(new boolean[]{(q1.y - p1.y < 0),
-                (q1.y - p2.y < 0), (q2.y - p1.y < 0), (q2.y - p2.y < 0)})) 
+            if (!allEqual(new boolean[]{(q1.x - v1.x < 0), (q1.x - v2.x < 0),
+                (q2.x - v1.x < 0), (q2.x - v2.x < 0)}) || !allEqual(new boolean[]{(q1.y - v1.y < 0),
+                (q1.y - v2.y < 0), (q2.y - v1.y < 0), (q2.y - v2.y < 0)})) 
             {
                 // Need to return multiple points or a line segment?
                 return null;
@@ -293,14 +285,14 @@ public class Utility {
         }
 
         double u = numerator / denominator;
-        double t = Utility.crossProduct(Utility.subtractPoints(q1, p1), s) / denominator;
+        double t = Utility.crossProduct(Utility.subtractVertexs(q1, v1), s) / denominator;
         
         // Lines are not parallel but intersect
         if ((t >= 0) && (t <= 1) && (u >= 0) && (u <= 1)) {
-            Point intersection;
+            Vertex intersection;
             r.x *= t;
             r.y *= t;
-            intersection = Utility.addPoints(p1, r);
+            intersection = Utility.addVertexs(v1, r);
             //System.out.println("2Found intersection at (" + intersection.x + ", " + intersection.y + ")");
             return intersection;
         }
@@ -328,29 +320,29 @@ public class Utility {
     /**
      * Determine which point is left and right based on normal
      * 
-     * @param p1 First point to consider
-     * @param p2 Second  point to consider
-     * @param left Point object to assign as left point
-     * @param right Point object to assign as right point
-     * @param axisRotation Angle of slope p1p2
+     * @param v1 First point to consider
+     * @param v2 Second  point to consider
+     * @param left Vertex object to assign as left point
+     * @param right Vertex object to assign as right point
+     * @param axisRotation Angle of slope v1v2
      */
-    public static void setLeftAndRightPoint(Point p1, Point p2, Point left, Point right, double angle) {
+    public static void setLeftAndRightVertex(Vertex v1, Vertex v2, Vertex left, Vertex right, double angle) {
         
-        //System.out.println("Rotating " + p1 + " and " + p2 + " by " + Math.toDegrees(angle) + " degrees");
-        Point r1 = Utility.rotatePoint(p1, Utility.midpoint(p1, p2), angle);
-        Point r2 = Utility.rotatePoint(p2, Utility.midpoint(p1, p2), angle);
+        //System.out.println("Rotating " + v1 + " and " + v2 + " by " + Math.toDegrees(angle) + " degrees");
+        Vertex r1 = Utility.rotateVertex(v1, Utility.midpoint(v1, v2), angle);
+        Vertex r2 = Utility.rotateVertex(v2, Utility.midpoint(v1, v2), angle);
         //System.out.println("Rotated points: " + r1 + ", " + r2);
         
         if (Math.min(r1.x, r2.x) == r1.x) {
-            left.x = p1.x;
-            left.y = p1.y;
-            right.x = p2.x;
-            right.y = p2.y;
+            left.x = v1.x;
+            left.y = v1.y;
+            right.x = v2.x;
+            right.y = v2.y;
         } else {
-            left.x = p2.x;
-            left.y = p2.y;
-            right.x = p1.x;
-            right.y = p1.y;
+            left.x = v2.x;
+            left.y = v2.y;
+            right.x = v1.x;
+            right.y = v1.y;
         }
         
     }
@@ -359,30 +351,30 @@ public class Utility {
      * Find the two vertices of a quad that have max and min y values wrt an angle
      * 
      * @param q A quadrilateral to iterate over
-     * @param a1 Point used as reference for rotation
-     * @param a2 Point used as reference for rotation
+     * @param a1 Vertex used as reference for rotation
+     * @param a2 Vertex used as reference for rotation
      * @param angle Angle to rotate quad by such that a1a2 is parallel to x axis
      * @return Array of nonInner vertices of size 2
      */
-    public static ArrayList<Point> findNonInnerVertices(Quadrilateral q, Point a1, Point a2, double angle) {
-        ArrayList<Point> nonInnerVerts = new ArrayList();
-        Point[] rVerts = new Point[4];
+    public static ArrayList<Vertex> findNonInnerVertices(Quadrilateral q, Vertex a1, Vertex a2, double angle) {
+        ArrayList<Vertex> nonInnerVerts = new ArrayList();
+        Vertex[] rVerts = new Vertex[4];
         
         // Rotate all quad vertices
         //System.out.print("Non-Inner Vertices rVerts: ");
         for (int i = 0; i < 4; i ++) {
-            rVerts[i] = Utility.rotatePoint(q.getVertices()[i], Utility.midpoint(a1, a2), angle);
+            rVerts[i] = Utility.rotateVertex(q.getVertices()[i], Utility.midpoint(a1, a2), angle);
             //System.out.print(rVerts[i] + ", ");
         }
         //System.out.println();
         
         // Sort rotated quad vertices by ascending y value (more or less sweep line)
-        Arrays.sort(rVerts, new Comparator<Point>() {
+        Arrays.sort(rVerts, new Comparator<Vertex>() {
             @Override
-            public int compare(Point p1, Point p2) {
-                if (p1.y > p2.y) {
+            public int compare(Vertex v1, Vertex v2) {
+                if (v1.y > v2.y) {
                     return +1;
-                } else if (p1.y < p2.y) {
+                } else if (v1.y < v2.y) {
                      return -1;
                 } else {
                     return 0;
@@ -394,21 +386,21 @@ public class Utility {
         double tolerance = 0.00001;
         // Check for SL hitting an edge
         if (Math.abs(rVerts[0].y - rVerts[1].y) < tolerance /*&& rVerts[0].x < rVerts[1].x*/) {
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[0], Utility.midpoint(a1, a2), -angle));
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[1], Utility.midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotateVertex(rVerts[0], Utility.midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotateVertex(rVerts[1], Utility.midpoint(a1, a2), -angle));
         } else {
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[0], Utility.midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotateVertex(rVerts[0], Utility.midpoint(a1, a2), -angle));
         }
         
         if (Math.abs(rVerts[2].y - rVerts[3].y) < tolerance /*&& rVerts[2].x > rVerts[3].x*/) {
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[2], Utility.midpoint(a1, a2), -angle));
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[3], Utility.midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotateVertex(rVerts[2], Utility.midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotateVertex(rVerts[3], Utility.midpoint(a1, a2), -angle));
         } else {
-            nonInnerVerts.add(Utility.rotatePoint(rVerts[3], Utility.midpoint(a1, a2), -angle));
+            nonInnerVerts.add(Utility.rotateVertex(rVerts[3], Utility.midpoint(a1, a2), -angle));
         }
         
         System.out.print("Non-inner vertices ");
-        for (Point p : nonInnerVerts) {
+        for (Vertex p : nonInnerVerts) {
             System.out.print(p + " ");
         }
         System.out.println();
@@ -420,11 +412,11 @@ public class Utility {
     /**
      * Create deep copy of a point array
      * 
-     * @param ptArr Point array to clone
+     * @param ptArr Vertex array to clone
      * @return Deep copy of ptSet
      */
-    public static Point[] deepCopyPointArray(Point[] ptArr) {
-        Point[] newSet = new Point[ptArr.length];
+    public static Vertex[] deepCopyVertexArray(Vertex[] ptArr) {
+        Vertex[] newSet = new Vertex[ptArr.length];
         for (int i = 0; i < ptArr.length; i ++) {
             newSet[i] = ptArr[i].deepCopy();
         }

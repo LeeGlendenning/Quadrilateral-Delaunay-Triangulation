@@ -10,25 +10,25 @@ import java.util.ArrayList;
  */
 public class Bisector {
     
-    private final ArrayList<Point> adjacentPoints; // Points that this bisector belongs to. Size 2 or 3. Necessary for computing dual of Voronoi
-    //ArrayList<Point[]> bisectorSegments; // List of start and end Points of the bisector segments. start/endpts may be equal, list size <= 4
-    private final Point startPoint, endPoint;
+    private final ArrayList<Vertex> adjacentVertices; // Vertices that this bisector belongs to. Size 2 or 3. Necessary for computing dual of Voronoi
+    //ArrayList<Vertex[]> bisectorSegments; // List of start and end Vertices of the bisector segments. start/endpts may be equal, list size <= 4
+    private final Vertex startVertex, endVertex;
     private final String tag; // "b2s" = bisector of 2 sites, "b3s" = bisector of 3 sites
     private double minQuadScale;
     //private boolean reflected;
     
     /**
-     * Create a Bisector having two endpoints and store the points that belong to it
+     * Create a Bisector having two endvertices and store the vertices that belong to it
      * 
-     * @param adjacentPts Subset of the point set that the bisector belongs to. Size 2 or 3
-     * @param startPt An endpoint of the bisector
-     * @param endPt An endpoint of the bisector
+     * @param adjacentPts Subset of the vertex set that the bisector belongs to. Size 2 or 3
+     * @param startPt An endvertex of the bisector
+     * @param endPt An endvertex of the bisector
      * @param tag String describing the bisector
      */
-    public Bisector(Point[] adjacentPts, Point startPt, Point endPt, String tag) {
-        this.adjacentPoints = (ArrayList)Utility.arrayToList(adjacentPts);
-        this.startPoint = startPt;
-        this.endPoint = endPt;
+    public Bisector(Vertex[] adjacentPts, Vertex startPt, Vertex endPt, String tag) {
+        this.adjacentVertices = (ArrayList)Utility.arrayToList(adjacentPts);
+        this.startVertex = startPt;
+        this.endVertex = endPt;
         this.tag = tag;
         this.minQuadScale = 1.0;
         //this.reflected = false;
@@ -68,24 +68,24 @@ public class Bisector {
     
     /**
      * 
-     * @return Deep copy of adjacent points array as an ArrayList
+     * @return Deep copy of adjacent vertices array as an ArrayList
      */
-    public ArrayList<Point> getAdjacentPtsArrayList() {
-        ArrayList<Point> adjCopy = new ArrayList();
-        for (int i = 0; i < this.adjacentPoints.size(); i ++) {
-            adjCopy.add(new Point(this.adjacentPoints.get(i).x, this.adjacentPoints.get(i).y));
+    public ArrayList<Vertex> getAdjacentPtsArrayList() {
+        ArrayList<Vertex> adjCopy = new ArrayList();
+        for (int i = 0; i < this.adjacentVertices.size(); i ++) {
+            adjCopy.add(new Vertex(this.adjacentVertices.get(i).x, this.adjacentVertices.get(i).y));
         }
         return adjCopy;
     }
     
     /**
      * 
-     * @return Deep copy of adjacent points array
+     * @return Deep copy of adjacent vertices array
      */
-    public Point[] getAdjacentPtsArray() {
-        Point[] adjCopy = new Point[this.adjacentPoints.size()];
-        for (int i = 0; i < this.adjacentPoints.size(); i ++) {
-            adjCopy[i] = new Point(this.adjacentPoints.get(i).x, this.adjacentPoints.get(i).y);
+    public Vertex[] getAdjacentPtsArray() {
+        Vertex[] adjCopy = new Vertex[this.adjacentVertices.size()];
+        for (int i = 0; i < this.adjacentVertices.size(); i ++) {
+            adjCopy[i] = new Vertex(this.adjacentVertices.get(i).x, this.adjacentVertices.get(i).y);
         }
         return adjCopy;
     }
@@ -100,18 +100,18 @@ public class Bisector {
     
     /**
      * 
-     * @return start Point
+     * @return start Vertex
      */
-    public Point getStartPoint() {
-        return this.startPoint.deepCopy();
+    public Vertex getStartVertex() {
+        return this.startVertex.deepCopy();
     }
     
     /**
      * 
-     * @return end Point
+     * @return end Vertex
      */
-    public Point getEndPoint() {
-        return this.endPoint.deepCopy();
+    public Vertex getEndVertex() {
+        return this.endVertex.deepCopy();
     }
     
     /**
@@ -119,8 +119,8 @@ public class Bisector {
      * @return Deep copy of this VoronoiBisector
      */
     public Bisector deepCopy() {
-        Bisector copy = new Bisector(Utility.deepCopyPointArray(this.getAdjacentPtsArray()), 
-                new Point(this.startPoint.x, this.startPoint.y), new Point(this.endPoint.x, this.endPoint.y), this.tag);
+        Bisector copy = new Bisector(Utility.deepCopyVertexArray(this.getAdjacentPtsArray()), 
+                new Vertex(this.startVertex.x, this.startVertex.y), new Vertex(this.endVertex.x, this.endVertex.y), this.tag);
         copy.setMinQuadScale(this.minQuadScale);
         
         return copy;
