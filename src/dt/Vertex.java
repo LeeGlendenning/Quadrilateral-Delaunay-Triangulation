@@ -178,8 +178,20 @@ public class Vertex {
      * @return ArrayList<Edge> A copy of this.neighborhood. Modifying the returned
      * ArrayList will not affect the neighborhood of this Vertex
      */
-    public ArrayList<Edge> getNeighbors(){
+    /*public ArrayList<Edge> getNeighbors(){
         return new ArrayList<Edge>(this.neighborhood);
+    }*/
+    
+    /**
+     * 
+     * @return ArrayList of neighbouring Vertex objects
+     */
+    public ArrayList<Vertex> getNeighbours() {
+        ArrayList<Vertex> neighbours = new ArrayList();
+        for (Edge e : this.neighborhood) {
+            neighbours.add(e.getNeighbor(this));
+        }
+        return neighbours;
     }
     
 }

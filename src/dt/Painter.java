@@ -198,7 +198,7 @@ public class Painter {
      * @param delaunayEdges List of vertex tuples representing edges of the Delaunay triangulation
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      */
-    public void drawDelaunayEdges(Graphics2D g2d, Set<Edge> delaunayEdges, int yMax) {
+    public void drawDelaunayEdges(Graphics2D g2d, List<Edge> delaunayEdges, int yMax) {
         g2d.setColor(Color.black);
         for (Edge edge : delaunayEdges) {
             g2d.drawLine((int)Math.round(edge.getVertices()[0].x), yMax - (int)Math.round(edge.getVertices()[0].y), 

@@ -16,12 +16,12 @@ import java.util.*;
  */
 public class Graph {
     
-    private HashMap<String, Vertex> vertices;
-    private HashMap<Integer, Edge> edges;
+    private List<Vertex> vertices;
+    private List<Edge> edges;
     
     public Graph(){
-        this.vertices = new HashMap<String, Vertex>();
-        this.edges = new HashMap<Integer, Edge>();
+        this.vertices = Collections.synchronizedList(new ArrayList());
+        this.edges = Collections.synchronizedList(new ArrayList());
     }
     
     /**
@@ -32,11 +32,11 @@ public class Graph {
      * @param vertices The initial Vertices to populate this Graph
      */
     public Graph(ArrayList<Vertex> vertices){
-        this.vertices = new HashMap<String, Vertex>();
-        this.edges = new HashMap<Integer, Edge>();
+        this.vertices = Collections.synchronizedList(new ArrayList());
+        this.edges = Collections.synchronizedList(new ArrayList());
         
         for(Vertex v: vertices){
-            this.vertices.put(v.getLabel(), v);
+            this.vertices.add(v);
         }
         
     }
@@ -58,7 +58,7 @@ public class Graph {
        
         //ensures the Edge is not in the Graph
         Edge e = new Edge(v1, v2);
-        if(edges.containsKey(e.hashCode())){
+        if(edges.contains(e)){
             return false;
         }
        
@@ -67,7 +67,7 @@ public class Graph {
             return false;
         }
             
-        edges.put(e.hashCode(), e);
+        edges.add(e);
         v1.addNeighbor(e);
         v2.addNeighbor(e);
         return true;
@@ -78,13 +78,13 @@ public class Graph {
      * @param e The Edge to look up
      * @return true iff this Graph contains the Edge e
      */
-    public boolean containsEdge(Edge e){
+    /*public boolean containsEdge(Edge e){
         if(e.getVertices()[0] == null || e.getVertices()[1] == null){
             return false;
         }
         
         return this.edges.containsKey(e.hashCode());
-    }
+    }*/
     
     
     /**
@@ -119,8 +119,12 @@ public class Graph {
      * @param label The specified Vertex label
      * @return Vertex The Vertex with the specified label
      */
-    public Vertex getVertex(String label){
+    /*public Vertex getVertex(String label){
         return vertices.get(label);
+    }*/
+    
+    public List<Vertex> getVertices() {
+        return new ArrayList(this.vertices);
     }
     
     /**
@@ -129,56 +133,39 @@ public class Graph {
      * only if overwriteExisting is true. If the existing Vertex is overwritten,
      * the Edges incident to it are all removed from the Graph.
      * 
-     * @param vertex
-     * @param overwriteExisting
-     * @return true iff vertex was added to the Graph
+     * @param vertex Vertex to add
      */
-    public boolean addVertex(Vertex vertex, boolean overwriteExisting){
-        Vertex current = this.vertices.get(vertex.getLabel());
-        if(current != null){
-            if(!overwriteExisting){
-                return false;
-            }
-            
-            while(current.getNeighborCount() > 0){
-                this.removeEdge(current.getNeighbor(0));
-            }
-        }
-        
-        
-        vertices.put(vertex.getLabel(), vertex);
-        return true;
+    public void addVertex(Vertex vertex){
+        vertices.add(vertex);
     }
     
     /**
      * 
-     * @param label The label of the Vertex to remove
-     * @return Vertex The removed Vertex object
+     * @param v The vertex to remove
      */
-    public Vertex removeVertex(String label){
-        Vertex v = vertices.remove(label);
+    public void removeVertex(Vertex v){
+        this.vertices.remove(v);
         
         while(v.getNeighborCount() > 0){
             this.removeEdge(v.getNeighbor((0)));
         }
         
-        return v;
     }
     
     /**
      * 
      * @return Set<String> The unique labels of the Graph's Vertex objects
      */
-    public Set<String> vertexKeys(){
+    /*public Set<String> vertexKeys(){
         return this.vertices.keySet();
-    }
+    }*/
     
     /**
      * 
-     * @return Set<Edge> The Edges of this graph
+     * @return List<Edge> The Edges of this graph
      */
-    public Set<Edge> getEdges(){
-        return new HashSet<Edge>(this.edges.values());
+    public List<Edge> getEdges(){
+        return new ArrayList(this.edges);
     }
     
 }

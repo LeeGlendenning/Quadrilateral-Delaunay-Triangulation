@@ -20,7 +20,7 @@ import javax.swing.Timer;
 public class VoronoiDiagram extends JPanel {
 
     private Graph delaunayTriangulation;
-    protected List<Vertex> vertices;
+    //protected List<Vertex> vertices;
     private List<Vertex> voronoiVertices; // voronoiVertices used for animation
     //private List<Vertex[]> delaunayEdges; // List of Vertex tuples representing edges in the Delaunay triangulation
     protected Quadrilateral quad;
@@ -51,14 +51,14 @@ public class VoronoiDiagram extends JPanel {
      * @param vertices Vertex set
      */
     public VoronoiDiagram(Quadrilateral q, ArrayList<Vertex> vertices) {
-        this.vertices = new ArrayList();
+        //this.delaunayTriangulation.getVertices() = new ArrayList();
         this.quad = q;
         this.painter = new Painter();
         this.mouseX = this.mouseY = 0;
         
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiVertices = Collections.synchronizedList(new ArrayList());
-        this.delaunayTriangulation = new Graph(vertices);
+        this.delaunayTriangulation = new Graph();
         this.scaleIterations = 0;
         this.curScale = 1.0;
         
@@ -88,7 +88,6 @@ public class VoronoiDiagram extends JPanel {
      * Reset all instance variables
      */
     public void reset() {
-        this.vertices = Collections.synchronizedList(new ArrayList());
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiVertices = Collections.synchronizedList(new ArrayList());
         this.delaunayTriangulation = new Graph();
@@ -122,7 +121,7 @@ public class VoronoiDiagram extends JPanel {
         } else if (clickCount == 3) {
             p = new Vertex(200, 350);
         }*/
-        if (this.vertices.contains(p)) {
+        if (this.delaunayTriangulation.getVertices().contains(p)) {
             System.out.println("Vertex not added. Already exists.");
             return;
         }
@@ -130,22 +129,22 @@ public class VoronoiDiagram extends JPanel {
         System.out.println("Adding vertex " + p + "\n");
         
         // Find B2S between p and other vertices
-        for (int i = 0; i < this.vertices.size(); i++) {
-            this.b2s.findBisectorOfTwoSites(this.quad, this.vertices.get(i).deepCopy(), p);
+        for (int i = 0; i < this.delaunayTriangulation.getVertices().size(); i++) {
+            this.b2s.findBisectorOfTwoSites(this.quad, this.delaunayTriangulation.getVertices().get(i).deepCopy(), p);
         }
         System.out.println();
         this.displayEdges.addAll(this.b2s.getDisplayEdges());
         Bisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
         
         // Find B3S between p and all other pairs of vertices
-        for (int i = 0; i < this.vertices.size(); i ++) {
-            for (int j = i + 1; j < this.vertices.size(); j++) {
-                System.out.println("Finding B3S between: " + this.vertices.get(i).deepCopy() + ", " + this.vertices.get(j).deepCopy() + ", and p = " + p);
-                this.b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.vertices.get(i).deepCopy(), this.vertices.get(j).deepCopy(), p);
+        for (int i = 0; i < this.delaunayTriangulation.getVertices().size(); i ++) {
+            for (int j = i + 1; j < this.delaunayTriangulation.getVertices().size(); j++) {
+                System.out.println("Finding B3S between: " + this.delaunayTriangulation.getVertices().get(i).deepCopy() + ", " + this.delaunayTriangulation.getVertices().get(j).deepCopy() + ", and p = " + p);
+                this.b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.delaunayTriangulation.getVertices().get(i).deepCopy(), this.delaunayTriangulation.getVertices().get(j).deepCopy(), p);
             }
         }
         System.out.println();
-        this.vertices.add(p);
+        this.delaunayTriangulation.addVertex(p);
         this.displayEdges.addAll(this.b3s.getDisplayEdges());
         
         this.chosenB3S = b3s.getChosenBisectors();
@@ -156,6 +155,9 @@ public class VoronoiDiagram extends JPanel {
                 triangulateVertices(chosenBisector.getAdjacentPtsArray());
             }
         }
+        
+        // Retriangulate if necessary
+        checkAdjacentTriangles(p);
         
         System.out.println();
         repaint();
@@ -178,7 +180,7 @@ public class VoronoiDiagram extends JPanel {
             System.out.println(quad[i] + " " + quad[ii]);
         }*/
         
-        for (Vertex p : this.vertices) {
+        for (Vertex p : this.delaunayTriangulation.getVertices()) {
             
             if (Utility.isLeftOfSegment(quad[0], quad[1], p, 0.1) == -1 &&
                     Utility.isLeftOfSegment(quad[1], quad[2], p, 0.1) == -1 &&
@@ -215,13 +217,59 @@ public class VoronoiDiagram extends JPanel {
      * For a new vertex added to the DT, check triangles formed from a B3S having
      * the new vertex in the adjacent vertex list
      */
-    private void checkAdjacentTriangles(Vertex p) {
-        for (Bisector b : this.chosenB3S) {
-            
+    private void checkAdjacentTriangles(Vertex v) {
+        System.out.println("Checking adjacent triangles...");
+        System.out.print("v neighbours " + v.getNeighborCount() + " : ");
+        for (Vertex nv : v.getNeighbours()) {
+            System.out.print("(" + nv.x + ", " + nv.y + ") ");
         }
-        /*if (!this.delaunayEdges.contains(new Vertex[]{adjVerts[i], adjVerts[ii]})) {
-            this.delaunayEdges.add(new Vertex[]{adjVerts[i], adjVerts[ii]});
-        }*/
+        System.out.println();
+        
+        for (Bisector b : this.chosenB3S) {
+            boolean doRetriangulation = true;
+            // If all vertices contributing to the B3S are adjacent to v,
+            // then the B3S may be a problem and needs to be retriangulated
+            System.out.println("Checking B3S at " + b.getStartVertex());
+            for (Vertex adjV : b.getAdjacentPtsArray()) {
+                if (!v.getNeighbours().contains(adjV)) {
+                    System.out.println("v neighbours does not contain adjVert: " + adjV);
+                    doRetriangulation = false;
+                } else {
+                    System.out.println("v neighbours contains adjVert: " + adjV);
+                }
+            }
+            if (doRetriangulation) {
+                System.out.println("Retriangulating");
+                retriangulate(b);
+            }
+        }
+        
+    }
+    
+    /**
+     * 
+     * @param b3s Bisector between 3 sites to retriangulate
+     */
+    private void retriangulate(Bisector b3s) {
+        // Check if the edges associated to the b3s should be removed from DT
+        if (vertexInsideQuad(calculateMinQuad(b3s))) {
+            Vertex[] adjVerts = b3s.getAdjacentPtsArray();
+
+            int ii;
+            // Remove edges associated to the B3S
+            for (int i = 0; i < adjVerts.length; i ++) {
+                if (i == adjVerts.length-1) {
+                    ii = 0;
+                } else {
+                    ii = i+1;
+                }
+                
+                // Remove edges if they exist - which they should
+                if (this.delaunayTriangulation.getEdges().contains(new Edge(adjVerts[i], adjVerts[ii]))) {
+                    this.delaunayTriangulation.removeEdge(new Edge(adjVerts[i], adjVerts[ii]));
+                }
+            }
+        }
         
     }
     
@@ -381,7 +429,7 @@ public class VoronoiDiagram extends JPanel {
     
     public void newQuad(Vertex[] verts) {
         this.quad = new Quadrilateral(verts);
-        Vertex[] tempPts = this.vertices.toArray(new Vertex[this.vertices.size()]);
+        Vertex[] tempPts = this.delaunayTriangulation.getVertices().toArray(new Vertex[this.delaunayTriangulation.getVertices().size()]);
         reset();
         // Reconstruct VoronoiDiagram with new quad
         for (Vertex tempP : tempPts) {
@@ -399,9 +447,9 @@ public class VoronoiDiagram extends JPanel {
      * @param p Vertex to remove from vertex set
      */
     public void removeVertex(Vertex p) {
-        if (this.vertices.contains(p)) {
-            this.vertices.remove(p);
-            Vertex[] tempPts = this.vertices.toArray(new Vertex[this.vertices.size()]);
+        if (this.delaunayTriangulation.getVertices().contains(p)) {
+            this.delaunayTriangulation.getVertices().remove(p);
+            Vertex[] tempPts = this.delaunayTriangulation.getVertices().toArray(new Vertex[this.delaunayTriangulation.getVertices().size()]);
             reset();
             // Reconstruct VoronoiDiagram with remaining vertices
             for (Vertex tempP : tempPts) {
@@ -507,6 +555,14 @@ public class VoronoiDiagram extends JPanel {
     }
     
     /**
+     * 
+     * @return List<Vertex> list of vertices in the DT
+     */
+    public List<Vertex> getVertices() {
+        return this.delaunayTriangulation.getVertices();
+    }
+    
+    /**
      * Draws the Voronoi diagram to the window
      *
      * @param g Graphics object used to draw to the screen
@@ -520,7 +576,7 @@ public class VoronoiDiagram extends JPanel {
         int yMax = this.getBounds().getSize().height;
 
         
-        painter.drawVerticesAndQuads(g2d, this.vertices, this.quad, yMax, vertexRadius, this.curScale);
+        painter.drawVerticesAndQuads(g2d, this.delaunayTriangulation.getVertices(), this.quad, yMax, vertexRadius, this.curScale);
 
         g2d.setColor(Color.black);
         painter.drawBisectorRayVertices(g2d, this.voronoiVertices, yMax, voronoiVertexRadius);
@@ -543,7 +599,7 @@ public class VoronoiDiagram extends JPanel {
         
         painter.drawB2S_hgVertices(g2d, b2s.geth1(), b2s.geth2(), b2s.getg1(), b2s.getg2(), yMax, vertexRadius, this.showB2S_hgVertices);
         
-        painter.drawVertexCoordinates(g2d, this.vertices, yMax, this.showCoordinates);
+        painter.drawVertexCoordinates(g2d, this.delaunayTriangulation.getVertices(), yMax, this.showCoordinates);
         
         painter.drawMouseCoordinates(g2d, mouseX, mouseY, yMax);
         
@@ -590,10 +646,10 @@ public class VoronoiDiagram extends JPanel {
         this.quad.scaleQuad(this.curScale);
 
         // for each pair of vertices, check for quad intersection
-        for (int i = 0; i < vertices.size(); i++) {
-            for (int j = i + 1; j < vertices.size(); j++) {
+        for (int i = 0; i < this.delaunayTriangulation.getVertices().size(); i++) {
+            for (int j = i + 1; j < this.delaunayTriangulation.getVertices().size(); j++) {
                 // Find and store intersections for current quad scaling
-                findQuadIntersections(this.quad, this.vertices.get(i), this.vertices.get(j));
+                findQuadIntersections(this.quad, this.delaunayTriangulation.getVertices().get(i), this.delaunayTriangulation.getVertices().get(j));
             }
         }
     }

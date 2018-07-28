@@ -40,13 +40,13 @@ public class Edge {
      * @param current
      * @return The neighbor of current along this Edge
      */
-    /*public Vertex getNeighbor(Vertex current){
-        if(!(current.equals(one) || current.equals(two))){
+    public Vertex getNeighbor(Vertex current){
+        if(!(current.equals(v1) || current.equals(v2))){
             return null;
         }
         
-        return (current.equals(one)) ? two : one;
-    }*/
+        return (current.equals(v1)) ? v2 : v1;
+    }
     
     
     public Vertex[] getVertices() {

@@ -219,7 +219,7 @@ public class UI implements ActionListener{
      */
     private void saveVertexSetFile(File file) throws FileNotFoundException, UnsupportedEncodingException {
         try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
-            for (Vertex p : this.voronoiDiagram.vertices) {
+            for (Vertex p : this.voronoiDiagram.getVertices()) {
                 writer.println(p.x + "," + p.y);
             }
         }
