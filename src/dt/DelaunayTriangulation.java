@@ -157,7 +157,7 @@ public class DelaunayTriangulation extends JPanel {
                 triangulateVertices(chosenBisector.getAdjacentPtsArray());
             }
         }
-        Utility.debugPrintln("Vertex " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1) + " neighbour size = " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1).getNeighbours().size());
+        //Utility.debugPrintln("Vertex " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1) + " neighbour size = " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1).getNeighbours().size());
         // Retriangulate if necessary
         //checkAdjacentTriangles(p);
         

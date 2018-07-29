@@ -2,6 +2,7 @@ package dt;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
 import java.util.List;
@@ -184,10 +185,15 @@ public class Painter {
      * @param showCoordinates If true, draw vertex coordinates. Otherwise do nothing
      */
     public void drawVertexCoordinates(Graphics2D g2d, List<Vertex> vertexSet, int yMax, boolean showCoordinates) {
-        g2d.setColor(Color.red);
+        
         if (showCoordinates) {
             for (Vertex p : vertexSet) {
-                g2d.drawString((Math.round(p.x) + ", " + Math.round(p.y)), Math.round(p.x), Math.round(yMax - p.y));
+                g2d.setColor(Color.blue);
+                g2d.setFont(new Font("default", Font.BOLD, 16));
+                g2d.drawString(vertexSet.indexOf(p) + ": ", Math.round(p.x)+2, Math.round(yMax - p.y));
+                g2d.setColor(Color.red);
+                g2d.setFont(new Font("default", Font.PLAIN, 16));
+                g2d.drawString(Math.round(p.x) + ", " + Math.round(p.y), Math.round(p.x)+20, Math.round(yMax - p.y));
             }
         }
     }
