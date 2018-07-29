@@ -7,6 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.JPanel;
@@ -19,7 +20,7 @@ import javax.swing.Timer;
  */
 public class DelaunayTriangulation extends JPanel {
 
-    private Graph delaunayTriangulation;
+    private Graph dtGraph;
     //protected List<Vertex> vertices;
     private List<Vertex> voronoiVertices; // voronoiVertices used for animation
     //private List<Vertex[]> delaunayEdges; // List of Vertex tuples representing edges in the Delaunay triangulation
@@ -51,14 +52,14 @@ public class DelaunayTriangulation extends JPanel {
      * @param vertices Vertex set
      */
     public DelaunayTriangulation(Quadrilateral q, ArrayList<Vertex> vertices) {
-        //this.delaunayTriangulation.getVertices() = new ArrayList();
+        //this.dtGraph.getVertices() = new ArrayList();
         this.quad = q;
         this.painter = new Painter();
         this.mouseX = this.mouseY = 0;
         
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiVertices = Collections.synchronizedList(new ArrayList());
-        this.delaunayTriangulation = new Graph();
+        this.dtGraph = new Graph();
         this.scaleIterations = 0;
         this.curScale = 1.0;
         
@@ -90,7 +91,7 @@ public class DelaunayTriangulation extends JPanel {
     public void reset() {
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiVertices = Collections.synchronizedList(new ArrayList());
-        this.delaunayTriangulation = new Graph();
+        this.dtGraph = new Graph();
         this.scaleIterations = 0;
         this.chosenB3S = new Bisector[]{};
         
@@ -121,7 +122,7 @@ public class DelaunayTriangulation extends JPanel {
         } else if (clickCount == 3) {
             p = new Vertex(200, 350);
         }*/
-        if (this.delaunayTriangulation.getVertices().contains(p)) {
+        if (this.dtGraph.getVertices().contains(p)) {
             Utility.debugPrintln("Vertex not added. Already exists.");
             return;
         }
@@ -129,22 +130,22 @@ public class DelaunayTriangulation extends JPanel {
         Utility.debugPrintln("Adding vertex " + p + "\n");
         
         // Find B2S between p and other vertices
-        for (int i = 0; i < this.delaunayTriangulation.getVertices().size(); i++) {
-            this.b2s.findBisectorOfTwoSites(this.quad, this.delaunayTriangulation.getVertices().get(i).deepCopy(), p);
+        for (int i = 0; i < this.dtGraph.getVertices().size(); i++) {
+            this.b2s.findBisectorOfTwoSites(this.quad, this.dtGraph.getVertices().get(i).deepCopy(), p);
         }
         Utility.debugPrintln("");
         this.displayEdges.addAll(this.b2s.getDisplayEdges());
         Bisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
         
         // Find B3S between p and all other pairs of vertices
-        for (int i = 0; i < this.delaunayTriangulation.getVertices().size(); i ++) {
-            for (int j = i + 1; j < this.delaunayTriangulation.getVertices().size(); j++) {
-                Utility.debugPrintln("Finding B3S between: " + this.delaunayTriangulation.getVertices().get(i).deepCopy() + ", " + this.delaunayTriangulation.getVertices().get(j).deepCopy() + ", and p = " + p);
-                this.b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.delaunayTriangulation.getVertices().get(i).deepCopy(), this.delaunayTriangulation.getVertices().get(j).deepCopy(), p);
+        for (int i = 0; i < this.dtGraph.getVertices().size(); i ++) {
+            for (int j = i + 1; j < this.dtGraph.getVertices().size(); j++) {
+                Utility.debugPrintln("Finding B3S between: " + this.dtGraph.getVertices().get(i).deepCopy() + ", " + this.dtGraph.getVertices().get(j).deepCopy() + ", and p = " + p);
+                this.b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.dtGraph.getVertices().get(i).deepCopy(), this.dtGraph.getVertices().get(j).deepCopy(), p);
             }
         }
         Utility.debugPrintln("");
-        this.delaunayTriangulation.addVertex(p);
+        this.dtGraph.addVertex(p);
         this.displayEdges.addAll(this.b3s.getDisplayEdges());
         
         this.chosenB3S = b3s.getChosenBisectors();
@@ -156,10 +157,15 @@ public class DelaunayTriangulation extends JPanel {
                 triangulateVertices(chosenBisector.getAdjacentPtsArray());
             }
         }
-        Utility.debugPrintln("Vertex " + this.delaunayTriangulation.getVertices().get(this.delaunayTriangulation.getVertices().size()-1) + " neighbour size = " + this.delaunayTriangulation.getVertices().get(this.delaunayTriangulation.getVertices().size()-1).getNeighbours().size());
+        Utility.debugPrintln("Vertex " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1) + " neighbour size = " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1).getNeighbours().size());
         // Retriangulate if necessary
         //checkAdjacentTriangles(p);
         
+        double[][] dist = findAllPairsShortestPath();
+        for (double[] d : dist) {
+            Utility.debugPrintln(Arrays.toString(d));
+        }
+                
         Utility.debugPrintln("");
         repaint();
     }
@@ -168,8 +174,8 @@ public class DelaunayTriangulation extends JPanel {
      * Remove all edges of the triangulation
      */
     private void removeAllEdges() {
-        for (Edge e : this.delaunayTriangulation.getEdges()) {
-            this.delaunayTriangulation.removeEdge(e);
+        for (Edge e : this.dtGraph.getEdges()) {
+            this.dtGraph.removeEdge(e);
         }
     }
     
@@ -190,7 +196,7 @@ public class DelaunayTriangulation extends JPanel {
             Utility.debugPrintln(quad[i] + " " + quad[ii]);
         }*/
         
-        for (Vertex p : this.delaunayTriangulation.getVertices()) {
+        for (Vertex p : this.dtGraph.getVertices()) {
             
             if (Utility.isLeftOfSegment(quad[0], quad[1], p, 0.1) == -1 &&
                     Utility.isLeftOfSegment(quad[1], quad[2], p, 0.1) == -1 &&
@@ -217,9 +223,9 @@ public class DelaunayTriangulation extends JPanel {
                 ii = i+1;
             }
             // If the edge doesn't already exist
-            if (!this.delaunayTriangulation.getEdges().contains(new Edge(verts[i], verts[ii]))) {
+            if (!this.dtGraph.getEdges().contains(new Edge(verts[i], verts[ii]))) {
                 //Utility.debugPrintln("Adding edge between " + verts[i] + " and " + verts[ii]);
-                this.delaunayTriangulation.addEdge(verts[i], verts[ii]);
+                this.dtGraph.addEdge(verts[i], verts[ii]);
             }
         }
     }
@@ -272,8 +278,8 @@ public class DelaunayTriangulation extends JPanel {
             }
 
             // Remove edges if they exist - which they should
-            if (this.delaunayTriangulation.getEdges().contains(new Edge(adjVerts[i], adjVerts[ii]))) {
-                this.delaunayTriangulation.removeEdge(new Edge(adjVerts[i], adjVerts[ii]));
+            if (this.dtGraph.getEdges().contains(new Edge(adjVerts[i], adjVerts[ii]))) {
+                this.dtGraph.removeEdge(new Edge(adjVerts[i], adjVerts[ii]));
             }
         }
     }*/
@@ -421,7 +427,53 @@ public class DelaunayTriangulation extends JPanel {
         return new Vertex[]{ray[0], ray[1]};
     }
     
-    
+    /**
+     * Uses Floyd-Warshall algorithm to find the shortest path between each pair of vertices
+     * @return 
+     */
+    private double[][] findAllPairsShortestPath() {
+        // 2D array representing distance between each vertex in DT
+        double[][] dist = new double[this.dtGraph.getVertices().size()][this.dtGraph.getVertices().size()];
+        // Initialize 2D array with infinity
+        for (double[] arr : dist) {
+            Arrays.fill(arr, Double.MAX_VALUE);
+        }
+        
+        // Set distance from vertices sharing an edge to the weight of the edge
+        for (Edge e : this.dtGraph.getEdges()) {
+            dist[this.dtGraph.getVertices().indexOf(e.getVertices()[0])][this.dtGraph.getVertices().indexOf(e.getVertices()[1])] = e.getWeight();
+            dist[this.dtGraph.getVertices().indexOf(e.getVertices()[1])][this.dtGraph.getVertices().indexOf(e.getVertices()[0])] = e.getWeight();
+        }
+        
+        // Set distance from a vertex to itself as 0 (diagonal)
+        for (int i = 0; i < dist.length; i ++) {
+            dist[i][i] = 0;
+        }
+        
+        /*
+        6 for k from 1 to |V|
+        7    for i from 1 to |V|
+        8       for j from 1 to |V|
+        9          if dist[i][j] > dist[i][k] + dist[k][j] 
+        10             dist[i][j] ← dist[i][k] + dist[k][j]
+        11         end if
+        */
+        for (int k = 0; k < dist.length; k ++) 
+        {
+            for (int i = 0; i < dist.length; i ++) 
+            {
+                for (int j = 0; j < dist.length; j ++) 
+                {
+                    if (dist[i][j] > dist[i][k] + dist[k][j]) {
+                        dist[i][j] = dist[i][k] + dist[k][j];
+                    }
+                    
+                }
+            }
+        }
+        
+        return dist;
+    }
     
     
     
@@ -434,7 +486,7 @@ public class DelaunayTriangulation extends JPanel {
     
     public void newQuad(Vertex[] verts) {
         this.quad = new Quadrilateral(verts);
-        Vertex[] tempPts = this.delaunayTriangulation.getVertices().toArray(new Vertex[this.delaunayTriangulation.getVertices().size()]);
+        Vertex[] tempPts = this.dtGraph.getVertices().toArray(new Vertex[this.dtGraph.getVertices().size()]);
         reset();
         // Reconstruct VoronoiDiagram with new quad
         for (Vertex tempP : tempPts) {
@@ -452,9 +504,9 @@ public class DelaunayTriangulation extends JPanel {
      * @param p Vertex to remove from vertex set
      */
     public void removeVertex(Vertex p) {
-        if (this.delaunayTriangulation.getVertices().contains(p)) {
-            this.delaunayTriangulation.removeVertex(p);
-            Vertex[] tempPts = this.delaunayTriangulation.getVertices().toArray(new Vertex[this.delaunayTriangulation.getVertices().size()]);
+        if (this.dtGraph.getVertices().contains(p)) {
+            this.dtGraph.removeVertex(p);
+            Vertex[] tempPts = this.dtGraph.getVertices().toArray(new Vertex[this.dtGraph.getVertices().size()]);
             reset();
             // Reconstruct VoronoiDiagram with remaining vertices
             for (Vertex tempP : tempPts) {
@@ -566,7 +618,7 @@ public class DelaunayTriangulation extends JPanel {
      * @return List<Vertex> list of vertices in the DT
      */
     public List<Vertex> getVertices() {
-        return this.delaunayTriangulation.getVertices();
+        return this.dtGraph.getVertices();
     }
     
     /**
@@ -583,7 +635,7 @@ public class DelaunayTriangulation extends JPanel {
         int yMax = this.getBounds().getSize().height;
 
         
-        painter.drawVerticesAndQuads(g2d, this.delaunayTriangulation.getVertices(), this.quad, yMax, vertexRadius, this.curScale);
+        painter.drawVerticesAndQuads(g2d, this.dtGraph.getVertices(), this.quad, yMax, vertexRadius, this.curScale);
 
         g2d.setColor(Color.black);
         painter.drawBisectorRayVertices(g2d, this.voronoiVertices, yMax, voronoiVertexRadius);
@@ -606,11 +658,11 @@ public class DelaunayTriangulation extends JPanel {
         
         painter.drawB2S_hgVertices(g2d, b2s.geth1(), b2s.geth2(), b2s.getg1(), b2s.getg2(), yMax, vertexRadius, this.showB2S_hgVertices);
         
-        painter.drawVertexCoordinates(g2d, this.delaunayTriangulation.getVertices(), yMax, this.showCoordinates);
+        painter.drawVertexCoordinates(g2d, this.dtGraph.getVertices(), yMax, this.showCoordinates);
         
         painter.drawMouseCoordinates(g2d, mouseX, mouseY, yMax);
         
-        painter.drawDelaunayEdges(g2d, this.delaunayTriangulation.getEdges(), yMax);
+        painter.drawDelaunayEdges(g2d, this.dtGraph.getEdges(), yMax);
     }
 
     
@@ -653,10 +705,10 @@ public class DelaunayTriangulation extends JPanel {
         this.quad.scaleQuad(this.curScale);
 
         // for each pair of vertices, check for quad intersection
-        for (int i = 0; i < this.delaunayTriangulation.getVertices().size(); i++) {
-            for (int j = i + 1; j < this.delaunayTriangulation.getVertices().size(); j++) {
+        for (int i = 0; i < this.dtGraph.getVertices().size(); i++) {
+            for (int j = i + 1; j < this.dtGraph.getVertices().size(); j++) {
                 // Find and store intersections for current quad scaling
-                findQuadIntersections(this.quad, this.delaunayTriangulation.getVertices().get(i), this.delaunayTriangulation.getVertices().get(j));
+                findQuadIntersections(this.quad, this.dtGraph.getVertices().get(i), this.dtGraph.getVertices().get(j));
             }
         }
     }
