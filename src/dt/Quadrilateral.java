@@ -43,9 +43,9 @@ public class Quadrilateral {
      * Print various details about the defined quadrilateral
      */
     private void printInfo() {
-        System.out.print("Original quad: ");
+        Utility.debugPrint("Original quad: ");
         printVertices(this.vertices);
-        System.out.println("Center of quad: (" + center.x + ", " + center.y + ")");
+        Utility.debugPrintln("Center of quad: (" + center.x + ", " + center.y + ")");
     }
     
     /**
@@ -55,9 +55,9 @@ public class Quadrilateral {
      */
     public void printVertices(Vertex[] verts) {
         for (int i = 0; i < 4; i ++) {
-            System.out.print("(" + verts[i].x + ", " + verts[i].y + ") ");
+            Utility.debugPrint("(" + verts[i].x + ", " + verts[i].y + ") ");
         }
-        System.out.println();
+        Utility.debugPrintln("");
     }
     
     /**
@@ -130,7 +130,7 @@ public class Quadrilateral {
      * Scales just below min but scaling back up by a small amount doesn't do anything because of integer coordinates (doubles rounded)
      */
     private void minimizeQuad() {
-        System.out.println("Minimizing quad");
+        Utility.debugPrintln("Minimizing quad");
         
         double curScale = 1.0;
         Vertex[] tempVertices = Utility.deepCopyVertexArray(this.vertices);
@@ -139,7 +139,7 @@ public class Quadrilateral {
             curScale -= 0.1;
             tempVertices = scaleQuad(curScale);
         }
-        System.out.println();
+        Utility.debugPrintln("");
     }
     
     /**
@@ -154,7 +154,7 @@ public class Quadrilateral {
         for (int i = 0; i < 4; i ++) 
         {
             j = (j==3) ? 0 : i+1;
-            //System.out.println("edge length: " + euclideanDistance(vertices[i], vertices[j]));
+            //Utility.debugPrintln("edge length: " + euclideanDistance(vertices[i], vertices[j]));
             if (Utility.euclideanDistance(vertices[i], vertices[j]) < min){
                 return false;
             }

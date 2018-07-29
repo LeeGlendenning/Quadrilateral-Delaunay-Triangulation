@@ -122,45 +122,55 @@ public class VoronoiDiagram extends JPanel {
             p = new Vertex(200, 350);
         }*/
         if (this.delaunayTriangulation.getVertices().contains(p)) {
-            System.out.println("Vertex not added. Already exists.");
+            Utility.debugPrintln("Vertex not added. Already exists.");
             return;
         }
         
-        System.out.println("Adding vertex " + p + "\n");
+        Utility.debugPrintln("Adding vertex " + p + "\n");
         
         // Find B2S between p and other vertices
         for (int i = 0; i < this.delaunayTriangulation.getVertices().size(); i++) {
             this.b2s.findBisectorOfTwoSites(this.quad, this.delaunayTriangulation.getVertices().get(i).deepCopy(), p);
         }
-        System.out.println();
+        Utility.debugPrintln("");
         this.displayEdges.addAll(this.b2s.getDisplayEdges());
         Bisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
         
         // Find B3S between p and all other pairs of vertices
         for (int i = 0; i < this.delaunayTriangulation.getVertices().size(); i ++) {
             for (int j = i + 1; j < this.delaunayTriangulation.getVertices().size(); j++) {
-                System.out.println("Finding B3S between: " + this.delaunayTriangulation.getVertices().get(i).deepCopy() + ", " + this.delaunayTriangulation.getVertices().get(j).deepCopy() + ", and p = " + p);
+                Utility.debugPrintln("Finding B3S between: " + this.delaunayTriangulation.getVertices().get(i).deepCopy() + ", " + this.delaunayTriangulation.getVertices().get(j).deepCopy() + ", and p = " + p);
                 this.b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.delaunayTriangulation.getVertices().get(i).deepCopy(), this.delaunayTriangulation.getVertices().get(j).deepCopy(), p);
             }
         }
-        System.out.println();
+        Utility.debugPrintln("");
         this.delaunayTriangulation.addVertex(p);
         this.displayEdges.addAll(this.b3s.getDisplayEdges());
         
         this.chosenB3S = b3s.getChosenBisectors();
         
-        //calculateMinQuads();
+        removeAllEdges();
+        
         for (Bisector chosenBisector : this.chosenB3S) {
             if (!vertexInsideQuad(calculateMinQuad(chosenBisector))) {
                 triangulateVertices(chosenBisector.getAdjacentPtsArray());
             }
         }
-        System.out.println("Vertex " + this.delaunayTriangulation.getVertices().get(this.delaunayTriangulation.getVertices().size()-1) + " neighbour size = " + this.delaunayTriangulation.getVertices().get(this.delaunayTriangulation.getVertices().size()-1).getNeighbours().size());
+        Utility.debugPrintln("Vertex " + this.delaunayTriangulation.getVertices().get(this.delaunayTriangulation.getVertices().size()-1) + " neighbour size = " + this.delaunayTriangulation.getVertices().get(this.delaunayTriangulation.getVertices().size()-1).getNeighbours().size());
         // Retriangulate if necessary
-        checkAdjacentTriangles(p);
+        //checkAdjacentTriangles(p);
         
-        System.out.println();
+        Utility.debugPrintln("");
         repaint();
+    }
+    
+    /**
+     * Remove all edges of the triangulation
+     */
+    private void removeAllEdges() {
+        for (Edge e : this.delaunayTriangulation.getEdges()) {
+            this.delaunayTriangulation.removeEdge(e);
+        }
     }
     
     /**
@@ -169,7 +179,7 @@ public class VoronoiDiagram extends JPanel {
      */
     private boolean vertexInsideQuad(Vertex[] quad) {
         
-        /*System.out.println("vertexInsideQuad: ");
+        /*Utility.debugPrintln("vertexInsideQuad: ");
         int ii;
         for (int i = 0; i < quad.length; i ++) {
             if (i == quad.length-1) {
@@ -177,7 +187,7 @@ public class VoronoiDiagram extends JPanel {
             } else {
                 ii = i+1;
             }
-            System.out.println(quad[i] + " " + quad[ii]);
+            Utility.debugPrintln(quad[i] + " " + quad[ii]);
         }*/
         
         for (Vertex p : this.delaunayTriangulation.getVertices()) {
@@ -186,7 +196,7 @@ public class VoronoiDiagram extends JPanel {
                     Utility.isLeftOfSegment(quad[1], quad[2], p, 0.1) == -1 &&
                     Utility.isLeftOfSegment(quad[2], quad[3], p, 0.1) == -1 &&
                     Utility.isLeftOfSegment(quad[3], quad[0], p, 0.1) == -1) {
-                //System.out.println("Vertex " + p + " inside");
+                //Utility.debugPrintln("Vertex " + p + " inside");
                 return true;
             }
             
@@ -208,9 +218,8 @@ public class VoronoiDiagram extends JPanel {
             }
             // If the edge doesn't already exist
             if (!this.delaunayTriangulation.getEdges().contains(new Edge(verts[i], verts[ii]))) {
-                //System.out.println("Adding edge between " + verts[i] + " and " + verts[ii]);
+                //Utility.debugPrintln("Adding edge between " + verts[i] + " and " + verts[ii]);
                 this.delaunayTriangulation.addEdge(verts[i], verts[ii]);
-                //System.out.println(verts[i] + " neighbours.size = " + verts[i].getNeighbours().size());
             }
         }
     }
@@ -219,61 +228,55 @@ public class VoronoiDiagram extends JPanel {
      * For a new vertex added to the DT, check triangles formed from a B3S having
      * the new vertex in the adjacent vertex list
      */
-    private void checkAdjacentTriangles(Vertex v) {
-        System.out.println("Checking adjacent triangles...");
-        System.out.print("v neighbours " + v + " : ");
-        for (Vertex nv : v.getNeighbours()) {
-            System.out.print("(" + nv.x + ", " + nv.y + ") ");
-        }
-        System.out.println();
+    /*private void checkAdjacentTriangles(Vertex v) {
+        Utility.debugPrintln("Checking adjacent triangles...");
         
         for (Bisector b : this.chosenB3S) {
-            boolean doRetriangulation = true;
             // If all vertices contributing to the B3S are adjacent to v,
             // then the B3S may be a problem and needs to be retriangulated
-            System.out.println("Checking B3S at " + b.getStartVertex());
+            Utility.debugPrintln("Checking B3S at " + b.getStartVertex());
             for (Vertex adjV : b.getAdjacentPtsArray()) {
                 if (!v.getNeighbours().contains(adjV)) {
-                    System.out.println("v neighbours does not contain adjVert: " + adjV);
-                    doRetriangulation = false;
+                    //Utility.debugPrintln("v neighbours does not contain adjVert: " + adjV);
+                    return;
                 } else {
-                    System.out.println("v neighbours contains adjVert: " + adjV);
+                    Utility.debugPrintln("v neighbours contains adjVert: " + adjV);
                 }
             }
-            if (doRetriangulation) {
-                System.out.println("Retriangulating");
-                retriangulate(b);
+            
+            Utility.debugPrintln("Retriangulating");
+            if (vertexInsideQuad(calculateMinQuad(b))) {
+                removeInvalidEdges(b);
+            } else {
+                triangulateVertices(b.getAdjacentPtsArray());
             }
         }
-        
-    }
+    }*/
     
     /**
      * 
      * @param b3s Bisector between 3 sites to retriangulate
      */
-    private void retriangulate(Bisector b3s) {
+    /*private void removeInvalidEdges(Bisector b3s) {
         // Check if the edges associated to the b3s should be removed from DT
-        if (vertexInsideQuad(calculateMinQuad(b3s))) {
-            Vertex[] adjVerts = b3s.getAdjacentPtsArray();
+        
+        Vertex[] adjVerts = b3s.getAdjacentPtsArray();
 
-            int ii;
-            // Remove edges associated to the B3S
-            for (int i = 0; i < adjVerts.length; i ++) {
-                if (i == adjVerts.length-1) {
-                    ii = 0;
-                } else {
-                    ii = i+1;
-                }
-                
-                // Remove edges if they exist - which they should
-                if (this.delaunayTriangulation.getEdges().contains(new Edge(adjVerts[i], adjVerts[ii]))) {
-                    this.delaunayTriangulation.removeEdge(new Edge(adjVerts[i], adjVerts[ii]));
-                }
+        int ii;
+        // Remove edges associated to the B3S
+        for (int i = 0; i < adjVerts.length; i ++) {
+            if (i == adjVerts.length-1) {
+                ii = 0;
+            } else {
+                ii = i+1;
+            }
+
+            // Remove edges if they exist - which they should
+            if (this.delaunayTriangulation.getEdges().contains(new Edge(adjVerts[i], adjVerts[ii]))) {
+                this.delaunayTriangulation.removeEdge(new Edge(adjVerts[i], adjVerts[ii]));
             }
         }
-        
-    }
+    }*/
     
     /**
      * @param chosenB3S Chosen Bisector between 3 vertices
@@ -282,7 +285,7 @@ public class VoronoiDiagram extends JPanel {
     public Vertex[] calculateMinQuad(Bisector chosenB3S) {
         Double scale;
         if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(chosenB3S)) != null) {
-            //System.out.println("Scale = " + scale + "\n");
+            //Utility.debugPrintln("Scale = " + scale + "\n");
             chosenB3S.setMinQuadScale(scale);
             return this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), scale);
         }
@@ -295,11 +298,11 @@ public class VoronoiDiagram extends JPanel {
      */
     private Double findMinimumQuadScaling(Bisector chosenB3S) {
         Vertex[] qVerts = this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), this.curScale);
-        /*System.out.println("qVerts for " + chosenB3S.getEndVertex());
+        /*Utility.debugPrintln("qVerts for " + chosenB3S.getEndVertex());
         for (Vertex p : qVerts) {
-            System.out.print(p + " ");
+            Utility.debugPrint(p + " ");
         }
-        System.out.println();*/
+        Utility.debugPrintln();*/
         
         Vertex[][] quadRays = new Vertex[4][2]; // Rays from quad center through each vertex
         for (int i = 0; i < 4; i ++) {
@@ -310,7 +313,7 @@ public class VoronoiDiagram extends JPanel {
         Double scale = null, tempScale;
         for (Vertex adj : chosenB3S.getAdjacentPtsArray()) {
             tempScale = findScaleForAdjacentB3SPt(adj, quadRays, qVerts, chosenB3S.getEndVertex());
-            //System.out.println(tempScale);
+            //Utility.debugPrintln(tempScale);
             if (scale == null || tempScale > scale) {
                 scale = tempScale;
             }
@@ -328,7 +331,7 @@ public class VoronoiDiagram extends JPanel {
      */
     private Double findScaleForAdjacentB3SPt(Vertex adj, Vertex[][] quadRays, Vertex[] qVerts, Vertex chosenB3SPt) {
         Double scale = null;
-        //System.out.println("chosenB3S vertex = " + chosenB3SPt);
+        //Utility.debugPrintln("chosenB3S vertex = " + chosenB3SPt);
         
         Vertex intersectionPt;
         
@@ -346,15 +349,15 @@ public class VoronoiDiagram extends JPanel {
             Vertex[] intersectionRay1 = findMinQuadRay(adj, qVerts[i], qVerts[ii]);
             //this.displayEdges.add(new VoronoiBisector(new Vertex[]{}, intersectionRay1[0], intersectionRay1[1], "debug"));
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay1[0], intersectionRay1[1], quadRays[i][0], quadRays[i][1])) != null) {
-                //System.out.println("qVerts[i] = " + qVerts[i] + ", chosenB3SPt = " + chosenB3SPt);
-                //System.out.println("1dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
+                //Utility.debugPrintln("qVerts[i] = " + qVerts[i] + ", chosenB3SPt = " + chosenB3SPt);
+                //Utility.debugPrintln("1dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[i], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
                 }
             }
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay1[0], intersectionRay1[1], quadRays[ii][0], quadRays[ii][1])) != null) {
-                //System.out.println("2dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
+                //Utility.debugPrintln("2dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[ii], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
@@ -365,14 +368,14 @@ public class VoronoiDiagram extends JPanel {
             Vertex[] intersectionRay2 = findMinQuadRay(adj, qVerts[ii], qVerts[i]);
             //this.displayEdges.add(new VoronoiBisector(new Vertex[]{}, intersectionRay2[0], intersectionRay2[1], "debug"));
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay2[0], intersectionRay2[1], quadRays[i][0], quadRays[i][1])) != null) {
-                //System.out.println("3dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
+                //Utility.debugPrintln("3dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[i], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[i], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
                 }
             }
             if ((intersectionPt = Utility.doLineSegmentsIntersect(intersectionRay2[0], intersectionRay2[1], quadRays[ii][0], quadRays[ii][1])) != null) {
-                //System.out.println("4dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
+                //Utility.debugPrintln("4dist(intersectionpt, chosenB3S) = " + Utility.euclideanDistance(qVerts[ii], chosenB3SPt));
                 tempScale = Utility.euclideanDistance(intersectionPt, chosenB3SPt) / Utility.euclideanDistance(qVerts[ii], chosenB3SPt);
                 if (scale == null || tempScale > scale) {
                     scale = tempScale;
@@ -391,11 +394,11 @@ public class VoronoiDiagram extends JPanel {
      * @param throughPt Vertex the ray will pass through before being translated
      */
     private Vertex[] findMinQuadRay(Vertex translatePt, Vertex startPt, Vertex throughPt) {
-        //System.out.println("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
+        //Utility.debugPrintln("endPt = " + endPt + ", a = " + a + ", nonInnerVertex = " + nonInnerVertex);
         
         // Define the direction of the ray starting at a
         double rayEndx = Utility.RAY_SIZE;
-        //System.out.println(a + " : " + nonInnerVertex);
+        //Utility.debugPrintln(a + " : " + nonInnerVertex);
         if (startPt.x > throughPt.x || (startPt.x == throughPt.x && startPt.y > throughPt.y)) {
             rayEndx = -Utility.RAY_SIZE;
         }
@@ -406,7 +409,7 @@ public class VoronoiDiagram extends JPanel {
         // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
         Vertex[] ray = {new Vertex(startPt.x, startPt.y), Utility.rotateVertex(rayEnd, new Vertex(0,0), -angle)};
         
-        //System.out.println("ray = " + ray[0] + ", " + ray[1]);
+        //Utility.debugPrintln("ray = " + ray[0] + ", " + ray[1]);
         
         //Translate ray so that it starts at endPt
         ray[0].x += translatePt.x - startPt.x;
@@ -458,7 +461,7 @@ public class VoronoiDiagram extends JPanel {
                 addVertex(tempP);
             }
         } else {
-            System.out.println("Couldn't delete vertex because it doesn't exist.");
+            Utility.debugPrintln("Couldn't delete vertex because it doesn't exist.");
         }
     }
     
@@ -645,7 +648,7 @@ public class VoronoiDiagram extends JPanel {
      * Applies one step for the animation
      */
     private void animationStep() {
-        System.out.println("Doing animation step");
+        Utility.debugPrintln("Doing animation step");
         this.curScale += 0.1;
         this.quad.scaleQuad(this.curScale);
 
@@ -683,11 +686,11 @@ public class VoronoiDiagram extends JPanel {
                 } else {
                     l = j + 1;
                 }
-                //System.out.println("i = " + i + ", k = " + k + ", j = " + j + ", l = " + l);
-                //System.out.println("Comparing line segments: (" + quad1[i].x + ", " + quad1[i].y + ") ("+ quad1[k].x + ", " + quad1[k].y + ") and (" + quad2[j].x + ", " + quad2[j].y + ") ("+ quad2[l].x + ", " + quad2[l].y + ")");
+                //Utility.debugPrintln("i = " + i + ", k = " + k + ", j = " + j + ", l = " + l);
+                //Utility.debugPrintln("Comparing line segments: (" + quad1[i].x + ", " + quad1[i].y + ") ("+ quad1[k].x + ", " + quad1[k].y + ") and (" + quad2[j].x + ", " + quad2[j].y + ") ("+ quad2[l].x + ", " + quad2[l].y + ")");
                 Vertex intersectionVertex;
                 if ((intersectionVertex = Utility.doLineSegmentsIntersect(quad1[i], quad1[k], quad2[j], quad2[l])) != null) {
-                    //System.out.println("Found intersection at (" + intersectionVertex.x + ", " + intersectionVertex.y + ")");
+                    //Utility.debugPrintln("Found intersection at (" + intersectionVertex.x + ", " + intersectionVertex.y + ")");
                     this.voronoiVertices.add(intersectionVertex);
                 }
             }

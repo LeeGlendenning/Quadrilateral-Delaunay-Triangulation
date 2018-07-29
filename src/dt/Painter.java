@@ -29,10 +29,10 @@ public class Painter {
      * @param curScale Current scaling factor to draw Quadrilateral at
      */
     public void drawVerticesAndQuads(Graphics2D g2d, List<Vertex> vertices, Quadrilateral quad, int yMax, int vertexRadius, double curScale) {
-        //System.out.println("Vertices.size() = " + vertices.size());
+        //Utility.debugPrintln("Vertices.size() = " + vertices.size());
         for (Vertex v : vertices) {
             g2d.setColor(v.getColour());
-            //System.out.println("Drawing vertex at " + (p.x - vertexRadius) + ", " + (yMax - (p.y + vertexRadius)));
+            //Utility.debugPrintln("Drawing vertex at " + (p.x - vertexRadius) + ", " + (yMax - (p.y + vertexRadius)));
             // Subtract vertexRadius because vertices are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(v.x - vertexRadius, yMax - (v.y + vertexRadius), vertexRadius * 2, vertexRadius * 2)); // x, y, width, height
             quad.drawQuad(g2d, v, 1.0, yMax); // Original quad
@@ -110,7 +110,7 @@ public class Painter {
                         (int)Math.round(bisector.getEndVertex().x), yMax - (int)Math.round(bisector.getEndVertex().y));
                 g2d.setStroke(new BasicStroke(2));
                 //vd.quad.drawQuad(g2d, bisector.startVertex, 1.0, yMax); // Original quad
-                //System.out.println(bisector.getMinQuadScale());
+                //Utility.debugPrintln(bisector.getMinQuadScale());
                 quad.drawQuad(g2d, bisector.getStartVertex(), bisector.getMinQuadScale(), yMax);
                 //vd.quad.drawQuad(g2d, bisector.startVertex, vd.curScale, yMax);
             }

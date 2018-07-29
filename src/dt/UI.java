@@ -59,7 +59,7 @@ public class UI implements ActionListener{
         this.voronoiDiagram.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                //System.out.println(e.getX() + "," + e.getY());
+                //Utility.debugPrintln(e.getX() + "," + e.getY());
                 addVoronoiVertex(e.getX(), e.getY());
             }
         });
@@ -93,7 +93,7 @@ public class UI implements ActionListener{
     @Override
     public void actionPerformed(ActionEvent ev)
     {
-        //System.out.println(ev.getActionCommand());
+        //Utility.debugPrintln(ev.getActionCommand());
         switch(ev.getActionCommand()) {
             // File menu
             case "Load Vertex Set":
@@ -103,9 +103,9 @@ public class UI implements ActionListener{
                 try {
                     saveVertexSet();
                 } catch (FileNotFoundException ex) {
-                    System.out.println("Something went wrong while saving vertex set");
+                    Utility.debugPrintln("Something went wrong while saving vertex set");
                 } catch (UnsupportedEncodingException ex) {
-                    System.out.println("Something went wrong while saving vertex set");
+                    Utility.debugPrintln("Something went wrong while saving vertex set");
                 }
                 break;
             case "Load Quadrilateral":
@@ -115,9 +115,9 @@ public class UI implements ActionListener{
                 try{
                     saveQuadrilateral();
                 } catch (FileNotFoundException ex) {
-                    System.out.println("Something went wrong while saving Quadrilateral");
+                    Utility.debugPrintln("Something went wrong while saving Quadrilateral");
                 } catch (UnsupportedEncodingException ex) {
-                    System.out.println("Something went wrong while saving Quadrilateral");
+                    Utility.debugPrintln("Something went wrong while saving Quadrilateral");
                 }
                 break;
             // Edit menu
@@ -167,11 +167,11 @@ public class UI implements ActionListener{
                 
         if (jfcLoadPts.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             File selectedFile = jfcLoadPts.getSelectedFile();
-            System.out.println(selectedFile.getAbsolutePath());
+            Utility.debugPrintln(selectedFile.getAbsolutePath());
             try {
                 loadVertexSetFile(selectedFile);
             } catch (FileNotFoundException ex) {
-                System.out.println("File not found");
+                Utility.debugPrintln("File not found");
             }
         }
     }
@@ -189,7 +189,7 @@ public class UI implements ActionListener{
                 try {
                     newVertexSet.add(new Vertex(Double.parseDouble(nextLine.split(",")[0]), Double.parseDouble(nextLine.split(",")[1])));
                 } catch(NumberFormatException e) {
-                    System.out.println("Vertex set file not correct format.");
+                    Utility.debugPrintln("Vertex set file not correct format.");
                     return;
                 }
             }
@@ -205,7 +205,7 @@ public class UI implements ActionListener{
                 
         if (jfcSavePts.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
             File selectedFile = jfcSavePts.getSelectedFile();
-            System.out.println(selectedFile.getAbsolutePath());
+            Utility.debugPrintln(selectedFile.getAbsolutePath());
             
             saveVertexSetFile(selectedFile);
         }
@@ -233,7 +233,7 @@ public class UI implements ActionListener{
                 
         if (jfcSaveQuad.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
             File selectedFile = jfcSaveQuad.getSelectedFile();
-            System.out.println(selectedFile.getAbsolutePath());
+            Utility.debugPrintln(selectedFile.getAbsolutePath());
             saveQuadrilateralFile(selectedFile);
         }
     }
@@ -254,11 +254,11 @@ public class UI implements ActionListener{
                 
         if (jfcLoadQuad.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             File selectedFile = jfcLoadQuad.getSelectedFile();
-            System.out.println(selectedFile.getAbsolutePath());
+            Utility.debugPrintln(selectedFile.getAbsolutePath());
             try {
                 loadQuadFile(selectedFile);
             } catch (FileNotFoundException ex) {
-                System.out.println("File not found");
+                Utility.debugPrintln("File not found");
             }
         }
     }
@@ -277,7 +277,7 @@ public class UI implements ActionListener{
                 try {
                     newQuad[i] = new Vertex(Double.parseDouble(nextLine.split(",")[0]), Double.parseDouble(nextLine.split(",")[1]));
                 } catch(NumberFormatException e) {
-                    System.out.println("Vertex set file not correct format.");
+                    Utility.debugPrintln("Vertex set file not correct format.");
                     return;
                 }
                 i ++;
@@ -339,10 +339,10 @@ public class UI implements ActionListener{
                         new Vertex(Double.parseDouble(newQuadFieldx3.getText()), Double.parseDouble(newQuadFieldy3.getText())),
                         new Vertex(Double.parseDouble(newQuadFieldx4.getText()), Double.parseDouble(newQuadFieldy4.getText()))});
             } catch (NumberFormatException e) {
-                System.out.println("Invalid format for new quad vertex. X and Y coordinates must be numbers.");
+                Utility.debugPrintln("Invalid format for new quad vertex. X and Y coordinates must be numbers.");
             }
         } else if (newQuadResult == JOptionPane.OK_OPTION ) {
-            System.out.println("All fields must not be empty.");
+            Utility.debugPrintln("All fields must not be empty.");
         }
     }
     
@@ -366,13 +366,13 @@ public class UI implements ActionListener{
             try {
                 this.voronoiDiagram.removeVertex(new Vertex(Double.parseDouble(xField.getText()), Double.parseDouble(yField.getText())));
             } catch (NumberFormatException e) {
-                System.out.println("Invalid vertex format. X and Y coordinates must be numbers.");
+                Utility.debugPrintln("Invalid vertex format. X and Y coordinates must be numbers.");
             }
         }
     }
     
     private void addVoronoiVertex(int x, int y) {
-        //System.out.println("Adding vertex (" + x + ", " + (this.voronoiDiagram.getBounds().getSize().height - y) + ")");
+        //Utility.debugPrintln("Adding vertex (" + x + ", " + (this.voronoiDiagram.getBounds().getSize().height - y) + ")");
         this.voronoiDiagram.addVertex(new Vertex(x, this.voronoiDiagram.getBounds().getSize().height - y));
     }
     

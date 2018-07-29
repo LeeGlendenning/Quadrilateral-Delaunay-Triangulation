@@ -52,18 +52,28 @@ public class Graph {
      * @return true iff no Edge already exists in the Graph
      */
     public boolean addEdge(Vertex v1, Vertex v2){
-        if(v1.equals(v2)){
-            return false;   
+        boolean v1Exists = false, v2Exists = false;
+        double tolerance = 0.0001;
+        for (Vertex v : this.vertices) {
+            if (Math.abs(v.x - v1.x) < tolerance && Math.abs(v.y - v1.y) < tolerance) {
+                v1 = v;
+                v1Exists = true;
+            }
+            if (Math.abs(v.x - v2.x) < tolerance && Math.abs(v.y - v2.y) < tolerance) {
+                v2 = v;
+                v2Exists = true;
+            }
         }
-       
+        
+        if (!v1Exists || !v2Exists) {
+            Utility.debugPrintln("Edge not added because vertices do not exist.");
+            return false;
+        }
+        
         //ensures the Edge is not in the Graph
         Edge e = new Edge(v1, v2);
         if(edges.contains(e)){
-            return false;
-        }
-       
-        //and that the Edge isn't already incident to one of the vertices
-        else if(v1.containsNeighbor(e) || v2.containsNeighbor(e)){
+            Utility.debugPrintln("Edge already exists. Not added.");
             return false;
         }
             
@@ -92,12 +102,11 @@ public class Graph {
      * including as each vertex's incidence neighborhood.
      * 
      * @param e The Edge to remove from the Graph
-     * @return Edge The Edge removed from the Graph
      */
-    public Edge removeEdge(Edge e){
+    public void removeEdge(Edge e){
        e.getVertices()[0].removeNeighbor(e);
        e.getVertices()[1].removeNeighbor(e);
-       return this.edges.remove(e.hashCode());
+       this.edges.remove(e);
     }
     
     /**
@@ -116,7 +125,6 @@ public class Graph {
     
     /**
      * 
-     * @param label The specified Vertex label
      * @return Vertex The Vertex with the specified label
      */
     /*public Vertex getVertex(String label){
@@ -136,7 +144,7 @@ public class Graph {
      * @param vertex Vertex to add
      */
     public void addVertex(Vertex vertex){
-        vertices.add(vertex);
+        this.vertices.add(vertex);
     }
     
     /**
@@ -151,6 +159,15 @@ public class Graph {
         }
         
     }
+    
+    /*public Vertex getVertex(double x, double y) {
+        double tolerance = 0.0001;
+        for (Vertex v : this.vertices) {
+            if (Math.abs(v.x - x) < tolerance && Math.abs(v.y - y) < tolerance) {
+                return v;
+            }
+        }
+    }*/
     
     /**
      * 
