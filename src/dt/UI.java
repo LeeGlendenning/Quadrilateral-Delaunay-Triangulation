@@ -44,10 +44,10 @@ public class UI implements ActionListener{
     private JCheckBoxMenuItem showDTMenuItem, showVDMenuItem, showCoordsMenuItem;
     private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
     
-    private final VoronoiDiagram voronoiDiagram;
+    private final DelaunayTriangulation voronoiDiagram;
     
     public UI(Quadrilateral q, ArrayList<Vertex> vertexSet) {
-        this.voronoiDiagram = new VoronoiDiagram(q, vertexSet);
+        this.voronoiDiagram = new DelaunayTriangulation(q, vertexSet);
         createFrame();
     }
     

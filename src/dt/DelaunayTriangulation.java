@@ -17,7 +17,7 @@ import javax.swing.Timer;
  *
  * @author Lee Glendenning
  */
-public class VoronoiDiagram extends JPanel {
+public class DelaunayTriangulation extends JPanel {
 
     private Graph delaunayTriangulation;
     //protected List<Vertex> vertices;
@@ -50,7 +50,7 @@ public class VoronoiDiagram extends JPanel {
      * @param q Quadrilateral
      * @param vertices Vertex set
      */
-    public VoronoiDiagram(Quadrilateral q, ArrayList<Vertex> vertices) {
+    public DelaunayTriangulation(Quadrilateral q, ArrayList<Vertex> vertices) {
         //this.delaunayTriangulation.getVertices() = new ArrayList();
         this.quad = q;
         this.painter = new Painter();
