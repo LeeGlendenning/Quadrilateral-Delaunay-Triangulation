@@ -155,7 +155,7 @@ public class VoronoiDiagram extends JPanel {
                 triangulateVertices(chosenBisector.getAdjacentPtsArray());
             }
         }
-        
+        System.out.println("Vertex " + this.delaunayTriangulation.getVertices().get(this.delaunayTriangulation.getVertices().size()-1) + " neighbour size = " + this.delaunayTriangulation.getVertices().get(this.delaunayTriangulation.getVertices().size()-1).getNeighbours().size());
         // Retriangulate if necessary
         checkAdjacentTriangles(p);
         
@@ -198,17 +198,19 @@ public class VoronoiDiagram extends JPanel {
      * 
      * @param pts Array of 3 vertices to connect
      */
-    private void triangulateVertices(Vertex[] pts) {
+    private void triangulateVertices(Vertex[] verts) {
         int ii;
-        for (int i = 0; i < pts.length; i ++) {
-            if (i == pts.length-1) {
+        for (int i = 0; i < verts.length; i ++) {
+            if (i == verts.length-1) {
                 ii = 0;
             } else {
                 ii = i+1;
             }
             // If the edge doesn't already exist
-            if (!this.delaunayTriangulation.getEdges().contains(new Edge(pts[i], pts[ii]))) {
-                this.delaunayTriangulation.addEdge(pts[i], pts[ii]);
+            if (!this.delaunayTriangulation.getEdges().contains(new Edge(verts[i], verts[ii]))) {
+                //System.out.println("Adding edge between " + verts[i] + " and " + verts[ii]);
+                this.delaunayTriangulation.addEdge(verts[i], verts[ii]);
+                //System.out.println(verts[i] + " neighbours.size = " + verts[i].getNeighbours().size());
             }
         }
     }
@@ -219,7 +221,7 @@ public class VoronoiDiagram extends JPanel {
      */
     private void checkAdjacentTriangles(Vertex v) {
         System.out.println("Checking adjacent triangles...");
-        System.out.print("v neighbours " + v.getNeighborCount() + " : ");
+        System.out.print("v neighbours " + v + " : ");
         for (Vertex nv : v.getNeighbours()) {
             System.out.print("(" + nv.x + ", " + nv.y + ") ");
         }
@@ -448,13 +450,15 @@ public class VoronoiDiagram extends JPanel {
      */
     public void removeVertex(Vertex p) {
         if (this.delaunayTriangulation.getVertices().contains(p)) {
-            this.delaunayTriangulation.getVertices().remove(p);
+            this.delaunayTriangulation.removeVertex(p);
             Vertex[] tempPts = this.delaunayTriangulation.getVertices().toArray(new Vertex[this.delaunayTriangulation.getVertices().size()]);
             reset();
             // Reconstruct VoronoiDiagram with remaining vertices
             for (Vertex tempP : tempPts) {
                 addVertex(tempP);
             }
+        } else {
+            System.out.println("Couldn't delete vertex because it doesn't exist.");
         }
     }
     
