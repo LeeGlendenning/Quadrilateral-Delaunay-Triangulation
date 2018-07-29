@@ -41,13 +41,14 @@ public class UI implements ActionListener{
     private JMenu fileMenu, editMenu, viewMenu, vdMenu, dtMenu;
     private JMenuItem clearScreenMenuItem, loadVertexMenuItem, saveVertexMenuItem, loadQuadMenuItem, saveQuadMenuItem;
     private JMenuItem newQuadMenuItem, deleteVertexMenuItem;
+    private JMenuItem shortestPathMenuItem;
     private JCheckBoxMenuItem showDTMenuItem, showVDMenuItem, showCoordsMenuItem;
     private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
     
-    private final DelaunayTriangulation voronoiDiagram;
+    private final DelaunayTriangulation delaunayTriangulation;
     
     public UI(Quadrilateral q, ArrayList<Vertex> vertexSet) {
-        this.voronoiDiagram = new DelaunayTriangulation(q, vertexSet);
+        this.delaunayTriangulation = new DelaunayTriangulation(q, vertexSet);
         createFrame();
     }
     
@@ -56,7 +57,7 @@ public class UI implements ActionListener{
         this.frame = new JFrame("Voronoi Diagram");
         
         // Mouse listener for handling adding vertexs when mouse clicks
-        this.voronoiDiagram.addMouseListener(new MouseAdapter() {
+        this.delaunayTriangulation.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 //Utility.debugPrintln(e.getX() + "," + e.getY());
@@ -65,7 +66,7 @@ public class UI implements ActionListener{
         });
         
         // Mouse listener for showing mouse coordinates
-        this.voronoiDiagram.addMouseMotionListener(new MouseMotionAdapter() {
+        this.delaunayTriangulation.addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent me)
             {
@@ -83,7 +84,7 @@ public class UI implements ActionListener{
 
         Container contentPane = this.frame.getContentPane();
         contentPane.setLayout(new BorderLayout());
-        contentPane.add(this.voronoiDiagram, BorderLayout.CENTER);
+        contentPane.add(this.delaunayTriangulation, BorderLayout.CENTER);
         this.frame.setPreferredSize(new Dimension(800, 700));
         this.frame.setLocationRelativeTo(null);
         this.frame.pack();
@@ -122,7 +123,7 @@ public class UI implements ActionListener{
                 break;
             // Edit menu
             case "Clear Screen":
-                this.voronoiDiagram.reset();
+                this.delaunayTriangulation.reset();
                 break;
             case "Remove Vertex":
                 removeVertex();
@@ -138,24 +139,28 @@ public class UI implements ActionListener{
                 showDTMenuItem.setState(false);
                 break;
             case "Show Coordinates":
-                this.voronoiDiagram.setShowCoordinates(showCoordsMenuItem.getState());
+                this.delaunayTriangulation.setShowCoordinates(showCoordsMenuItem.getState());
                 break;
             // Voronoi Diagram menu
             case "Show Bisectors 2 Sites":
-                this.voronoiDiagram.setShowB2S(this.showB2SMenuItem.getState());
+                this.delaunayTriangulation.setShowB2S(this.showB2SMenuItem.getState());
                 break;
             case "Only Show Chosen Bisectors 2 Sites":
-                this.voronoiDiagram.setOnlyShowChosenB2S(this.showOnlyChosenB2SMenuItem.getState());
+                this.delaunayTriangulation.setOnlyShowChosenB2S(this.showOnlyChosenB2SMenuItem.getState());
                 break;
             case "Show Bisectors 3 Sites":
-                this.voronoiDiagram.setShowB3S(this.showB3SMenuItem.getState());
+                this.delaunayTriangulation.setShowB3S(this.showB3SMenuItem.getState());
                 break;
             case "Only Show Chosen Bisectors 3 Sites":
-                this.voronoiDiagram.setOnlyShowChosenB3S(this.showOnlyChosenB3SMenuItem.getState());
+                this.delaunayTriangulation.setOnlyShowChosenB3S(this.showOnlyChosenB3SMenuItem.getState());
                 break;
             /*case "Show FG For Bisectors 3 Sites":
-                this.voronoiDiagram.setShowFG(this.showB3SFGMenuItem.getState());
+                this.delaunayTriangulation.setShowFG(this.showB3SFGMenuItem.getState());
                 break;*/
+            // Delaunay Triangulation Menu
+            case "Find Path Length":
+                getPathLength();
+                break;
         }
     }
     
@@ -193,7 +198,7 @@ public class UI implements ActionListener{
                     return;
                 }
             }
-            this.voronoiDiagram.newVertexSet(newVertexSet);
+            this.delaunayTriangulation.newVertexSet(newVertexSet);
         }
     }
     
@@ -219,7 +224,7 @@ public class UI implements ActionListener{
      */
     private void saveVertexSetFile(File file) throws FileNotFoundException, UnsupportedEncodingException {
         try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
-            for (Vertex p : this.voronoiDiagram.getVertices()) {
+            for (Vertex p : this.delaunayTriangulation.getVertices()) {
                 writer.println(p.x + "," + p.y);
             }
         }
@@ -240,7 +245,7 @@ public class UI implements ActionListener{
     
     private void saveQuadrilateralFile(File file) throws FileNotFoundException, UnsupportedEncodingException {
         try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
-            for (Vertex p : this.voronoiDiagram.quad.getVertices()) {
+            for (Vertex p : this.delaunayTriangulation.quad.getVertices()) {
                 writer.println(p.x + "," + p.y);
             }
         }
@@ -282,7 +287,7 @@ public class UI implements ActionListener{
                 }
                 i ++;
             }
-            this.voronoiDiagram.newQuad(newQuad);
+            this.delaunayTriangulation.newQuad(newQuad);
         }
     }
     
@@ -334,7 +339,7 @@ public class UI implements ActionListener{
                 !newQuadFieldx3.getText().isEmpty() && !newQuadFieldy3.getText().isEmpty() &&
                 !newQuadFieldx4.getText().isEmpty() && !newQuadFieldy4.getText().isEmpty()) {
             try {
-                this.voronoiDiagram.newQuad(new Vertex[]{new Vertex(Double.parseDouble(newQuadFieldx1.getText()), Double.parseDouble(newQuadFieldy1.getText())),
+                this.delaunayTriangulation.newQuad(new Vertex[]{new Vertex(Double.parseDouble(newQuadFieldx1.getText()), Double.parseDouble(newQuadFieldy1.getText())),
                         new Vertex(Double.parseDouble(newQuadFieldx2.getText()), Double.parseDouble(newQuadFieldy2.getText())),
                         new Vertex(Double.parseDouble(newQuadFieldx3.getText()), Double.parseDouble(newQuadFieldy3.getText())),
                         new Vertex(Double.parseDouble(newQuadFieldx4.getText()), Double.parseDouble(newQuadFieldy4.getText()))});
@@ -364,7 +369,7 @@ public class UI implements ActionListener{
                  "Enter X and Y Coordinates", JOptionPane.OK_CANCEL_OPTION);
         if (rmPtResult == JOptionPane.OK_OPTION) {
             try {
-                this.voronoiDiagram.removeVertex(new Vertex(Double.parseDouble(xField.getText()), Double.parseDouble(yField.getText())));
+                this.delaunayTriangulation.removeVertex(new Vertex(Double.parseDouble(xField.getText()), Double.parseDouble(yField.getText())));
             } catch (NumberFormatException e) {
                 Utility.debugPrintln("Invalid vertex format. X and Y coordinates must be numbers.");
             }
@@ -372,12 +377,38 @@ public class UI implements ActionListener{
     }
     
     private void addVoronoiVertex(int x, int y) {
-        //Utility.debugPrintln("Adding vertex (" + x + ", " + (this.voronoiDiagram.getBounds().getSize().height - y) + ")");
-        this.voronoiDiagram.addVertex(new Vertex(x, this.voronoiDiagram.getBounds().getSize().height - y));
+        //Utility.debugPrintln("Adding vertex (" + x + ", " + (this.delaunayTriangulation.getBounds().getSize().height - y) + ")");
+        this.delaunayTriangulation.addVertex(new Vertex(x, this.delaunayTriangulation.getBounds().getSize().height - y));
     }
     
     private void displayCoordinates(int x, int y) {
-        this.voronoiDiagram.setMouseCoordinates(x, y);
+        this.delaunayTriangulation.setMouseCoordinates(x, y);
+    }
+    
+    /**
+     * Allow user to choose two vertices. The minimum length path between them is then displayed
+     */
+    private void getPathLength() {
+        JTextField v1Field = new JTextField(5);
+        JTextField v2Field = new JTextField(5);
+
+        JPanel getPathPanel = new JPanel();
+        getPathPanel.add(new JLabel("V1:"));
+        getPathPanel.add(v1Field);
+        getPathPanel.add(Box.createHorizontalStrut(15));
+        getPathPanel.add(new JLabel("V2:"));
+        getPathPanel.add(v2Field);
+
+        int getPathResult = JOptionPane.showConfirmDialog(null, getPathPanel, 
+                 "Enter vertex indices", JOptionPane.OK_CANCEL_OPTION);
+        if (getPathResult == JOptionPane.OK_OPTION) {
+            try {
+                JOptionPane.showMessageDialog(null, this.delaunayTriangulation.getShortestPath(Integer.parseInt(v1Field.getText()), Integer.parseInt(v2Field.getText())) + "",
+                        "Minimum path V" + v1Field.getText() + " and V" + v2Field.getText(), JOptionPane.PLAIN_MESSAGE);
+            } catch (NumberFormatException e) {
+                Utility.debugPrintln("Invalid vertex index. Index must be an integer.");
+            }
+        }
     }
     
     /**
@@ -471,12 +502,12 @@ public class UI implements ActionListener{
         vdMenu = new JMenu("Voronoi Diagram");
         
         showB2SMenuItem = new JCheckBoxMenuItem("Show Bisectors 2 Sites");
-        showB2SMenuItem.setState(this.voronoiDiagram.getShowB2S());
+        showB2SMenuItem.setState(this.delaunayTriangulation.getShowB2S());
         showOnlyChosenB2SMenuItem = new JCheckBoxMenuItem("Only Show Chosen Bisectors 2 Sites");
         showB3SMenuItem = new JCheckBoxMenuItem("Show Bisectors 3 Sites");
-        showB3SMenuItem.setState(this.voronoiDiagram.getShowB3S());
+        showB3SMenuItem.setState(this.delaunayTriangulation.getShowB3S());
         showOnlyChosenB3SMenuItem = new JCheckBoxMenuItem("Only Show Chosen Bisectors 3 Sites");
-        showOnlyChosenB3SMenuItem.setState(!this.voronoiDiagram.getShowB3SHidden());
+        showOnlyChosenB3SMenuItem.setState(!this.delaunayTriangulation.getShowB3SHidden());
         //showB3SFGMenuItem = new JCheckBoxMenuItem("Show FG For Bisectors 3 Sites");
         
         showB2SMenuItem.addActionListener(this);
@@ -497,6 +528,12 @@ public class UI implements ActionListener{
     
     private void createDTMenu() {
         dtMenu = new JMenu("Delaunay Triangulation");
+        
+        shortestPathMenuItem = new JMenuItem("Find Path Length");
+                
+        shortestPathMenuItem.addActionListener(this);
+        
+        dtMenu.add(shortestPathMenuItem);
         
         menuBar.add(dtMenu);
     }

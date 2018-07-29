@@ -34,14 +34,15 @@ public class DelaunayTriangulation extends JPanel {
     private FindBisectorsTwoSites b2s;
     private FindBisectorsThreeSites b3s;
     private final Painter painter;
+    private double[][] shortestPaths;
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = false, showB2S = false;
     private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
     private final boolean doAnimation = false;
     private boolean showCoordinates = true;
     
-    UI userInterface;
-    int mouseX, mouseY;
+    private UI userInterface;
+    private int mouseX, mouseY;
     
     //private final ArrayList<Vertex> h1, h2, g1, g2;
 
@@ -161,8 +162,8 @@ public class DelaunayTriangulation extends JPanel {
         // Retriangulate if necessary
         //checkAdjacentTriangles(p);
         
-        double[][] dist = findAllPairsShortestPath();
-        for (double[] d : dist) {
+        this.shortestPaths = findAllPairsShortestPath();
+        for (double[] d : this.shortestPaths) {
             Utility.debugPrintln(Arrays.toString(d));
         }
                 
@@ -475,9 +476,31 @@ public class DelaunayTriangulation extends JPanel {
         return dist;
     }
     
+    /**
+     * 
+     * @param v1i Index of v1
+     * @param v2i Index of v2
+     * @return Shortest path length between v1 and v2
+     */
+    public double getShortestPath(int v1i, int v2i) {
+        return this.shortestPaths[v1i][v2i];
+    }
     
-    
-    
+    /**
+     * 
+     * @return Stretch factor of VD
+     */
+    private double findStretchFactor() {
+        double stretchFactor = -1;
+        for (int i = 0; i < this.shortestPaths.length; i ++) {
+            for (int j = i+1; j < this.shortestPaths.length; j ++) {
+                if (this.shortestPaths[i][j] > stretchFactor) {
+                    stretchFactor = this.shortestPaths[i][j];
+                }
+            }
+        }
+        return stretchFactor;
+    }
     
     
     /*
@@ -663,6 +686,8 @@ public class DelaunayTriangulation extends JPanel {
         painter.drawMouseCoordinates(g2d, mouseX, mouseY, yMax);
         
         painter.drawDelaunayEdges(g2d, this.dtGraph.getEdges(), yMax);
+        
+        painter.drawStretchFactor(g2d, findStretchFactor());
     }
 
     

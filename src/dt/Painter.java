@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.Set;
 
@@ -189,12 +190,12 @@ public class Painter {
         if (showCoordinates) {
             int fontSize = 14;
             for (Vertex p : vertexSet) {
-                g2d.setColor(Color.blue);
+                g2d.setColor(Color.black);
                 g2d.setFont(new Font("default", Font.BOLD, fontSize));
                 g2d.drawString(vertexSet.indexOf(p) + ": ", Math.round(p.x)+2, Math.round(yMax - p.y));
                 g2d.setColor(Color.red);
                 g2d.setFont(new Font("default", Font.PLAIN, fontSize));
-                g2d.drawString(Math.round(p.x) + ", " + Math.round(p.y), Math.round(p.x)+20, Math.round(yMax - p.y));
+                g2d.drawString(Math.round(p.x) + ", " + Math.round(p.y), Math.round(p.x)+25, Math.round(yMax - p.y));
             }
         }
     }
@@ -211,6 +212,18 @@ public class Painter {
             g2d.drawLine((int)Math.round(edge.getVertices()[0].x), yMax - (int)Math.round(edge.getVertices()[0].y), 
                     (int)Math.round(edge.getVertices()[1].x), yMax - (int)Math.round(edge.getVertices()[1].y));
         }
+    }
+    
+    /**
+     * 
+     * @param g2d Graphics2D object used to draw to the screen
+     * @param stretchFactor Double stretch factor to draw as a String to top left corner of screen
+     */
+    public void drawStretchFactor(Graphics2D g2d, double stretchFactor) {
+        g2d.setColor(Color.white);
+        g2d.fill(new Rectangle2D.Double(0, 0, 250, 17));
+        g2d.setColor(Color.black);
+        g2d.drawString("Stretch factor = " + stretchFactor, 0, 14);
     }
     
 }
