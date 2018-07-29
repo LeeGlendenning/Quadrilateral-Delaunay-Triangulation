@@ -187,12 +187,13 @@ public class Painter {
     public void drawVertexCoordinates(Graphics2D g2d, List<Vertex> vertexSet, int yMax, boolean showCoordinates) {
         
         if (showCoordinates) {
+            int fontSize = 14;
             for (Vertex p : vertexSet) {
                 g2d.setColor(Color.blue);
-                g2d.setFont(new Font("default", Font.BOLD, 16));
+                g2d.setFont(new Font("default", Font.BOLD, fontSize));
                 g2d.drawString(vertexSet.indexOf(p) + ": ", Math.round(p.x)+2, Math.round(yMax - p.y));
                 g2d.setColor(Color.red);
-                g2d.setFont(new Font("default", Font.PLAIN, 16));
+                g2d.setFont(new Font("default", Font.PLAIN, fontSize));
                 g2d.drawString(Math.round(p.x) + ", " + Math.round(p.y), Math.round(p.x)+20, Math.round(yMax - p.y));
             }
         }
