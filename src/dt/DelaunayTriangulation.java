@@ -21,9 +21,7 @@ import javax.swing.Timer;
 public class DelaunayTriangulation extends JPanel {
 
     private Graph dtGraph;
-    //protected List<Vertex> vertices;
     private List<Vertex> voronoiVertices; // voronoiVertices used for animation
-    //private List<Vertex[]> delaunayEdges; // List of Vertex tuples representing edges in the Delaunay triangulation
     protected Quadrilateral quad;
     // Consider using synchronized list to avoid concurrent modification...
     private List<Bisector> displayEdges;
@@ -34,14 +32,14 @@ public class DelaunayTriangulation extends JPanel {
     private FindBisectorsTwoSites b2s;
     private FindBisectorsThreeSites b3s;
     private final Painter painter;
-    private double[][] shortestPaths;
+    private double[][] shortestPaths; // Shortest path lengths between any 2 vertices in the DT
+    private Integer[][] next; // Holds shortestPaths indices for finding path between 2 vertices
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = false, showB2S = false;
     private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
     private final boolean doAnimation = false;
     private boolean showCoordinates = true;
     
-    private UI userInterface;
     private int mouseX, mouseY;
     
     //private final ArrayList<Vertex> h1, h2, g1, g2;
@@ -435,15 +433,23 @@ public class DelaunayTriangulation extends JPanel {
     private double[][] findAllPairsShortestPath() {
         // 2D array representing distance between each vertex in DT
         double[][] dist = new double[this.dtGraph.getVertices().size()][this.dtGraph.getVertices().size()];
+        this.next = new Integer[this.dtGraph.getVertices().size()][this.dtGraph.getVertices().size()];
         // Initialize 2D array with infinity
         for (double[] arr : dist) {
             Arrays.fill(arr, Double.MAX_VALUE);
+        }
+        // Initialize 2D array with null
+        for (Integer[] arr : this.next) {
+            Arrays.fill(arr, null);
         }
         
         // Set distance from vertices sharing an edge to the weight of the edge
         for (Edge e : this.dtGraph.getEdges()) {
             dist[this.dtGraph.getVertices().indexOf(e.getVertices()[0])][this.dtGraph.getVertices().indexOf(e.getVertices()[1])] = e.getWeight();
             dist[this.dtGraph.getVertices().indexOf(e.getVertices()[1])][this.dtGraph.getVertices().indexOf(e.getVertices()[0])] = e.getWeight();
+        
+            next[this.dtGraph.getVertices().indexOf(e.getVertices()[0])][this.dtGraph.getVertices().indexOf(e.getVertices()[1])] = this.dtGraph.getVertices().indexOf(e.getVertices()[1]);
+            next[this.dtGraph.getVertices().indexOf(e.getVertices()[1])][this.dtGraph.getVertices().indexOf(e.getVertices()[0])] = this.dtGraph.getVertices().indexOf(e.getVertices()[0]);
         }
         
         // Set distance from a vertex to itself as 0 (diagonal)
@@ -467,6 +473,7 @@ public class DelaunayTriangulation extends JPanel {
                 {
                     if (dist[i][j] > dist[i][k] + dist[k][j]) {
                         dist[i][j] = dist[i][k] + dist[k][j];
+                        next[i][j] = next[i][k];
                     }
                     
                 }
@@ -474,6 +481,25 @@ public class DelaunayTriangulation extends JPanel {
         }
         
         return dist;
+    }
+    
+    /**
+     * 
+     * @param u Index of a Vertex in the DT
+     * @param v Index of a Vertex in the DT
+     * @return List of vertices making up a path from u to v
+     */
+    public ArrayList<Vertex> shortestPath(int u, int v) {
+        if (this.next[u][v] == null) {
+            return new ArrayList();
+        }
+        ArrayList<Vertex> path = new ArrayList();
+        path.add(this.dtGraph.getVertices().get(u));
+        while (u != v) {
+            u = this.next[u][v];
+            path.add(this.dtGraph.getVertices().get(u));
+        }
+        return path;
     }
     
     /**
@@ -501,6 +527,13 @@ public class DelaunayTriangulation extends JPanel {
         }
         return stretchFactor;
     }
+    
+    
+    
+    
+    
+    
+    
     
     
     /*

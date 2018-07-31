@@ -403,8 +403,12 @@ public class UI implements ActionListener{
                  "Enter vertex indices", JOptionPane.OK_CANCEL_OPTION);
         if (getPathResult == JOptionPane.OK_OPTION) {
             try {
-                JOptionPane.showMessageDialog(null, this.delaunayTriangulation.getShortestPath(Integer.parseInt(v1Field.getText()), Integer.parseInt(v2Field.getText())) + "",
-                        "Minimum path V" + v1Field.getText() + " and V" + v2Field.getText(), JOptionPane.PLAIN_MESSAGE);
+                String s = "Path: ";
+                for (Vertex v : this.delaunayTriangulation.shortestPath(Integer.parseInt(v1Field.getText()), Integer.parseInt(v2Field.getText()))) {
+                    s += v + " ";
+                }
+                s += "\nStretch Factor: " + this.delaunayTriangulation.getShortestPath(Integer.parseInt(v1Field.getText()), Integer.parseInt(v2Field.getText()));
+                JOptionPane.showMessageDialog(null, s, "Minimum path V" + v1Field.getText() + " and V" + v2Field.getText(), JOptionPane.PLAIN_MESSAGE);
             } catch (NumberFormatException e) {
                 Utility.debugPrintln("Invalid vertex index. Index must be an integer.");
             }
