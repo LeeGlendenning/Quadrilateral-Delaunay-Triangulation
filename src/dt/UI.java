@@ -125,7 +125,7 @@ public class UI implements ActionListener{
             case "Remove Vertex":
                 removeVertex();
                 break;
-            case "New Quadrilateral":
+            case "Define New Quadrilateral":
                 newQuadrilateral();
                 break;
             // View menu
@@ -135,7 +135,7 @@ public class UI implements ActionListener{
             case "Voronoi Diagram":
                 showDTMenuItem.setState(false);
                 break;
-            case "Show Coordinates":
+            case "Show Vertex Coordinates":
                 this.delaunayTriangulation.setShowCoordinates(showCoordsMenuItem.getState());
                 break;
             // Voronoi Diagram menu
@@ -355,21 +355,24 @@ public class UI implements ActionListener{
      * Allow user to specify a vertex in the VD to remove and reconstruct VD
      */
     private void removeVertex() {
-        JTextField xField = new JTextField(5);
-        JTextField yField = new JTextField(5);
+        //JTextField xField = new JTextField(5);
+        //JTextField yField = new JTextField(5);
+        JTextField vField = new JTextField(5);
 
         JPanel rmPtPanel = new JPanel();
-        rmPtPanel.add(new JLabel("x:"));
+        rmPtPanel.add(new JLabel("Vertex #:"));
+        rmPtPanel.add(vField);
+        /*rmPtPanel.add(new JLabel("x:"));
         rmPtPanel.add(xField);
         rmPtPanel.add(Box.createHorizontalStrut(15));
         rmPtPanel.add(new JLabel("y:"));
-        rmPtPanel.add(yField);
+        rmPtPanel.add(yField);*/
 
         int rmPtResult = JOptionPane.showConfirmDialog(null, rmPtPanel, 
-                 "Enter X and Y Coordinates", JOptionPane.OK_CANCEL_OPTION);
+                 "Enter Vertex Number", JOptionPane.OK_CANCEL_OPTION);
         if (rmPtResult == JOptionPane.OK_OPTION) {
             try {
-                this.delaunayTriangulation.removeVertex(new Vertex(Double.parseDouble(xField.getText()), Double.parseDouble(yField.getText())));
+                this.delaunayTriangulation.removeVertex(Integer.parseInt(vField.getText()));
             } catch (NumberFormatException e) {
                 Utility.debugPrintln("Invalid vertex format. X and Y coordinates must be numbers.");
             }
@@ -463,7 +466,7 @@ public class UI implements ActionListener{
         
         clearScreenMenuItem = new JMenuItem("Clear Screen");
         deleteVertexMenuItem = new JMenuItem("Remove Vertex");
-        newQuadMenuItem = new JMenuItem("New Quadrilateral");
+        newQuadMenuItem = new JMenuItem("Define New Quadrilateral");
         
         clearScreenMenuItem.addActionListener(this);
         deleteVertexMenuItem.addActionListener(this);
@@ -485,7 +488,7 @@ public class UI implements ActionListener{
         showDTMenuItem = new JCheckBoxMenuItem("Delaunay Triangulation");
         showVDMenuItem = new JCheckBoxMenuItem("Voronoi Diagram");
         showVDMenuItem.setState(true);
-        showCoordsMenuItem = new JCheckBoxMenuItem("Show Coordinates");
+        showCoordsMenuItem = new JCheckBoxMenuItem("Show Vertex Coordinates");
         showCoordsMenuItem.setState(true);
         
         showDTMenuItem.addActionListener(this);

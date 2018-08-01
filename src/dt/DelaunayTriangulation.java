@@ -578,9 +578,9 @@ public class DelaunayTriangulation extends JPanel {
      * Remove vertex and reconstruct Voronoi Diagram
      * @param p Vertex to remove from vertex set
      */
-    public void removeVertex(Vertex p) {
-        if (this.dtGraph.getVertices().contains(p)) {
-            this.dtGraph.removeVertex(p);
+    public void removeVertex(int i) {
+        if (this.dtGraph.getVertices().size() > i) {
+            this.dtGraph.removeVertex(new Vertex(this.dtGraph.getVertices().get(i).x, this.dtGraph.getVertices().get(i).y));
             Vertex[] tempPts = this.dtGraph.getVertices().toArray(new Vertex[this.dtGraph.getVertices().size()]);
             reset();
             // Reconstruct VoronoiDiagram with remaining vertices
