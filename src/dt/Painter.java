@@ -226,7 +226,7 @@ public class Painter {
         g2d.fill(new Rectangle2D.Double(0, 0, 250, 32));
         g2d.setColor(Color.black);
         g2d.drawString("Stretch factor = " + stretchFactor, 0, 14);
-        g2d.drawString("V" + sfVertices[0] + " and V" + sfVertices[1], 0, 28);
+        g2d.drawString("Between V" + sfVertices[0] + " and V" + sfVertices[1], 0, 28);
         
     }
     
