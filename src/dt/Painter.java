@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -217,13 +218,39 @@ public class Painter {
     /**
      * 
      * @param g2d Graphics2D object used to draw to the screen
+     * @param sfVertices Array of size 2 holding the vertex indices causing the stretch factor of the DT
      * @param stretchFactor Double stretch factor to draw as a String to top left corner of screen
      */
-    public void drawStretchFactor(Graphics2D g2d, double stretchFactor) {
+    public void drawStretchFactor(Graphics2D g2d, Integer[] sfVertices, double stretchFactor) {
         g2d.setColor(Color.white);
-        g2d.fill(new Rectangle2D.Double(0, 0, 250, 17));
+        g2d.fill(new Rectangle2D.Double(0, 0, 250, 32));
         g2d.setColor(Color.black);
         g2d.drawString("Stretch factor = " + stretchFactor, 0, 14);
+        g2d.drawString("V" + sfVertices[0] + " and V" + sfVertices[1], 0, 28);
+        
+    }
+    
+    /**
+     * 
+     * @param g2d Graphics2D object used to draw to the screen
+     * @param path List of vertices representing a path in the DT
+     * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
+     * @param highlightPath Boolean whether to highlight the path or not
+     * @param c Colour to draw/highlight the path
+     */
+    public void highlightShortestPath(Graphics2D g2d, ArrayList<Vertex> path, int yMax, boolean highlightPath, Color c) {
+        if (highlightPath) {
+            g2d.setColor(c);
+            if (c.equals(Color.red)) {
+                g2d.setStroke(new BasicStroke(2));
+            }
+            for (int i = 0; i < path.size()-1; i ++) {
+                g2d.drawLine((int)Math.round(path.get(i).x), yMax - (int)Math.round(path.get(i).y), 
+                        (int)Math.round(path.get(i+1).x), yMax - (int)Math.round(path.get(i+1).y));
+            }
+            
+            g2d.setStroke(new BasicStroke(1));
+        }
     }
     
 }

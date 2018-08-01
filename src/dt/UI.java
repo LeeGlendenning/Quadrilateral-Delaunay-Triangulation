@@ -42,6 +42,7 @@ public class UI implements ActionListener{
     private JMenuItem clearScreenMenuItem, loadVertexMenuItem, saveVertexMenuItem, loadQuadMenuItem, saveQuadMenuItem;
     private JMenuItem newQuadMenuItem, deleteVertexMenuItem;
     private JMenuItem shortestPathMenuItem;
+    private JCheckBoxMenuItem highlightPathMenuItem;
     private JCheckBoxMenuItem showDTMenuItem, showVDMenuItem, showCoordsMenuItem;
     private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
     
@@ -103,9 +104,7 @@ public class UI implements ActionListener{
             case "Save Vertex Set":
                 try {
                     saveVertexSet();
-                } catch (FileNotFoundException ex) {
-                    Utility.debugPrintln("Something went wrong while saving vertex set");
-                } catch (UnsupportedEncodingException ex) {
+                } catch (FileNotFoundException | UnsupportedEncodingException ex) {
                     Utility.debugPrintln("Something went wrong while saving vertex set");
                 }
                 break;
@@ -115,9 +114,7 @@ public class UI implements ActionListener{
             case "Save Quadrilateral":
                 try{
                     saveQuadrilateral();
-                } catch (FileNotFoundException ex) {
-                    Utility.debugPrintln("Something went wrong while saving Quadrilateral");
-                } catch (UnsupportedEncodingException ex) {
+                } catch (FileNotFoundException | UnsupportedEncodingException ex) {
                     Utility.debugPrintln("Something went wrong while saving Quadrilateral");
                 }
                 break;
@@ -158,8 +155,11 @@ public class UI implements ActionListener{
                 this.delaunayTriangulation.setShowFG(this.showB3SFGMenuItem.getState());
                 break;*/
             // Delaunay Triangulation Menu
-            case "Find Path Length":
-                getPathLength();
+            case "Find Shortest Path":
+                getShortestPath();
+                break;
+            case "Highlight Shortest Path":
+                this.delaunayTriangulation.setHighlightShortestPath(this.highlightPathMenuItem.getState());
                 break;
         }
     }
@@ -388,7 +388,7 @@ public class UI implements ActionListener{
     /**
      * Allow user to choose two vertices. The minimum length path between them is then displayed
      */
-    private void getPathLength() {
+    private void getShortestPath() {
         JTextField v1Field = new JTextField(5);
         JTextField v2Field = new JTextField(5);
 
@@ -407,7 +407,7 @@ public class UI implements ActionListener{
                 for (Vertex v : this.delaunayTriangulation.shortestPath(Integer.parseInt(v1Field.getText()), Integer.parseInt(v2Field.getText()))) {
                     s += v + " ";
                 }
-                s += "\nStretch Factor: " + this.delaunayTriangulation.getShortestPath(Integer.parseInt(v1Field.getText()), Integer.parseInt(v2Field.getText()));
+                s += "\nPath Length: " + this.delaunayTriangulation.getShortestPathLength(Integer.parseInt(v1Field.getText()), Integer.parseInt(v2Field.getText()));
                 JOptionPane.showMessageDialog(null, s, "Minimum path V" + v1Field.getText() + " and V" + v2Field.getText(), JOptionPane.PLAIN_MESSAGE);
             } catch (NumberFormatException e) {
                 Utility.debugPrintln("Invalid vertex index. Index must be an integer.");
@@ -533,11 +533,15 @@ public class UI implements ActionListener{
     private void createDTMenu() {
         dtMenu = new JMenu("Delaunay Triangulation");
         
-        shortestPathMenuItem = new JMenuItem("Find Path Length");
+        shortestPathMenuItem = new JMenuItem("Find Shortest Path");
+        highlightPathMenuItem = new JCheckBoxMenuItem("Highlight Shortest Path");
+        highlightPathMenuItem.setState(this.delaunayTriangulation.getHighlightShortestPath());
                 
         shortestPathMenuItem.addActionListener(this);
+        highlightPathMenuItem.addActionListener(this);
         
         dtMenu.add(shortestPathMenuItem);
+        dtMenu.add(highlightPathMenuItem);
         
         menuBar.add(dtMenu);
     }

@@ -34,11 +34,14 @@ public class DelaunayTriangulation extends JPanel {
     private final Painter painter;
     private double[][] shortestPaths; // Shortest path lengths between any 2 vertices in the DT
     private Integer[][] next; // Holds shortestPaths indices for finding path between 2 vertices
+    private double stretchFactor;
+    private Integer[] sfVertices;
+    private ArrayList<Vertex> curSelectedPath, oldSelectedPath; // Last path user has queried
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = false, showB2S = false;
     private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
     private final boolean doAnimation = false;
-    private boolean showCoordinates = true;
+    private boolean showCoordinates = true, highlightShortestPath = true, clearSelectedPath = false;
     
     private int mouseX, mouseY;
     
@@ -61,6 +64,10 @@ public class DelaunayTriangulation extends JPanel {
         this.dtGraph = new Graph();
         this.scaleIterations = 0;
         this.curScale = 1.0;
+        this.stretchFactor = 0;
+        this.sfVertices = new Integer[]{null, null};
+        this.curSelectedPath = new ArrayList();
+        this.oldSelectedPath = new ArrayList();
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
@@ -159,11 +166,13 @@ public class DelaunayTriangulation extends JPanel {
         //Utility.debugPrintln("Vertex " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1) + " neighbour size = " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1).getNeighbours().size());
         // Retriangulate if necessary
         //checkAdjacentTriangles(p);
-        
+        this.oldSelectedPath = this.curSelectedPath;
+        this.curSelectedPath = new ArrayList();
         this.shortestPaths = findAllPairsShortestPath();
-        for (double[] d : this.shortestPaths) {
+        /*for (double[] d : this.shortestPaths) {
             Utility.debugPrintln(Arrays.toString(d));
-        }
+        }*/
+        updateStretchFactor();
                 
         Utility.debugPrintln("");
         repaint();
@@ -499,33 +508,41 @@ public class DelaunayTriangulation extends JPanel {
             u = this.next[u][v];
             path.add(this.dtGraph.getVertices().get(u));
         }
+        
+        this.oldSelectedPath = new ArrayList(this.curSelectedPath);
+        this.curSelectedPath = new ArrayList(path);
         return path;
     }
     
     /**
      * 
-     * @param v1i Index of v1
-     * @param v2i Index of v2
+     * @param vi Index of v1
+     * @param vj Index of v2
      * @return Shortest path length between v1 and v2
      */
-    public double getShortestPath(int v1i, int v2i) {
-        return this.shortestPaths[v1i][v2i];
+    public double getShortestPathLength(int vi, int vj) {
+        return this.shortestPaths[vi][vj];
     }
     
     /**
      * 
      * @return Stretch factor of VD
      */
-    private double findStretchFactor() {
-        double stretchFactor = -1;
+    private void updateStretchFactor() {
+        double stretch = -1;
+        Integer v1 = null, v2 = null;
         for (int i = 0; i < this.shortestPaths.length; i ++) {
             for (int j = i+1; j < this.shortestPaths.length; j ++) {
-                if (this.shortestPaths[i][j] > stretchFactor) {
-                    stretchFactor = this.shortestPaths[i][j];
+                if (this.shortestPaths[i][j] > stretch) {
+                    stretch = this.shortestPaths[i][j];
+                    v1 = i;
+                    v2 = j;
                 }
             }
         }
-        return stretchFactor;
+        this.stretchFactor = stretch;
+        this.sfVertices[0] = v1;
+        this.sfVertices[1] = v2;
     }
     
     
@@ -671,6 +688,24 @@ public class DelaunayTriangulation extends JPanel {
     
     /**
      * 
+     * @param setting Boolean to set
+     */
+    public void setHighlightShortestPath(boolean setting) {
+        this.highlightShortestPath = setting;
+        this.repaint();
+    }
+    
+    /**
+     * 
+     * @return Boolean highlightShortestPath
+     */
+    public boolean getHighlightShortestPath() {
+        return this.highlightShortestPath;
+    }
+    
+    
+    /**
+     * 
      * @return List<Vertex> list of vertices in the DT
      */
     public List<Vertex> getVertices() {
@@ -720,7 +755,14 @@ public class DelaunayTriangulation extends JPanel {
         
         painter.drawDelaunayEdges(g2d, this.dtGraph.getEdges(), yMax);
         
-        painter.drawStretchFactor(g2d, findStretchFactor());
+        painter.drawStretchFactor(g2d, this.sfVertices, this.stretchFactor);
+        
+        // Clear old highlighted path
+        painter.highlightShortestPath(g2d, this.oldSelectedPath, yMax, this.highlightShortestPath, Color.black);
+        
+        painter.highlightShortestPath(g2d, this.curSelectedPath, yMax, this.highlightShortestPath, Color.red);
+        
+        
     }
 
     
