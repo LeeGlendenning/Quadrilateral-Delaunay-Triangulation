@@ -533,16 +533,18 @@ public class DelaunayTriangulation extends JPanel {
         Integer v1 = null, v2 = null;
         for (int i = 0; i < this.shortestPaths.length; i ++) {
             for (int j = i+1; j < this.shortestPaths.length; j ++) {
-                if (this.shortestPaths[i][j] > stretch) {
-                    stretch = this.shortestPaths[i][j];
+                if (this.shortestPaths[i][j] / (Utility.euclideanDistance(this.dtGraph.getVertices().get(i), this.dtGraph.getVertices().get(j))) > stretch) {
+                    stretch = this.shortestPaths[i][j] / (Utility.euclideanDistance(this.dtGraph.getVertices().get(i), this.dtGraph.getVertices().get(j)));
                     v1 = i;
                     v2 = j;
                 }
             }
         }
-        this.stretchFactor = stretch;
-        this.sfVertices[0] = v1;
-        this.sfVertices[1] = v2;
+        if (v1 != null && v2 != null) {
+            this.stretchFactor = stretch;
+            this.sfVertices[0] = v1;
+            this.sfVertices[1] = v2;
+        }
     }
     
     
