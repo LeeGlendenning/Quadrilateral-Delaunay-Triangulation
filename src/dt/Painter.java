@@ -105,7 +105,7 @@ public class Painter {
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param showB3S If true, show bisectors between 3 sites that are marked "chosen"
      */
-    public void drawChosenB3SAndMinQuads(Graphics2D g2d, Quadrilateral quad, Bisector[] chosenB3S, int yMax, boolean showB3S) {
+    public void drawChosenB3SAndMinQuads(Graphics2D g2d, Quadrilateral quad, ArrayList<Bisector> chosenB3S, int yMax, boolean showB3S) {
         for (Bisector bisector : chosenB3S) {
             if (showB3S) {
                 g2d.setStroke(new BasicStroke(7));

@@ -18,7 +18,6 @@ public class FindBisectorsThreeSites {
         this.width = width;
         
         this.voronoiEdgesB3S = Collections.synchronizedList(new ArrayList());
-        // TODO: pass displayEdges to VoronoiDiagram so that they can be passed to Painter
         this.displayEdges = Collections.synchronizedList(new ArrayList());
     }
     

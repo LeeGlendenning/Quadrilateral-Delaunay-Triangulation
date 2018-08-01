@@ -25,7 +25,7 @@ public class DelaunayTriangulation extends JPanel {
     protected Quadrilateral quad;
     // Consider using synchronized list to avoid concurrent modification...
     private List<Bisector> displayEdges;
-    private Bisector[] chosenB3S;
+    private ArrayList<Bisector> chosenB3S;
     private double curScale;
     private int scaleIterations;
     private Timer timer;
@@ -68,6 +68,7 @@ public class DelaunayTriangulation extends JPanel {
         this.sfVertices = new Integer[]{null, null};
         this.curSelectedPath = new ArrayList();
         this.oldSelectedPath = new ArrayList();
+        this.chosenB3S = new ArrayList();
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
@@ -79,8 +80,6 @@ public class DelaunayTriangulation extends JPanel {
             doVoronoiAnimation(40, 1000, b2s, b3s);
         }
     }
-    
-    //int clickCount = 0; // Debugging
     
     /**
      * Calls addVertex for initial vertex set passed to constructor
@@ -99,7 +98,7 @@ public class DelaunayTriangulation extends JPanel {
         this.voronoiVertices = Collections.synchronizedList(new ArrayList());
         this.dtGraph = new Graph();
         this.scaleIterations = 0;
-        this.chosenB3S = new Bisector[]{};
+        this.chosenB3S = new ArrayList();
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
@@ -119,15 +118,6 @@ public class DelaunayTriangulation extends JPanel {
      * @param p A Vertex
      */
     public void addVertex(Vertex p) {
-        /*clickCount++;
-        // Add vertices automatically for debugging
-        if (clickCount == 1) {
-            p = new Vertex(150, 300);
-        } else if (clickCount == 2) {
-            p = new Vertex(400, 250);
-        } else if (clickCount == 3) {
-            p = new Vertex(200, 350);
-        }*/
         if (this.dtGraph.getVertices().contains(p)) {
             Utility.debugPrintln("Vertex not added. Already exists.");
             return;
@@ -154,15 +144,18 @@ public class DelaunayTriangulation extends JPanel {
         this.dtGraph.addVertex(p);
         this.displayEdges.addAll(this.b3s.getDisplayEdges());
         
-        this.chosenB3S = b3s.getChosenBisectors();
         
-        removeAllEdges();
         
-        for (Bisector chosenBisector : this.chosenB3S) {
-            if (!vertexInsideQuad(calculateMinQuad(chosenBisector))) {
-                triangulateVertices(chosenBisector.getAdjacentPtsArray());
+        //removeAllEdges();
+        // Triangulate the newly added vertex
+        for (int i = this.chosenB3S.size(); i < this.b3s.getChosenBisectors().length; i ++) {
+            if (!vertexInsideQuad(calculateMinQuad(this.b3s.getChosenBisectors()[i]))) {
+                triangulateVertices(this.b3s.getChosenBisectors()[i].getAdjacentPtsArray());
             }
+            this.chosenB3S.add(this.b3s.getChosenBisectors()[i]);
         }
+        
+        
         //Utility.debugPrintln("Vertex " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1) + " neighbour size = " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1).getNeighbours().size());
         // Retriangulate if necessary
         //checkAdjacentTriangles(p);
@@ -232,6 +225,15 @@ public class DelaunayTriangulation extends JPanel {
             }
             // If the edge doesn't already exist
             if (!this.dtGraph.getEdges().contains(new Edge(verts[i], verts[ii]))) {
+                // Check if the new edge overlaps an existing edge. if so, delete old edge
+                for (Edge e : this.dtGraph.getEdges()) {
+                    Vertex intersection;
+                    if ((intersection = Utility.doLineSegmentsIntersect(e.getVertices()[0], e.getVertices()[1], verts[i], verts[ii])) != null &&
+                            !intersection.equals(verts[i]) && !intersection.equals(verts[ii])) {
+                        this.dtGraph.removeEdge(e);
+                    }
+                }
+                    
                 //Utility.debugPrintln("Adding edge between " + verts[i] + " and " + verts[ii]);
                 this.dtGraph.addEdge(verts[i], verts[ii]);
             }
