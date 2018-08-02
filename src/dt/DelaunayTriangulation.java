@@ -321,8 +321,8 @@ public class DelaunayTriangulation extends JPanel {
         }
         Utility.debugPrintln();*/
         
-        Vertex[][] quadRays = new Vertex[4][2]; // Rays from quad center through each vertex
-        for (int i = 0; i < 4; i ++) {
+        Vertex[][] quadRays = new Vertex[this.quad.getVertices().length][2]; // Rays from quad center through each vertex
+        for (int i = 0; i < this.quad.getVertices().length; i ++) {
             quadRays[i] = findMinQuadRay(chosenB3S.getEndVertex(), chosenB3S.getEndVertex(), qVerts[i]);
             //this.displayEdges.add(new VoronoiBisector(new Vertex[]{}, quadRays[i][0], quadRays[i][1], "debug"));
         }
