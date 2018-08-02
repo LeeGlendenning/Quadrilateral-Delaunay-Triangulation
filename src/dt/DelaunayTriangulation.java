@@ -578,7 +578,7 @@ public class DelaunayTriangulation extends JPanel {
     
     /**
      * Remove vertex and reconstruct Voronoi Diagram
-     * @param p Vertex to remove from vertex set
+     * @param i Vertex to remove from vertex set
      */
     public void removeVertex(int i) {
         if (this.dtGraph.getVertices().size() > i) {
@@ -707,7 +707,6 @@ public class DelaunayTriangulation extends JPanel {
         return this.highlightShortestPath;
     }
     
-    
     /**
      * 
      * @return List<Vertex> list of vertices in the DT
@@ -736,24 +735,34 @@ public class DelaunayTriangulation extends JPanel {
         painter.drawBisectorRayVertices(g2d, this.voronoiVertices, yMax, voronoiVertexRadius);
         
         // Draw bisector segments between 2 sites
-        painter.drawB2S(g2d, b2s.getVoronoiEdges(), yMax, this.showB2S, this.showB2S_hiddenCones);
-        
-        // Draw bisector segments between 3 sites
-        g2d.setStroke(new BasicStroke(5));
-        painter.drawB3S(g2d, b3s.getVoronoiEdges(), yMax, this.showB3S, this.showB3S_hidden);
-        
-        g2d.setColor(Color.blue);
-        if (this.chosenB3S != null) {
-            painter.drawChosenB3SAndMinQuads(g2d, this.quad, this.chosenB3S, yMax, this.showB3S);
+        if (this.showB2S) {
+            painter.drawB2S(g2d, b2s.getVoronoiEdges(), yMax, this.showB2S_hiddenCones);
         }
         
-        g2d.setColor(Color.black);
-        g2d.setStroke(new BasicStroke(1));
-        painter.drawDisplayEdges(g2d, this.displayEdges, yMax, this.showB2S_hgRegion, this.showB3S_fgRegion);
+        // Draw bisector segments between 3 sites
+        if (this.showB3S && this.showB3S_hidden) {
+            g2d.setStroke(new BasicStroke(5));
+            painter.drawB3S(g2d, b3s.getVoronoiEdges(), yMax);
+        }
         
-        painter.drawB2S_hgVertices(g2d, b2s.geth1(), b2s.geth2(), b2s.getg1(), b2s.getg2(), yMax, vertexRadius, this.showB2S_hgVertices);
+        if (this.showB3S && this.chosenB3S != null) {
+            g2d.setColor(Color.blue);
+            painter.drawChosenB3SAndMinQuads(g2d, this.quad, this.chosenB3S, yMax);
+        }
         
-        painter.drawVertexCoordinates(g2d, this.dtGraph.getVertices(), yMax, this.showCoordinates);
+        if (this.showB3S_fgRegion || this.showB2S_hgRegion) {
+            g2d.setColor(Color.black);
+            g2d.setStroke(new BasicStroke(1));
+            painter.drawDisplayEdges(g2d, this.displayEdges, yMax, this.showB2S_hgRegion, this.showB3S_fgRegion);
+        }
+        
+        if (this.showB2S_hgVertices) {
+            painter.drawB2S_hgVertices(g2d, b2s.geth1(), b2s.geth2(), b2s.getg1(), b2s.getg2(), yMax, vertexRadius);
+        }
+        
+        if (this.showCoordinates) {
+            painter.drawVertexCoordinates(g2d, this.dtGraph.getVertices(), yMax);
+        }
         
         painter.drawMouseCoordinates(g2d, mouseX, mouseY, yMax);
         
