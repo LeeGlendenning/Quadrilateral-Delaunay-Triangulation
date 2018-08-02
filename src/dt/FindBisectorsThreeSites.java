@@ -10,8 +10,8 @@ import java.util.List;
  */
 public class FindBisectorsThreeSites {
     
-    List<Bisector> voronoiEdgesB3S, displayEdges;
-    int height, width;
+    private final List<Bisector> voronoiEdgesB3S, displayEdges;
+    private final int height, width;
     
     public FindBisectorsThreeSites(int height, int width) {
         this.height = height;
@@ -94,10 +94,8 @@ public class FindBisectorsThreeSites {
         //a3 = new Vertex(a1.x,a1.y);
         double caseTolerance = 0.01;
         
-        double angle = Utility.calculateAngle(a1, a2);
-        
         // Check for degenerate case. FG consists of a line through a1a2
-        if (segsParallelToa1a2(q, a1, a2, angle) == 2) { // FG12 is a line
+        if (segsParallelToa1a2(q, a1, a2) == 2) { // FG12 is a line
             Utility.debugPrintln("B3P Special case - two quad edges parallel to a1a2");
 
             Vertex[] ray1 = findB3SUVRays(q, a2, a1, a1); // Ray from a1 to left
@@ -120,7 +118,7 @@ public class FindBisectorsThreeSites {
         }
                 
         Vertex[] uv = finduv(q, a1, a2); // Vertex[2] = {u, ray1+, ray2-, v, ray1+, ray2-}
-        if (segsParallelToa1a2(q, a1, a2, angle) == 1) { // FG12 is a triangle
+        if (segsParallelToa1a2(q, a1, a2) == 1) { // FG12 is a triangle
             Utility.debugPrintln("B3P Special case - one quad edge parallel to a1a2");
             Vertex[] ray1 = findB3SUVRays(q, a2, a1, a1); // Ray from a1 to left
             Vertex[] ray2 = findB3SUVRays(q, a1, a2, a2); // Ray from a2 to right
@@ -187,7 +185,7 @@ public class FindBisectorsThreeSites {
      * @param a2 Vertex
      * @return True if 2 rotated line segments are parallel (within 10 decimal places) to a1a2, false otherwise
      */
-    private int segsParallelToa1a2(Quadrilateral q, Vertex a1, Vertex a2, double angle) {
+    private int segsParallelToa1a2(Quadrilateral q, Vertex a1, Vertex a2) {
         int parallelCount = 0;
         
         int j;
@@ -539,16 +537,6 @@ public class FindBisectorsThreeSites {
         }
         
         return null;
-    }
-    
-    /**
-     * 
-     * @param edges ArrayList of Voronoi Bisectors to print formatted
-     */
-    private void printVoronoiEdges(ArrayList<Bisector> edges) {
-        for (Bisector vb : edges) {
-            Utility.debugPrintln(" " + /*vb.adjacentVertices.get(0) + ", " + vb.adjacentVertices.get(1) + ": " +*/ vb.getStartVertex() + ", " + vb.getEndVertex());
-        }
     }
     
     /**

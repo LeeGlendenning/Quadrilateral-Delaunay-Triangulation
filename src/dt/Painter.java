@@ -8,7 +8,6 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Painter class is used to draw all Graphics2D elements to the screen
@@ -172,6 +171,7 @@ public class Painter {
      * @param g2d Graphics2D object used to draw to the screen
      * @param mouseX X coordinate of mouse location
      * @param mouseY Y coordinate of mouse location
+     * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      */
     public void drawMouseCoordinates(Graphics2D g2d, int mouseX, int mouseY, int yMax) {
         String s = mouseX + ", " + (yMax- mouseY);

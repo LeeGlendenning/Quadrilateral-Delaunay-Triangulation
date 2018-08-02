@@ -363,7 +363,7 @@ public class Utility {
         
         // Rotate all quad vertices
         //Utility.debugPrint("Non-Inner Vertices rVerts: ");
-        for (int i = 0; i < 4; i ++) {
+        for (int i = 0; i < q.getVertices().length; i ++) {
             rVerts[i] = Utility.rotateVertex(q.getVertices()[i], Utility.midpoint(a1, a2), angle);
             //Utility.debugPrint(rVerts[i] + ", ");
         }

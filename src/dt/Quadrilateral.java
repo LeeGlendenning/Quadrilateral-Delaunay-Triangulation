@@ -61,15 +61,6 @@ public class Quadrilateral {
     }
     
     /**
-     * Load quad vertices from a file
-     * 
-     * @param filename name of file to load vertices from
-     */
-    public Quadrilateral(String filename) {
-        
-    }
-    
-    /**
      * Compute and store center of quad
      */
     private void computeCenter() {
@@ -87,13 +78,9 @@ public class Quadrilateral {
      * @return Vertex array with x-y distance of each vertex to the center of the quad
      */
     private Vertex[] computeVertDistToVertex(Vertex[] verts, Vertex p/*, boolean isReflected*/) {
-        Vertex[] distToCenter = new Vertex[4];
-        for (int i = 0; i < 4; i ++) {
-            /*if (isReflected) {
-                distToCenter[i] = new Vertex(verts[i].x - p.x, p.y - verts[i].y);
-            } else {*/
-                distToCenter[i] = new Vertex(verts[i].x - p.x, verts[i].y - p.y);
-            //}
+        Vertex[] distToCenter = new Vertex[this.vertices.length];
+        for (int i = 0; i < this.vertices.length; i ++) {
+            distToCenter[i] = new Vertex(verts[i].x - p.x, verts[i].y - p.y);
         }
         return distToCenter;
     }
@@ -106,7 +93,7 @@ public class Quadrilateral {
      */
     public Vertex[] scaleQuad(double scaleFactor) {
         Vertex[] scaledVertices = Utility.deepCopyVertexArray(this.vertices);
-        for (int i = 0; i < 4; i ++) {
+        for (int i = 0; i < this.vertices.length; i ++) {
             // Translate center of quad to origin
             scaledVertices[i].x -= this.center.x;
             scaledVertices[i].y -= this.center.y;
@@ -120,46 +107,7 @@ public class Quadrilateral {
             scaledVertices[i].y += this.center.y;
         }
         
-        //printVertices(scaledVertices);
-        
         return scaledVertices;
-    }
-    
-    /**
-     * Scale quad to minimum size
-     * Scales just below min but scaling back up by a small amount doesn't do anything because of integer coordinates (doubles rounded)
-     */
-    private void minimizeQuad() {
-        Utility.debugPrintln("Minimizing quad");
-        
-        double curScale = 1.0;
-        Vertex[] tempVertices = Utility.deepCopyVertexArray(this.vertices);
-        while (edgeLengthsLargerThanMin(tempVertices, 3.0)) {
-            this.vertices = Utility.deepCopyVertexArray(tempVertices);
-            curScale -= 0.1;
-            tempVertices = scaleQuad(curScale);
-        }
-        Utility.debugPrintln("");
-    }
-    
-    /**
-     * Check that area of quad is less than 1
-     * 
-     * @param vertices Set of vertices defining a quad
-     * @param min Minimum allowed length of an edge in the quad
-     * @return True if area is larger than 1, false otherwise
-     */
-    private boolean edgeLengthsLargerThanMin(Vertex[] vertices, double min) {
-        int j = 1;
-        for (int i = 0; i < 4; i ++) 
-        {
-            j = (j==3) ? 0 : i+1;
-            //Utility.debugPrintln("edge length: " + euclideanDistance(vertices[i], vertices[j]));
-            if (Utility.euclideanDistance(vertices[i], vertices[j]) < min){
-                return false;
-            }
-        }
-        return true;
     }
     
     /**
@@ -171,8 +119,8 @@ public class Quadrilateral {
      */
     public Vertex[] getPixelVertsForVertex(Vertex p, double scale) {
         Vertex[] distToCenter = computeVertDistToVertex(scaleQuad(scale), this.center);
-        Vertex[] verts = new Vertex[4];
-        for (int i = 0; i < 4; i ++) {
+        Vertex[] verts = new Vertex[this.vertices.length];
+        for (int i = 0; i < this.vertices.length; i ++) {
             verts[i] = new Vertex( (p.x + distToCenter[i].x), (p.y + distToCenter[i].y));
         }
         return verts;
@@ -193,7 +141,6 @@ public class Quadrilateral {
     public Vertex nextVertex(Vertex v) {
         for (int i = 0; i < this.vertices.length; i ++) {
             if (v.equals(this.vertices[i])) {
-                
                 return (i != this.vertices.length-1) ? new Vertex(this.vertices[i+1].x, this.vertices[i+1].y) : new Vertex(this.vertices[0].x, this.vertices[0].y);
             }
         }

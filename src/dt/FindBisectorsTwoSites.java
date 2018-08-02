@@ -175,7 +175,7 @@ public class FindBisectorsTwoSites {
         Vertex[] innerVerts = new Vertex[2], rVerts = new Vertex[4];
         Utility.debugPrint("Rotated quad: ");
         // Rotate all quad vertices
-        for (int i = 0; i < 4; i ++) {
+        for (int i = 0; i < q.getVertices().length; i ++) {
             rVerts[i] = Utility.rotateVertex(q.getVertices()[i], q.getCenter(), angle);
             Utility.debugPrint(rVerts[i] + " ");
         }
@@ -235,9 +235,9 @@ public class FindBisectorsTwoSites {
         //Utility.debugPrintln("temph1 = " + temph1 + ", temph2 = " + temph2);
         //Utility.debugPrintln("tempg1 = " + tempg1 + ", tempg2 = " + tempg2);
         
-        Vertex[] rVerts = new Vertex[4];
-        // Rotate all quad vertices
-        for (int i = 0; i < 4; i ++) {
+        Vertex[] rVerts = new Vertex[q.getVertices().length];
+        // Rotate all quad vertices so a1a2 is parallel to x axis
+        for (int i = 0; i < q.getVertices().length; i ++) {
             rVerts[i] = Utility.rotateVertex(q.getVertices()[i], q.getCenter(), angle);
         }
         
@@ -247,7 +247,7 @@ public class FindBisectorsTwoSites {
         
         // Find other h and g vertices and rotate quad back to its original place
         int j;
-        for (int i = 0; i < 4; i ++) {
+        for (int i = 0; i < q.getVertices().length; i ++) {
             if (i == 3) {
                 j = 0;
             } else {

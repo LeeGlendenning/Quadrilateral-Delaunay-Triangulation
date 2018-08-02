@@ -4,18 +4,16 @@ import java.util.ArrayList;
 
 
 /**
- * Bisector for Voronoi diagram defined by at most 4 segments
+ * Bisector line segment/ray for Delaunay Triangulation
  * 
  * @author Lee Glendenning
  */
 public class Bisector {
     
     private final ArrayList<Vertex> adjacentVertices; // Vertices that this bisector belongs to. Size 2 or 3. Necessary for computing dual of Voronoi
-    //ArrayList<Vertex[]> bisectorSegments; // List of start and end Vertices of the bisector segments. start/endpts may be equal, list size <= 4
     private final Vertex startVertex, endVertex;
     private final String tag; // "b2s" = bisector of 2 sites, "b3s" = bisector of 3 sites
     private double minQuadScale;
-    //private boolean reflected;
     
     /**
      * Create a Bisector having two endvertices and store the vertices that belong to it
@@ -31,24 +29,7 @@ public class Bisector {
         this.endVertex = endPt;
         this.tag = tag;
         this.minQuadScale = 1.0;
-        //this.reflected = false;
     }
-    
-    /**
-     * 
-     * @return True if min quad for this bisector should be reflected
-     */
-    /*public boolean isReflected() {
-        return this.reflected;
-    }*/
-    
-    /**
-     * 
-     * @param isReflected Boolean for whether to reflect the min quad for this bisector
-     */
-    /*public void setReflected(boolean isReflected) {
-        this.reflected = isReflected;
-    }*/
     
     /**
      * 

@@ -174,11 +174,11 @@ public class DelaunayTriangulation extends JPanel {
     /**
      * Remove all edges of the triangulation
      */
-    private void removeAllEdges() {
+    /*private void removeAllEdges() {
         for (Edge e : this.dtGraph.getEdges()) {
             this.dtGraph.removeEdge(e);
         }
-    }
+    }*/
     
     /**
      * 
