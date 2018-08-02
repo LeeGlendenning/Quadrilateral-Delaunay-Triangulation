@@ -149,10 +149,11 @@ public class DelaunayTriangulation extends JPanel {
         //removeAllEdges();
         // Triangulate the newly added vertex
         for (int i = this.chosenB3S.size(); i < this.b3s.getChosenBisectors().length; i ++) {
-            if (!vertexInsideQuad(calculateMinQuad(this.b3s.getChosenBisectors()[i]))) {
+            Bisector b = this.b3s.getChosenBisectors()[i];
+            if (!vertexInsideQuad(calculateMinQuad(b))) {
                 triangulateVertices(this.b3s.getChosenBisectors()[i].getAdjacentPtsArray());
             }
-            this.chosenB3S.add(this.b3s.getChosenBisectors()[i]);
+            this.chosenB3S.add(b);
         }
         
         
@@ -728,7 +729,6 @@ public class DelaunayTriangulation extends JPanel {
         int vertexRadius = 3, voronoiVertexRadius = 1;
         int yMax = this.getBounds().getSize().height;
 
-        
         painter.drawVerticesAndQuads(g2d, this.dtGraph.getVertices(), this.quad, yMax, vertexRadius, this.curScale);
 
         g2d.setColor(Color.black);
@@ -772,7 +772,7 @@ public class DelaunayTriangulation extends JPanel {
         
         // Clear old highlighted path
         painter.highlightShortestPath(g2d, this.oldSelectedPath, yMax, this.highlightShortestPath, Color.black);
-        
+        // Draw desired highlighted path
         painter.highlightShortestPath(g2d, this.curSelectedPath, yMax, this.highlightShortestPath, Color.red);
         
         
