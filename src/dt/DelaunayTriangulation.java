@@ -35,11 +35,11 @@ public class DelaunayTriangulation extends JPanel {
     private double[][] shortestPaths; // Shortest path lengths between any 2 vertices in the DT
     private Integer[][] next; // Holds shortestPaths indices for finding path between 2 vertices
     private double stretchFactor;
-    private Integer[] sfVertices;
+    private final Integer[] sfVertices;
     private ArrayList<Vertex> curSelectedPath, oldSelectedPath; // Last path user has queried
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = false, showB2S = false;
-    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
+    private boolean showB3S_fgRegion = true, showB3S_hidden = false, showB3S = false;
     private final boolean doAnimation = false;
     private boolean showCoordinates = true, highlightShortestPath = true, clearSelectedPath = false;
     
@@ -736,13 +736,13 @@ public class DelaunayTriangulation extends JPanel {
         
         // Draw bisector segments between 2 sites
         if (this.showB2S) {
-            painter.drawB2S(g2d, b2s.getVoronoiEdges(), yMax, this.showB2S_hiddenCones);
+            painter.drawB2S(g2d, this.b2s.getVoronoiEdges(), yMax, this.showB2S_hiddenCones);
         }
         
         // Draw bisector segments between 3 sites
         if (this.showB3S && this.showB3S_hidden) {
             g2d.setStroke(new BasicStroke(5));
-            painter.drawB3S(g2d, b3s.getVoronoiEdges(), yMax);
+            painter.drawB3S(g2d, this.b3s.getVoronoiEdges(), yMax);
         }
         
         if (this.showB3S && this.chosenB3S != null) {

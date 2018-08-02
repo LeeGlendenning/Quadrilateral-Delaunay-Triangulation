@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class FindBisectorsThreeSites {
     
-    private final List<Bisector> voronoiEdgesB3S, displayEdges;
+    private final List<Bisector> voronoiEdgesB3S, displayEdges, chosenBisectors;
     private final int height, width;
     
     public FindBisectorsThreeSites(int height, int width) {
@@ -19,6 +19,7 @@ public class FindBisectorsThreeSites {
         
         this.voronoiEdgesB3S = Collections.synchronizedList(new ArrayList());
         this.displayEdges = Collections.synchronizedList(new ArrayList());
+        this.chosenBisectors = Collections.synchronizedList(new ArrayList());
     }
     
     
@@ -43,7 +44,8 @@ public class FindBisectorsThreeSites {
         if (bisectorCase == 2) { // case 2: single vertex is bisector of 3 
             Bisector bisector = findIntersectionB3S(voronoiEdgesB2S, pLeft, pRight, p3);
             if (bisector != null) {
-                this.voronoiEdgesB3S.add(bisector);
+                //this.voronoiEdgesB3S.add(bisector);
+                this.chosenBisectors.add(bisector);
             } else {
                 Utility.debugPrintln("!!! case 2 bisector null - this shouldn't happen !!!");
             }
@@ -51,10 +53,11 @@ public class FindBisectorsThreeSites {
             Utility.debugPrintln("Handling case 3 - not collinear");
             //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
             
-            
+            System.out.println("Finding overlaps");
             ArrayList<Bisector> bisectors = findOverlapsB3S(voronoiEdgesB2S, pLeft, pRight, p3);
             if (!bisectors.isEmpty()) {
                 for (Bisector bisector : bisectors) {
+                    System.out.println("Adding bisector to voronoiEdges");
                     this.voronoiEdgesB3S.add(bisector);
                 }
             } else {
@@ -423,7 +426,7 @@ public class FindBisectorsThreeSites {
                             }
                             
                             Bisector bisector = new Bisector(new Vertex[]{a1, a2, a3}, chosenPt, chosenPt, "b3s_chosen_overlap");
-                            this.voronoiEdgesB3S.add(bisector);
+                            this.chosenBisectors.add(bisector);
                             overlaps.add(new Bisector(new Vertex[]{a1, a2, a3}, overlap[0], overlap[1], "b3s_overlap"));
                         }
                     }
@@ -468,7 +471,7 @@ public class FindBisectorsThreeSites {
                             if (!vertexIsInfinite(chosenPt)) {
                                 Vertex[] adjacentUnion = Utility.vertexArrayUnion(coneIntersection[0].getAdjacentPtsArray(), coneIntersection[1].getAdjacentPtsArray());
                                 //Utility.debugPrintln("Found cone intersection at " + chosenPt + "\n");
-                                this.voronoiEdgesB3S.add(new Bisector(adjacentUnion, chosenPt, chosenPt, "b3s_chosen_cone"));
+                                this.chosenBisectors.add(new Bisector(adjacentUnion, chosenPt, chosenPt, "b3s_chosen_cone"));
 
                                 // Add entire cone to list for displaying
                                 coneIntersections.add(coneIntersection);
@@ -679,13 +682,7 @@ public class FindBisectorsThreeSites {
      * @return Deep copy array of chosen bisectors between 3 vertices
      */
     public Bisector[] getChosenBisectors() {
-        List<Bisector> chosenBisectors = new ArrayList();
-        for (Bisector chosenB3S : this.voronoiEdgesB3S) {
-            if (chosenB3S.getTag().contains("chosen")) {
-                chosenBisectors.add(chosenB3S);
-            }
-        }
-        return Utility.deepCopyVBArray(chosenBisectors.toArray(new Bisector[chosenBisectors.size()]));
+        return Utility.deepCopyVBArray(this.chosenBisectors.toArray(new Bisector[this.chosenBisectors.size()]));
     }
     
 }
