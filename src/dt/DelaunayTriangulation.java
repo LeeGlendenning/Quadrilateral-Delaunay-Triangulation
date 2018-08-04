@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -39,7 +40,7 @@ public class DelaunayTriangulation extends JPanel {
     private ArrayList<Vertex> curSelectedPath, oldSelectedPath; // Last path user has queried
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = false, showB2S = false;
-    private boolean showB3S_fgRegion = true, showB3S_hidden = false, showB3S = false;
+    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
     private final boolean doAnimation = false;
     private boolean showCoordinates = true, highlightShortestPath = true, clearSelectedPath = false;
     
@@ -131,13 +132,13 @@ public class DelaunayTriangulation extends JPanel {
         }
         Utility.debugPrintln("");
         this.displayEdges.addAll(this.b2s.getDisplayEdges());
-        Bisector[] voronoiEdgesB2S = b2s.getVoronoiEdges();
+        HashMap<List<Vertex>, List<Bisector>> bisectors2S = b2s.getBisectors2S();
         
         // Find B3S between p and all other pairs of vertices
         for (int i = 0; i < this.dtGraph.getVertices().size(); i ++) {
             for (int j = i + 1; j < this.dtGraph.getVertices().size(); j++) {
                 Utility.debugPrintln("Finding B3S between: " + this.dtGraph.getVertices().get(i).deepCopy() + ", " + this.dtGraph.getVertices().get(j).deepCopy() + ", and p = " + p);
-                this.b3s.findBisectorOfThreeSites(this.quad, voronoiEdgesB2S, this.dtGraph.getVertices().get(i).deepCopy(), this.dtGraph.getVertices().get(j).deepCopy(), p);
+                this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, this.dtGraph.getVertices().get(i).deepCopy(), this.dtGraph.getVertices().get(j).deepCopy(), p);
             }
         }
         Utility.debugPrintln("");
@@ -736,7 +737,7 @@ public class DelaunayTriangulation extends JPanel {
         
         // Draw bisector segments between 2 sites
         if (this.showB2S) {
-            painter.drawB2S(g2d, this.b2s.getVoronoiEdges(), yMax, this.showB2S_hiddenCones);
+            painter.drawB2S(g2d, this.b2s.getBisectors2S(), yMax, this.showB2S_hiddenCones);
         }
         
         // Draw bisector segments between 3 sites

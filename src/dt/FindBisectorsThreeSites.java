@@ -1,8 +1,11 @@
 package dt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -22,58 +25,62 @@ public class FindBisectorsThreeSites {
         this.chosenBisectors = Collections.synchronizedList(new ArrayList());
     }
     
-    
     /**
-     * If it exists, find the bisector vertex between p1, p2, p3
+     * If it exists, find the bisector vertex between v1, v2, v3
      * 
      * @param q Quadrilateral around each vertex
-     * @param voronoiEdgesB2S Array of B2S line segments
-     * @param p1 A vertex to find bisector of
-     * @param p2 A vertex to find bisector of
-     * @param p3 A vertex to find bisector of
+     * @param bisectors2S HashMap<Vertex[], List<Bisector>> of bisectors between 2 sites
+     * @param v1 A vertex to find bisector of
+     * @param v2 A vertex to find bisector of
+     * @param v3 A vertex to find bisector of
      */
-    public void findBisectorOfThreeSites(Quadrilateral q, Bisector[] voronoiEdgesB2S, Vertex p1, Vertex p2, Vertex p3) {
-        Utility.debugPrintln("\nFinding Bisector Between 3 sites:");
+    public void findBisectorOfThreeSites(Quadrilateral q, HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex v1, Vertex v2, Vertex v3) {
+        Utility.debugPrint("\nFinding Bisector Between 3 sites:");
         Vertex pLeft = new Vertex(), pRight = new Vertex();
-        Utility.setLeftAndRightVertex(p1, p2, pLeft, pRight, Utility.calculateAngle(p1, p2));
+        Utility.setLeftAndRightVertex(v1, v2, pLeft, pRight, Utility.calculateAngle(v1, v2));
                     
-        Utility.debugPrintln("a1 = " + pLeft + " a2 = " + pRight + " a3 = " + p3);
-        int bisectorCase = caseBisectorBetween3Vertices(q, pLeft, pRight, p3);
+        Utility.debugPrint("a1 = " + pLeft + " a2 = " + pRight + " a3 = " + v3);
+        int bisectorCase = caseBisectorBetween3Vertices(q, pLeft, pRight, v3);
+        
+        // Keys to bisectors2S for the 3 bisectors for v1, v2, v3
+        List<Vertex> key1 = getB2SKey(bisectors2S, v1, v2);
+        List<Vertex> key2 = getB2SKey(bisectors2S, v2, v3);
+        List<Vertex> key3 = getB2SKey(bisectors2S, v1, v3);
         
         // If case is 1, ignore. Means there is no bisector vertex
         if (bisectorCase == 2) { // case 2: single vertex is bisector of 3 
-            Bisector bisector = findIntersectionB3S(voronoiEdgesB2S, pLeft, pRight, p3);
+            Bisector bisector = findIntersectionB3S(bisectors2S, pLeft, pRight, v3, key3, key2);
             if (bisector != null) {
                 //this.voronoiEdgesB3S.add(bisector);
                 this.chosenBisectors.add(bisector);
             } else {
-                Utility.debugPrintln("!!! case 2 bisector null - this shouldn't happen !!!");
+                Utility.debugPrint("[findBisectorOfThreeSites] case 2 bisector null - this shouldn't happen.");
             }
-        } else if (bisectorCase == 3 && !Utility.isCollinear(pLeft, pRight, p3)) {
-            Utility.debugPrintln("Handling case 3 - not collinear");
+        } else if (bisectorCase == 3 && !Utility.isCollinear(pLeft, pRight, v3)) {
+            Utility.debugPrint("Handling case 3 - not collinear");
             //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
             
-            System.out.println("Finding overlaps");
-            ArrayList<Bisector> bisectors = findOverlapsB3S(voronoiEdgesB2S, pLeft, pRight, p3);
+            Utility.debugPrintln("Finding overlaps");
+            ArrayList<Bisector> bisectors = findOverlapsB3S(bisectors2S, pLeft, pRight, v3, key1, key2, key3);
             if (!bisectors.isEmpty()) {
                 for (Bisector bisector : bisectors) {
-                    System.out.println("Adding bisector to voronoiEdges");
+                    Utility.debugPrintln("Adding bisector to voronoiEdges");
                     this.voronoiEdgesB3S.add(bisector);
                 }
             } else {
-                Utility.debugPrintln("!!! case 3 bisector overlaps empty - this shouldn't happen !!!");
+                Utility.debugPrint("[findBisectorOfThreeSites] case 3 bisector overlaps empty - this shouldn't happen.");
             }
-        } else if (bisectorCase == 3 && Utility.isCollinear(pLeft, pRight, p3)) {
-            Utility.debugPrintln("Handling case 3 - collinear");
+        } else if (bisectorCase == 3 && Utility.isCollinear(pLeft, pRight, v3)) {
+            Utility.debugPrint("Handling case 3 - collinear");
             //BC(a1; a2; a3) consists of one or two cones
-            ArrayList<Bisector[]> cones = findConeIntersectionsB3S(voronoiEdgesB2S, pLeft, pRight, p3);
+            ArrayList<Bisector[]> cones = findConeIntersectionsB3S(bisectors2S, pLeft, pRight, v3);
             if (!cones.isEmpty()) {
                 for (Bisector[] cone : cones) {
                     this.voronoiEdgesB3S.add(cone[0]);
                     this.voronoiEdgesB3S.add(cone[1]);
                 }
             } else {
-                Utility.debugPrintln("!!! case 3 bisector cone overlaps empty - this shouldn't happen !!!");
+                Utility.debugPrint("[findBisectorOfThreeSites] case 3 bisector cone overlaps empty - this shouldn't happen.");
             }
         }
     }
@@ -93,13 +100,13 @@ public class FindBisectorsThreeSites {
      * @return Integer representing the case
      */
     private int caseBisectorBetween3Vertices(Quadrilateral q, Vertex a1, Vertex a2, Vertex a3) {
-        //Utility.debugPrintln("caseBisectorBetween3Vertices: " + a1 + ", " + a2 + ", " + a3);
+        //Utility.debugPrint("caseBisectorBetween3Vertices: " + a1 + ", " + a2 + ", " + a3);
         //a3 = new Vertex(a1.x,a1.y);
         double caseTolerance = 0.01;
         
         // Check for degenerate case. FG consists of a line through a1a2
         if (segsParallelToa1a2(q, a1, a2) == 2) { // FG12 is a line
-            Utility.debugPrintln("B3P Special case - two quad edges parallel to a1a2");
+            Utility.debugPrint("B3P Special case - two quad edges parallel to a1a2");
 
             Vertex[] ray1 = findB3SUVRays(q, a2, a1, a1); // Ray from a1 to left
             Vertex[] ray2 = findB3SUVRays(q, a1, a2, a2); // Ray from a2 to right
@@ -112,17 +119,17 @@ public class FindBisectorsThreeSites {
                     Utility.isLeftOfSegment(ray1[0], ray1[1], a3, caseTolerance) == 0 ||
                     Utility.isLeftOfSegment(ray2[0], ray2[1], a3, caseTolerance) == 0 ) {
 
-                Utility.debugPrintln("Vertex on boundary - case 3 (degenerate case)");
+                Utility.debugPrint("Vertex on boundary - case 3 (degenerate case)");
                 return 3;
             } else {
-                Utility.debugPrintln("Vertex not on boundary - case 2 (degenerate case)");
+                Utility.debugPrint("Vertex not on boundary - case 2 (degenerate case)");
                 return 2;
             }
         }
                 
         Vertex[] uv = finduv(q, a1, a2); // Vertex[2] = {u, ray1+, ray2-, v, ray1+, ray2-}
         if (segsParallelToa1a2(q, a1, a2) == 1) { // FG12 is a triangle
-            Utility.debugPrintln("B3P Special case - one quad edge parallel to a1a2");
+            Utility.debugPrint("B3P Special case - one quad edge parallel to a1a2");
             Vertex[] ray1 = findB3SUVRays(q, a2, a1, a1); // Ray from a1 to left
             Vertex[] ray2 = findB3SUVRays(q, a1, a2, a2); // Ray from a2 to right
 
@@ -142,7 +149,7 @@ public class FindBisectorsThreeSites {
         }
         // Non-degenerate case
         
-        //Utility.debugPrintln(Arrays.toString(uv));
+        //Utility.debugPrint(Arrays.toString(uv));
         
         // Case 1 split into 3 parts for debugging
         if (Utility.isLeftOfSegment(a1, uv[0], a3, caseTolerance) == -1 &&
@@ -150,19 +157,19 @@ public class FindBisectorsThreeSites {
                 Utility.isLeftOfSegment(uv[3], a2, a3, caseTolerance) == 1 &&
                 Utility.isLeftOfSegment(uv[3],a1, a3, caseTolerance) == -1) 
         {
-            Utility.debugPrintln("Vertex inside F - case 1 (do nothing)");
+            Utility.debugPrint("Vertex inside F - case 1 (do nothing)");
             return 1;
             
         } else if (Utility.isLeftOfSegment(uv[1], a1, a3, caseTolerance) == 1 &&
                 Utility.isLeftOfSegment(a1,uv[4], a3, caseTolerance) == 1) 
         {
-            Utility.debugPrintln("Vertex inside G12 - case 1 (do nothing)");
+            Utility.debugPrint("Vertex inside G12 - case 1 (do nothing)");
             return 1;
             
         } else if (Utility.isLeftOfSegment(uv[2], a2, a3, caseTolerance) == -1 &&
                 Utility.isLeftOfSegment(a2,uv[5], a3, caseTolerance) == -1) 
         {
-            Utility.debugPrintln("Vertex inside G21 - case 1 (do nothing)");
+            Utility.debugPrint("Vertex inside G21 - case 1 (do nothing)");
             return 1;
             
         } else if (Utility.isLeftOfSegment(a2, uv[0], a3, caseTolerance) == 0 ||
@@ -173,11 +180,11 @@ public class FindBisectorsThreeSites {
                 Utility.isLeftOfSegment(uv[2], a2, a3, caseTolerance) == 0 ||
                 Utility.isLeftOfSegment(a2, uv[5], a3, caseTolerance) == 0) 
         {
-            Utility.debugPrintln("Vertex on boundary - case 3");
+            Utility.debugPrint("Vertex on boundary - case 3");
             return 3;
         }
         
-        Utility.debugPrintln("Vertex outside FG - case 2");
+        Utility.debugPrint("Vertex outside FG - case 2");
         return 2;
     }
     
@@ -206,6 +213,25 @@ public class FindBisectorsThreeSites {
         }
         
         return parallelCount;
+    }
+    
+    /**
+     * 
+     * @param bisectors2S HashMap of B2S
+     * @param v1 A vertex
+     * @param v2 A vertex
+     * @return A key to the HashMap holding the bisector of v1 and v2
+     */
+    private List<Vertex> getB2SKey(HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex v1, Vertex v2) {
+        // Get the Bisector from the HashMap and add this ray to it
+        if (bisectors2S.containsKey(Arrays.asList(v1, v2))) {
+            return Arrays.asList(v1, v2);
+        } else if (bisectors2S.containsKey(Arrays.asList(v2, v1))) {
+            return Arrays.asList(v2, v1);
+        } else {
+            Utility.debugPrint("[getB2SKey] Couldn't find HashMap entry for B2S to add rays to. This shouldn't happen!");
+            return null;
+        }
     }
     
     /**
@@ -262,29 +288,29 @@ public class FindBisectorsThreeSites {
         for (Vertex p : td) {
             Utility.debugPrint(p + " ");
         }
-        Utility.debugPrintln();*/
+        Utility.debugPrint();*/
         
         Vertex[] u1 = findB3SUVRays(q, Utility.rotateVertex(td[0], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a1, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.prevVertex(td[0]), Utility.midpoint(a1, a2), angle));
-        //Utility.debugPrintln("u1: " + td[0] + ", " + q.prevVertex(td[0]));
+        //Utility.debugPrint("u1: " + td[0] + ", " + q.prevVertex(td[0]));
         Vertex[] u2 = findB3SUVRays(q, Utility.rotateVertex(td[0], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a2, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.nextVertex(td[0]), Utility.midpoint(a1, a2), angle));
-        //Utility.debugPrintln("u2: " + td[0] + ", " + q.nextVertex(td[0]));
+        //Utility.debugPrint("u2: " + td[0] + ", " + q.nextVertex(td[0]));
         
         double tolerance = 0.00001;
         Vertex[] v1;
         // Edge parallel to a1a2
         if (Math.abs(td[1].y - Utility.rotateVertex(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle).y) < tolerance) {
-            Utility.debugPrintln("Handling B3S triangle FG region");
+            Utility.debugPrint("Handling B3S triangle FG region");
             v1 = findB3SUVRays(q, Utility.rotateVertex(td[1], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a1, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle));
         } else {
             v1 = findB3SUVRays(q, Utility.rotateVertex(td[1], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a1, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.nextVertex(td[1]), Utility.midpoint(a1, a2), angle));
         }
-        //Utility.debugPrintln("v1: " + v1[0] + ", " + v1[1]);
+        //Utility.debugPrint("v1: " + v1[0] + ", " + v1[1]);
         Vertex[] v2 = findB3SUVRays(q, Utility.rotateVertex(td[1], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a2, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle));
-        //Utility.debugPrintln("v2: " + td[1] + ", " + q.prevVertex(td[1]));
+        //Utility.debugPrint("v2: " + td[1] + ", " + q.prevVertex(td[1]));
         
         Vertex u = Utility.doLineSegmentsIntersect(Utility.rotateVertex(u1[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u1[1], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u2[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u2[1], Utility.midpoint(a1, a2), -angle));
         Vertex v = Utility.doLineSegmentsIntersect(Utility.rotateVertex(v1[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v1[1], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v2[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v2[1], Utility.midpoint(a1, a2), -angle));
-        //Utility.debugPrintln("u = " + u + ", v = " + v);
+        //Utility.debugPrint("u = " + u + ", v = " + v);
         
         //below lines only for debugging when u or v is null (shouldn't happen)
         /*this.displayEdges.add(new VoronoiBisector(new Vertex[]{}, Utility.rotateVertex(u1[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u1[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
@@ -310,81 +336,70 @@ public class FindBisectorsThreeSites {
      * @return Vertex array containing ray starting at endPt and passing through nextPt then translated to a
      */
     private Vertex[] findB3SUVRays(Quadrilateral quad, Vertex endPt, Vertex a, Vertex nextPt) {
-        Vertex p1 = new Vertex(), p2 = new Vertex();
+        Vertex v1 = new Vertex(), v2 = new Vertex();
         // EndPt is relative to Quadrilateral. Translate relative to a
-        p1.x = endPt.x + a.x - quad.getCenter().x;
-        p1.y = endPt.y + a.y - quad.getCenter().y;
+        v1.x = endPt.x + a.x - quad.getCenter().x;
+        v1.y = endPt.y + a.y - quad.getCenter().y;
         
         // NonInnerVertex is relative to Quadrilateral. Translate relative to a
-        p2.x = nextPt.x + a.x - quad.getCenter().x;
-        p2.y = nextPt.y + a.y - quad.getCenter().y;
+        v2.x = nextPt.x + a.x - quad.getCenter().x;
+        v2.y = nextPt.y + a.y - quad.getCenter().y;
         
-        //Utility.debugPrintln("endPt = " + p1 + ", a = " + a + ", nextPt = " + p2);
+        //Utility.debugPrint("endPt = " + v1 + ", a = " + a + ", nextPt = " + v2);
         
         // Define the direction of the ray starting at a
         double rayEndx = Utility.RAY_SIZE;
-        //Utility.debugPrintln(a + " : " + nonInnerVertex);
-        if (p1.x > p2.x || (p1.x == p2.x && p1.y > p2.y)) {
+        //Utility.debugPrint(a + " : " + nonInnerVertex);
+        if (v1.x > v2.x || (v1.x == v2.x && v1.y > v2.y)) {
             rayEndx = -Utility.RAY_SIZE;
         }
         Vertex rayEnd = new Vertex(rayEndx, a.y); // End vertex of ray which is basically + or - infinity
         Vertex rayEnd2 = new Vertex(-rayEndx, a.y);
         
-        double angle = Utility.calculateAngle(p1, p2);
+        double angle = Utility.calculateAngle(v1, v2);
         
         // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
-        Vertex[] ray = {new Vertex(p1.x, p1.y), Utility.rotateVertex(rayEnd, new Vertex(0,0), -angle)};
-        Vertex[] ray2 = {new Vertex(p1.x, p1.y), Utility.rotateVertex(rayEnd2, new Vertex(0,0), -angle)};
+        Vertex[] ray = {new Vertex(v1.x, v1.y), Utility.rotateVertex(rayEnd, new Vertex(0,0), -angle)};
+        Vertex[] ray2 = {new Vertex(v1.x, v1.y), Utility.rotateVertex(rayEnd2, new Vertex(0,0), -angle)};
         
         //Translate ray so that it starts at a
-        ray[0].x += a.x - p1.x;
-        ray[0].y += a.y - p1.y;
-        ray[1].x += a.x - p1.x;
-        ray[1].y += a.y - p1.x;
+        ray[0].x += a.x - v1.x;
+        ray[0].y += a.y - v1.y;
+        ray[1].x += a.x - v1.x;
+        ray[1].y += a.y - v1.x;
         
-        ray2[0].x += a.x - p1.x;
-        ray2[0].y += a.y - p1.y;
-        ray2[1].x += a.x - p1.x;
-        ray2[1].y += a.y - p1.x;
+        ray2[0].x += a.x - v1.x;
+        ray2[0].y += a.y - v1.y;
+        ray2[1].x += a.x - v1.x;
+        ray2[1].y += a.y - v1.x;
         
-        //Utility.debugPrintln("ray = " + ray[0] + ", " + ray[1]);
+        //Utility.debugPrint("ray = " + ray[0] + ", " + ray[1]);
         
         return new Vertex[]{ray[0], ray[1], ray2[0], ray2[1]};
     }
     
     /**
-     * 
+     * @param bisectors2S HashMap<Vertex[], List<Bisector>> of bisectors between 2 sites
      * @param a1 A vertex
      * @param a2 A vertex
      * @param a3 A vertex
+     * @param key1 A key to the bisectors2S HashMap for bisector between a1a3
+     * @param key2 A key to the bisectors2S HashMap for bisector between a2a3
      * @return VoronoiBisector representing the intersection vertex between bisector of a1a3 and a2a3. case 2
      */
-    private Bisector findIntersectionB3S(Bisector[] voronoiEdgesB2S, Vertex a1, Vertex a2, Vertex a3) {
-        //Utility.debugPrintln("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + voronoiEdgesB2S.length);
-        //printEdges(voronoiEdgesB2S);
-        for (int i = 0; i < voronoiEdgesB2S.length; i ++) {
-            
-            // If the voronoi edge segment belongs to a1a3
-            if (voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a1) &&
-                    voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a3)) {
-                
-                //Utility.debugPrintln("Considering " + voronoiEdgesB2S[i].getAdjacentPts().get(0) + " and " + voronoiEdgesB2S[i].getAdjacentPts().get(1));
-                for (int j = 0; j < voronoiEdgesB2S.length; j ++) {
-                    //Utility.debugPrintln("Comparing with " + voronoiEdgesB2S[j].getAdjacentPts());
-                    
-                    //Utility.debugPrintln("Considering " + voronoiEdgesB2S[j].getAdjacentPts().get(0) + " and " + voronoiEdgesB2S[j].getAdjacentPts().get(1));
-                    // If the voronoi edge segment belongs to a2a3
-                    if (voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a2) &&
-                            voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a3)) {
-                        
-                        // Look for intersection between the 2 edge segments
-                        Vertex b3s = Utility.doLineSegmentsIntersect(voronoiEdgesB2S[i].getStartVertex(), voronoiEdgesB2S[i].getEndVertex(), 
-                                voronoiEdgesB2S[j].getStartVertex(), voronoiEdgesB2S[j].getEndVertex());
-                        if (b3s != null) {
-                            //Utility.debugPrintln("Found intersection vertex: " + b3s);
-                            return new Bisector(new Vertex[]{a1, a2, a3}, b3s, b3s, "b3s_chosen");
-                        }
-                    }
+    private Bisector findIntersectionB3S(HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex a1, Vertex a2, Vertex a3, List<Vertex> key1, List<Vertex> key2) {
+        //Utility.debugPrint("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + bisectors2S.length);
+        //printEdges(bisectors2S);
+        List<Bisector> bisector1 = bisectors2S.get(key1);
+        List<Bisector> bisector2 = bisectors2S.get(key2);
+        for (Bisector b1 : bisector1) {
+            for (Bisector b2 : bisector2) {
+                // Look for intersection between the 2 edge segments
+                Vertex b3s = Utility.doLineSegmentsIntersect(b1.getStartVertex(), b1.getEndVertex(), 
+                        b2.getStartVertex(), b2.getEndVertex());
+                if (b3s != null) {
+                    //Utility.debugPrint("Found intersection vertex: " + b3s);
+                    return new Bisector(new Vertex[]{a1, a2, a3}, b3s, b3s, "b3s_chosen");
                 }
             }
         }
@@ -392,60 +407,90 @@ public class FindBisectorsThreeSites {
     }
     
     /**
-     * 
+     * @param bisectors2S HashMap<Vertex[], List<Bisector>> of bisectors between 2 sites
      * @param a1 A vertex
      * @param a2 A vertex
      * @param a3 A vertex
+     * @param key1 A key to the bisectors2S HashMap for bisector between a1a2
+     * @param key2 A key to the bisectors2S HashMap for bisector between a2a3
+     * @param key3 A key to the bisectors2S HashMap for bisector between a1a3
      * @return ArrayList of VoronoiBisector representing the overlapping segments between bisector of a1a3 and a2a3. case 3 non-collinear
      */
-    private ArrayList<Bisector> findOverlapsB3S(Bisector[] voronoiEdgesB2S, Vertex a1, Vertex a2, Vertex a3) {
+    private ArrayList<Bisector> findOverlapsB3S(HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex a1, Vertex a2, Vertex a3, List<Vertex> key1, List<Vertex> key2, List<Vertex> key3) {
         ArrayList<Bisector> overlaps = new ArrayList();
         
-        for (int i = 0; i < voronoiEdgesB2S.length; i ++) {
-            //Utility.debugPrintln("Considering " + voronoiEdgesB2S[i].getAdjacentPts().get(0) + " and " + voronoiEdgesB2S[i].getAdjacentPts().get(1));
-            // If bisector belongs to a1a2, a1a3, or a2a3
-            if (voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a1) && voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a2) ||
-                    voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a1) && voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a3) ||
-                    voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a2) && voronoiEdgesB2S[i].getAdjacentPtsArrayList().contains(a3)) {
-                for (int j = i+1; j < voronoiEdgesB2S.length; j ++) {
-                    //Utility.debugPrintln("Considering " + voronoiEdgesB2S[j].getAdjacentPts().get(0) + " and " + voronoiEdgesB2S[j].getAdjacentPts().get(1));
-                    // If bisector belongs to a1a2, a1a3, or a2a3
-                    if (voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a1) && voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a2) ||
-                            voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a1) && voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a3) ||
-                            voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a2) && voronoiEdgesB2S[j].getAdjacentPtsArrayList().contains(a3)) {
-                        Vertex[] overlap = doLineSegmentsOverlap(voronoiEdgesB2S[i].getStartVertex(), voronoiEdgesB2S[i].getEndVertex(), 
-                                voronoiEdgesB2S[j].getStartVertex(), voronoiEdgesB2S[j].getEndVertex());
-
-                        if (overlap != null) {
-                            //Utility.debugPrintln("Found overlap: " + overlap[0] + ", " + overlap[1]);
-                            Vertex chosenPt;
-                            if (Math.abs(overlap[0].x) > 999 || Math.abs(overlap[0].y) > 999) {
-                                chosenPt = overlap[1];
-                            } else {
-                                chosenPt = overlap[0];
-                            }
-                            
-                            Bisector bisector = new Bisector(new Vertex[]{a1, a2, a3}, chosenPt, chosenPt, "b3s_chosen_overlap");
-                            this.chosenBisectors.add(bisector);
-                            overlaps.add(new Bisector(new Vertex[]{a1, a2, a3}, overlap[0], overlap[1], "b3s_overlap"));
-                        }
+        List<Bisector> bisector1 = bisectors2S.get(key1);
+        List<Bisector> bisector2 = bisectors2S.get(key2);
+        List<Bisector> bisector3 = bisectors2S.get(key3);
+        for (Bisector b1 : bisector1) {
+            for (Bisector b2 : bisector2) {
+                // Check for overlap between a1a2
+                Vertex[] overlap1 = doLineSegmentsOverlap(b1.getStartVertex(), b1.getEndVertex(), 
+                                b2.getStartVertex(), b2.getEndVertex());
+                Bisector tempB1 = checkOverlap(overlap1, a1, a2, a3);
+                if (tempB1 != null) {
+                    overlaps.add(tempB1);
+                }
+            
+                for (Bisector b3 : bisector3) {
+                    // Check for overlap between a2a3
+                    Vertex[] overlap2 = doLineSegmentsOverlap(b2.getStartVertex(), b2.getEndVertex(), 
+                                b3.getStartVertex(), b3.getEndVertex());
+                    Bisector tempB2 = checkOverlap(overlap2, a1, a2, a3);
+                    if (tempB2 != null) {
+                        overlaps.add(tempB2);
+                    }
+                    
+                    // Check for overlap between a1a3
+                    Vertex[] overlap3 = doLineSegmentsOverlap(b1.getStartVertex(), b1.getEndVertex(), 
+                                b3.getStartVertex(), b3.getEndVertex());
+                    Bisector tempB3 = checkOverlap(overlap3, a1, a2, a3);
+                    if (tempB3 != null) {
+                        overlaps.add(tempB3);
                     }
                 }
             }
         }
+        
         return overlaps;
     }
     
     /**
      * 
+     * @param overlap A Vertex[2] representing the line segment which is an overlap
+     * @param a1 A vertex
+     * @param a2 A vertex
+     * @param a3 A vertex
+     * @return A Bisector representing the overlap if it exists, null otherwise
+     */
+    private Bisector checkOverlap(Vertex[] overlap, Vertex a1, Vertex a2, Vertex a3) {
+        if (overlap != null) {
+            //Utility.debugPrint("Found overlap: " + overlap[0] + ", " + overlap[1]);
+            Vertex chosenPt;
+            if (Math.abs(overlap[0].x) > 999 || Math.abs(overlap[0].y) > 999) {
+                chosenPt = overlap[1];
+            } else {
+                chosenPt = overlap[0];
+            }
+
+            Bisector bisector = new Bisector(new Vertex[]{a1, a2, a3}, chosenPt, chosenPt, "b3s_chosen_overlap");
+            this.chosenBisectors.add(bisector);
+            return new Bisector(new Vertex[]{a1, a2, a3}, overlap[0], overlap[1], "b3s_overlap");
+        } else {
+            return null;
+        }
+    }
+    
+    /**
+     * @param bisectors2S HashMap<Vertex[], List<Bisector>> of bisectors between 2 sites
      * @param a1 A vertex
      * @param a2 A vertex
      * @param a3 A vertex
      * @return ArrayList of VoronoiBisector representing the overlapping cones between bisector of a1a3 and a2a3. case 3 collinear
      */
-    private ArrayList<Bisector[]> findConeIntersectionsB3S(Bisector[] voronoiEdgesB2S, Vertex a1, Vertex a2, Vertex a3) {
+    private ArrayList<Bisector[]> findConeIntersectionsB3S(HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex a1, Vertex a2, Vertex a3) {
         ArrayList<Bisector[]> coneIntersections = new ArrayList();
-        ArrayList<Bisector[]> cones = getCones(voronoiEdgesB2S); // List of VoronoiBisector tuples representing cones
+        ArrayList<Bisector[]> cones = getCones(bisectors2S); // List of VoronoiBisector tuples representing cones
         
         for (int i = 0; i < cones.size(); i ++) {
             // If cone belongs to a1a2, a1a3, or a2a3
@@ -459,10 +504,10 @@ public class FindBisectorsThreeSites {
                             cones.get(j)[0].getAdjacentPtsArrayList().contains(a1) && cones.get(j)[0].getAdjacentPtsArrayList().contains(a3) ||
                             cones.get(j)[0].getAdjacentPtsArrayList().contains(a2) && cones.get(j)[0].getAdjacentPtsArrayList().contains(a3)) {
                         
-                        //Utility.debugPrintln("Comparing " + cones.get(i)[0].getStartVertex() + ", " + cones.get(i)[0].getEndVertex());
-                        //Utility.debugPrintln("and " + cones.get(i)[1].getStartVertex() + ", " + cones.get(i)[1].getEndVertex());
-                        //Utility.debugPrintln("to " + cones.get(j)[0].getStartVertex() + ", " + cones.get(j)[0].getEndVertex());
-                        //Utility.debugPrintln("and " + cones.get(j)[1].getStartVertex() + ", " + cones.get(j)[1].getEndVertex());
+                        //Utility.debugPrint("Comparing " + cones.get(i)[0].getStartVertex() + ", " + cones.get(i)[0].getEndVertex());
+                        //Utility.debugPrint("and " + cones.get(i)[1].getStartVertex() + ", " + cones.get(i)[1].getEndVertex());
+                        //Utility.debugPrint("to " + cones.get(j)[0].getStartVertex() + ", " + cones.get(j)[0].getEndVertex());
+                        //Utility.debugPrint("and " + cones.get(j)[1].getStartVertex() + ", " + cones.get(j)[1].getEndVertex());
                         Bisector[] coneIntersection;
                         if ((coneIntersection = doConesIntersect(cones.get(i), cones.get(j))) != null) {
                             // Add chosen B3S vertex to list (apex of cone)
@@ -470,7 +515,7 @@ public class FindBisectorsThreeSites {
                                     coneIntersection[1].getStartVertex(), coneIntersection[1].getEndVertex());
                             if (!vertexIsInfinite(chosenPt)) {
                                 Vertex[] adjacentUnion = Utility.vertexArrayUnion(coneIntersection[0].getAdjacentPtsArray(), coneIntersection[1].getAdjacentPtsArray());
-                                //Utility.debugPrintln("Found cone intersection at " + chosenPt + "\n");
+                                //Utility.debugPrint("Found cone intersection at " + chosenPt + "\n");
                                 this.chosenBisectors.add(new Bisector(adjacentUnion, chosenPt, chosenPt, "b3s_chosen_cone"));
 
                                 // Add entire cone to list for displaying
@@ -489,31 +534,35 @@ public class FindBisectorsThreeSites {
      * 
      * @return ArrayList of cones represented by VoronoiBisector tuples
      */
-    private ArrayList<Bisector[]> getCones(Bisector[] voronoiEdgesB2S) {
+    private ArrayList<Bisector[]> getCones(HashMap<List<Vertex>, List<Bisector>> bisectors2S) {
         ArrayList<Bisector[]> cones = new ArrayList();
         int index = 0; // Also coneID
         boolean isFirstRay = true;
         
-        for (Bisector cone : voronoiEdgesB2S) {
-            if (cone.getTag().contains("cone")) {
-                String curConeID = cone.getTag().substring(cone.getTag().indexOf("=")+1, cone.getTag().length());
-                
-                if (Integer.parseInt(curConeID) == index) {
-                    if (isFirstRay) {
-                        cones.add(new Bisector[2]);
-                        cones.get(index)[0] = cone;
-                        //Utility.debugPrintln("Adding cone " + curConeID + " at index " + index + " [0]");
-                        //Utility.debugPrintln(cone.getStartVertex() + ", " + cone.getEndVertex());
-                        isFirstRay = false;
-                    } else {
-                        cones.get(index)[1] = cone;
-                        //Utility.debugPrintln("Adding cone " + curConeID + " at index " + index + " [1]");
-                        //Utility.debugPrintln(cone.getStartVertex() + ", " + cone.getEndVertex());
-                        index ++;
-                        isFirstRay = true;
+        for (Map.Entry<List<Vertex>, List<Bisector>> bisectorEntry : bisectors2S.entrySet()) {
+            List<Bisector> bisector = bisectorEntry.getValue();
+            
+            for (Bisector cone : bisector) {
+            
+                if (cone.getTag().contains("cone")) {
+                    String curConeID = cone.getTag().substring(cone.getTag().indexOf("=")+1, cone.getTag().length());
+
+                    if (Integer.parseInt(curConeID) == index) {
+                        if (isFirstRay) {
+                            cones.add(new Bisector[2]);
+                            cones.get(index)[0] = cone;
+                            //Utility.debugPrint("Adding cone " + curConeID + " at index " + index + " [0]");
+                            //Utility.debugPrint(cone.getStartVertex() + ", " + cone.getEndVertex());
+                            isFirstRay = false;
+                        } else {
+                            cones.get(index)[1] = cone;
+                            //Utility.debugPrint("Adding cone " + curConeID + " at index " + index + " [1]");
+                            //Utility.debugPrint(cone.getStartVertex() + ", " + cone.getEndVertex());
+                            index ++;
+                            isFirstRay = true;
+                        }
                     }
                 }
-                
             }
         }
         
@@ -544,14 +593,14 @@ public class FindBisectorsThreeSites {
     
     /**
      * 
-     * @param p1 Endvertex of first line segment P
-     * @param p2 Endvertex of first line segment Q
+     * @param v1 Endvertex of first line segment P
+     * @param v2 Endvertex of first line segment Q
      * @param q1 Endvertex of second line segment
      * @param q2 Endvertex of second line segment
      * @return Line segment representing overlap of P and Q
      */
-    private Vertex[] doLineSegmentsOverlap(Vertex p1, Vertex p2, Vertex q1, Vertex q2) {
-        if (p1.equals(p2) || q1.equals(q2)) {
+    private Vertex[] doLineSegmentsOverlap(Vertex v1, Vertex v2, Vertex q1, Vertex q2) {
+        if (v1.equals(v2) || q1.equals(q2)) {
             return null;
         }
         
@@ -559,9 +608,9 @@ public class FindBisectorsThreeSites {
         Vertex[] overlap = {null, null};
         
         Vertex pl = new Vertex(), pr = new Vertex(), ql = new Vertex(), qr = new Vertex();
-        Utility.setLeftAndRightVertex(p1, p2, pl, pr, Utility.calculateAngle(p1, p2));
+        Utility.setLeftAndRightVertex(v1, v2, pl, pr, Utility.calculateAngle(v1, v2));
         Utility.setLeftAndRightVertex(q1, q2, ql, qr, Utility.calculateAngle(q1, q2));
-        //Utility.debugPrintln("\nInitial vertices: " + pl + ", " + pr + " : " + ql + ", " + qr);
+        //Utility.debugPrint("\nInitial vertices: " + pl + ", " + pr + " : " + ql + ", " + qr);
         // Adjust ray endvertices to be at screen boundary
         if (vertexIsInfinite(pl)) {
             pl = findBoundaryVertexOnRay(pl, pr);
@@ -576,17 +625,17 @@ public class FindBisectorsThreeSites {
             qr = findBoundaryVertexOnRay(ql, qr);
         }
 
-        //Utility.debugPrintln("\nDoLineSegmentsOverlap: " + pl + ", " + pr + " : " + ql + ", " + qr);
+        //Utility.debugPrint("\nDoLineSegmentsOverlap: " + pl + ", " + pr + " : " + ql + ", " + qr);
 
         double qlOverlap = Utility.isLeftOfSegment(pl, pr, ql, overlapTolerane);
         double qrOverlap = Utility.isLeftOfSegment(pl, pr, qr, overlapTolerane);
 
-        //Utility.debugPrintln("qlOverlap = " + qlOverlap);
-        //Utility.debugPrintln("qrOverlap = " + qrOverlap);
+        //Utility.debugPrint("qlOverlap = " + qlOverlap);
+        //Utility.debugPrint("qrOverlap = " + qrOverlap);
 
         // No overlap
         if (qlOverlap != 0 && qrOverlap != 0) {
-            //Utility.debugPrintln("No overlap");
+            //Utility.debugPrint("No overlap");
             return null;
         }
 
@@ -630,11 +679,11 @@ public class FindBisectorsThreeSites {
     
     /**
      * 
-     * @param p1 Endvertex of ray represented as line segment
-     * @param p2 Endvertex of ray represented as line segment
+     * @param v1 Endvertex of ray represented as line segment
+     * @param v2 Endvertex of ray represented as line segment
      * @return Vertex on line segment at boundary of screen
      */
-    private Vertex findBoundaryVertexOnRay(Vertex p1, Vertex p2) {
+    private Vertex findBoundaryVertexOnRay(Vertex v1, Vertex v2) {
         double boundaryBuff = 1000;
         Vertex[] leftScreen = {new Vertex(-boundaryBuff, -boundaryBuff), new Vertex(-boundaryBuff, this.height+boundaryBuff)};
         Vertex[] rightScreen = {new Vertex(this.width+boundaryBuff, -boundaryBuff), new Vertex(this.width+boundaryBuff, this.height+boundaryBuff)};
@@ -643,20 +692,20 @@ public class FindBisectorsThreeSites {
         
         Vertex boundary;
         // Left side of screen will intersect ray
-        if ((boundary = Utility.doLineSegmentsIntersect(p1, p2, leftScreen[0], leftScreen[1])) != null) {
-            //Utility.debugPrintln("boundary vertex: " + boundary);
+        if ((boundary = Utility.doLineSegmentsIntersect(v1, v2, leftScreen[0], leftScreen[1])) != null) {
+            //Utility.debugPrint("boundary vertex: " + boundary);
             return boundary;
-        } else if ((boundary = Utility.doLineSegmentsIntersect(p1, p2, rightScreen[0], rightScreen[1])) != null) { // Right side of screen will intersect ray
-            //Utility.debugPrintln("boundary vertex: " + boundary);
+        } else if ((boundary = Utility.doLineSegmentsIntersect(v1, v2, rightScreen[0], rightScreen[1])) != null) { // Right side of screen will intersect ray
+            //Utility.debugPrint("boundary vertex: " + boundary);
             return boundary;        
-        } else if ((boundary = Utility.doLineSegmentsIntersect(p1, p2, topScreen[0], topScreen[1])) != null) { // Right side of screen will intersect ray
-            //Utility.debugPrintln("boundary vertex: " + boundary);
+        } else if ((boundary = Utility.doLineSegmentsIntersect(v1, v2, topScreen[0], topScreen[1])) != null) { // Right side of screen will intersect ray
+            //Utility.debugPrint("boundary vertex: " + boundary);
             return boundary;        
-        } else if ((boundary = Utility.doLineSegmentsIntersect(p1, p2, bottomScreen[0], bottomScreen[1])) != null) { // Right side of screen will intersect ray
-            //Utility.debugPrintln("boundary vertex: " + boundary);
+        } else if ((boundary = Utility.doLineSegmentsIntersect(v1, v2, bottomScreen[0], bottomScreen[1])) != null) { // Right side of screen will intersect ray
+            //Utility.debugPrint("boundary vertex: " + boundary);
             return boundary;        
         } else {
-            Utility.debugPrintln("!!! Could not find intersection of ray with screen boundary !!!");
+            Utility.debugPrint("!!! Could not find intersection of ray with screen boundary !!!");
             return null;
         }
     }        

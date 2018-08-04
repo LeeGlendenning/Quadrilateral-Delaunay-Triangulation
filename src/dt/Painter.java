@@ -7,7 +7,9 @@ import java.awt.Graphics2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Painter class is used to draw all Graphics2D elements to the screen
@@ -60,16 +62,20 @@ public class Painter {
      * Draw all bisectors between two sites
      * 
      * @param g2d Graphics2D object used to draw to the screen
-     * @param voronoiEdgesB2S Array of VoronoiBisector objects to draw to screen
+     * @param bisectors2S HashMap<Vertex[], List<Bisector>> storing Bisectors between 2 sites
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param showB2S_hiddenCones If true, draw bisectors between 2 sites that are marked "hidden"
      */
-    public void drawB2S(Graphics2D g2d, Bisector[] voronoiEdgesB2S, int yMax, boolean showB2S_hiddenCones) {
-        for (Bisector bisector : voronoiEdgesB2S) {
-            if (bisector.getTag().startsWith("b2s_chosen") ||
-                    bisector.getTag().startsWith("b2s_hidden") && showB2S_hiddenCones){
-                g2d.drawLine((int)Math.round(bisector.getStartVertex().x), yMax - (int)Math.round(bisector.getStartVertex().y),
-                        (int)Math.round(bisector.getEndVertex().x), yMax - (int)Math.round(bisector.getEndVertex().y));
+    public void drawB2S(Graphics2D g2d, HashMap<List<Vertex>, List<Bisector>> bisectors2S, int yMax, boolean showB2S_hiddenCones) {
+        for (Map.Entry<List<Vertex>, List<Bisector>> bisectorEntry : bisectors2S.entrySet()) {
+            List<Bisector> bisector = bisectorEntry.getValue();
+            
+            for (Bisector bSeg : bisector) {
+                if (bSeg.getTag().startsWith("b2s_chosen") ||
+                        bSeg.getTag().startsWith("b2s_hidden") && showB2S_hiddenCones){
+                    g2d.drawLine((int)Math.round(bSeg.getStartVertex().x), yMax - (int)Math.round(bSeg.getStartVertex().y),
+                            (int)Math.round(bSeg.getEndVertex().x), yMax - (int)Math.round(bSeg.getEndVertex().y));
+                }
             }
         }
     }

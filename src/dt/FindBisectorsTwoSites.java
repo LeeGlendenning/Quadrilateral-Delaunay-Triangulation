@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -13,7 +14,8 @@ import java.util.List;
 public class FindBisectorsTwoSites {
     
     private final ArrayList<Vertex> h1, h2, g1, g2;
-    private final List<Bisector> voronoiEdgesB2S, displayEdges;
+    private final HashMap<List<Vertex>, List<Bisector>> bisectors2S; // Keyed by adjacent Vertices[2]
+    private final List<Bisector> /*voronoiEdgesB2S,*/ displayEdges;
     private int coneID = 0;
     
     public FindBisectorsTwoSites() {
@@ -22,7 +24,8 @@ public class FindBisectorsTwoSites {
         this.g1 = new ArrayList();
         this.g2 = new ArrayList();
         
-        this.voronoiEdgesB2S = Collections.synchronizedList(new ArrayList());
+        //this.voronoiEdgesB2S = Collections.synchronizedList(new ArrayList());
+        bisectors2S = new HashMap();
         this.displayEdges = Collections.synchronizedList(new ArrayList());
     }
     
@@ -58,7 +61,17 @@ public class FindBisectorsTwoSites {
         Vertex g = doRaysIntersect(a1, g1.get(g1.size()-1), a2, g2.get(g2.size()-1));
         
         //Utility.debugPrintln("Endvertices of main bisector segment: " + h + ", " + g);
-        this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, h, g, "b2s_chosen"));
+        if (!this.bisectors2S.containsKey(Arrays.asList(p1, p2)) &&
+                !this.bisectors2S.containsKey(Arrays.asList(p2, p1))) 
+        {
+            ArrayList<Bisector> tempB = new ArrayList();
+            tempB.add(new Bisector(new Vertex[]{p1, p2}, h, g, "b2s_chosen"));
+            this.bisectors2S.put(Arrays.asList(p1, p2), new ArrayList(tempB));
+            //Utility.debugPrintln("Created key for " + p1 + ", " + p2 + " : " + Arrays.toString(new Vertex[]{p1, p2}));
+        } else {
+            Utility.debugPrintln("[findBisectorOfTwoSites] B2S key already exists. This shouldn't happen!");
+        }
+        //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, h, g, "b2s_chosen"));
         
         // Find intersections between non-inner vertices
         ArrayList<Vertex> nonInnerVertices = Utility.findNonInnerVertices(quad, a1, a2, angle);
@@ -81,6 +94,20 @@ public class FindBisectorsTwoSites {
             rNonInner.add(Utility.rotateVertex(niVert, a1, angle));
         }
         
+        List<Vertex> key = null;
+        // Get the Bisector from the HashMap and add this ray to it
+        //Utility.debugPrintln("Checking for key: " + Arrays.toString(new Vertex[]{p1, p2}) + " and " + Arrays.toString(new Vertex[]{p2, p1}));
+        if (this.bisectors2S.containsKey(Arrays.asList(p1, p2))) {
+            key = Arrays.asList(p1, p2);
+            //Utility.debugPrintln("Found key " + key.toString());
+        } else if (this.bisectors2S.containsKey(Arrays.asList(p1, p2))) {
+            key = Arrays.asList(p1, p2);
+            //Utility.debugPrintln("Found key " + key.toString());
+        } else {
+            Utility.debugPrintln("[calculateAllBisectorRays] Couldn't find HashMap entry for B2S to add rays to. This shouldn't happen!");
+            return;
+        }
+        
         // If SL hits edge there are 2 non-inner verts at that y height
         // The right-most non-inner vert is the "chosen" one and should
         // Only be shown. the left-most is stored for B3S calculations
@@ -88,47 +115,60 @@ public class FindBisectorsTwoSites {
         Vertex[] ray;
         if (nonInnerVertices.size() == 2) {
             ray = findBisectorRay(h, a1, nonInnerVertices.get(0), quad);
-            this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
+            this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen"));
+            //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
+            
             ray = findBisectorRay(g, a1, nonInnerVertices.get(1), quad);
-            this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
+            this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen"));
+            //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
         }
         
         double tolerance = 0.00001;
         if (nonInnerVertices.size() == 3 && Math.abs(rNonInner.get(0).y - rNonInner.get(1).y) < tolerance) {
             if (rNonInner.get(0).x < rNonInner.get(1).x) {
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(0), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(1), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
                 this.coneID ++;
             } else{
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(0), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(1), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
                 this.coneID ++;
             }
             
             ray = findBisectorRay(g, a1, nonInnerVertices.get(2), quad);
-            this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
+            this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen"));
+            //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
         }
         
         if (nonInnerVertices.size() == 3 && Math.abs(rNonInner.get(1).y - rNonInner.get(2).y) < tolerance) {
             Utility.debugPrintln("here");
             ray = findBisectorRay(h, a1, nonInnerVertices.get(0), quad);
-            this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
+            this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen"));
+            //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
             
             if (rNonInner.get(1).x < rNonInner.get(2).x) {
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(1), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(2), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
                 this.coneID ++;
             } else{
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(1), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(2), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
                 this.coneID ++;
             }
         }
@@ -136,29 +176,37 @@ public class FindBisectorsTwoSites {
         if (nonInnerVertices.size() == 4) {
             if (rNonInner.get(0).x < rNonInner.get(1).x) {
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(0), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(1), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
                 this.coneID ++;
             } else{
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(0), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
                 ray = findBisectorRay(h, a1, nonInnerVertices.get(1), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
                 this.coneID ++;
             }
             
             if (rNonInner.get(2).x < rNonInner.get(3).x) {
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(2), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(3), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
                 this.coneID ++;
             } else{
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(2), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen_cone=" + coneID));
                 ray = findBisectorRay(g, a1, nonInnerVertices.get(3), quad);
-                this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                this.bisectors2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_hidden_cone=" + coneID));
+                //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_hidden_cone=" + coneID));
                 this.coneID ++;
             }
         }
@@ -442,8 +490,9 @@ public class FindBisectorsTwoSites {
      * 
      * @return Deep copy of the VoronoiBisector List for B2S
      */
-    public Bisector[] getVoronoiEdges() {
-        return Utility.deepCopyVBArray(this.voronoiEdgesB2S.toArray(new Bisector[this.voronoiEdgesB2S.size()]));
+    public HashMap<List<Vertex>, List<Bisector>> getBisectors2S() {
+        return new HashMap(this.bisectors2S);
+        //return Utility.deepCopyVBArray(this.voronoiEdgesB2S.toArray(new Bisector[this.voronoiEdgesB2S.size()]));
     }
     
     /**

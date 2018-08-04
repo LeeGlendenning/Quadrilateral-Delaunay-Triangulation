@@ -121,8 +121,18 @@ public class Vertex {
      */
     @Override
     public boolean equals(Object other){
+        //System.out.println("Checking equals Vertex");
         double tolerance = 0.01;
         return other.getClass() == this.getClass() && Math.abs(this.x - ((Vertex) other).x) < tolerance && Math.abs(this.y - ((Vertex) other).y) < tolerance;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 97 * hash + (int) (Double.doubleToLongBits(this.x) ^ (Double.doubleToLongBits(this.x) >>> 32));
+        hash = 97 * hash + (int) (Double.doubleToLongBits(this.y) ^ (Double.doubleToLongBits(this.y) >>> 32));
+        //System.out.println("inside hashCode. returning " + hash);
+        return hash;
     }
     
     /**
