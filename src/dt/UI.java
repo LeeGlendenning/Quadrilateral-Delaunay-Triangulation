@@ -28,6 +28,8 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileSystemView;
 
 /**
@@ -40,8 +42,7 @@ public class UI implements ActionListener{
     private JMenuBar menuBar;
     private JMenu fileMenu, editMenu, viewMenu, vdMenu, dtMenu;
     private JMenuItem clearScreenMenuItem, loadVertexMenuItem, saveVertexMenuItem, loadQuadMenuItem, saveQuadMenuItem;
-    private JMenuItem newQuadMenuItem, deleteVertexMenuItem;
-    private JMenuItem shortestPathMenuItem;
+    private JMenuItem newQuadMenuItem, deleteVertexMenuItem, shortestPathMenuItem, showChartMenuItem;
     private JCheckBoxMenuItem highlightPathMenuItem;
     private JCheckBoxMenuItem showDTMenuItem, showVDMenuItem, showCoordsMenuItem;
     private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
@@ -53,6 +54,9 @@ public class UI implements ActionListener{
         createFrame();
     }
     
+    /**
+     * Create JFrame and register mouse listener
+     */
     private void createFrame() {
         // Set up display window
         this.frame = new JFrame("Voronoi Diagram");
@@ -62,7 +66,7 @@ public class UI implements ActionListener{
             @Override
             public void mousePressed(MouseEvent e) {
                 //Utility.debugPrintln(e.getX() + "," + e.getY());
-                addVoronoiVertex(e.getX(), e.getY());
+                addVertex(e.getX(), e.getY());
             }
         });
         
@@ -161,6 +165,16 @@ public class UI implements ActionListener{
             case "Highlight Shortest Path":
                 this.delaunayTriangulation.setHighlightShortestPath(this.highlightPathMenuItem.getState());
                 break;
+            case "Show Performance Chart":
+                // Create performance time chart
+                SwingUtilities.invokeLater(() -> {
+                    PerformanceChart example = new PerformanceChart("Delaunay Triangulation Runtime Performance", this.delaunayTriangulation.getPerformanceData());
+                    example.setSize(800, 400);
+                    example.setLocationRelativeTo(null);
+                    example.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+                    example.setVisible(true);
+                });
+                break;
         }
     }
     
@@ -243,6 +257,9 @@ public class UI implements ActionListener{
         }
     }
     
+    /**
+     * Write the quadrilateral to a file
+     */
     private void saveQuadrilateralFile(File file) throws FileNotFoundException, UnsupportedEncodingException {
         try (PrintWriter writer = new PrintWriter(file, "UTF-8")) {
             for (Vertex p : this.delaunayTriangulation.quad.getVertices()) {
@@ -379,11 +396,21 @@ public class UI implements ActionListener{
         }
     }
     
-    private void addVoronoiVertex(int x, int y) {
+    /**
+     * 
+     * @param x X coordinate of new vertex
+     * @param y Y coordinate of new vertex
+     */
+    private void addVertex(int x, int y) {
         //Utility.debugPrintln("Adding vertex (" + x + ", " + (this.delaunayTriangulation.getBounds().getSize().height - y) + ")");
         this.delaunayTriangulation.addVertex(new Vertex(x, this.delaunayTriangulation.getBounds().getSize().height - y));
     }
     
+    /**
+     * 
+     * @param x X coordinate of mouse
+     * @param y Y coordinate of mouse
+     */
     private void displayCoordinates(int x, int y) {
         this.delaunayTriangulation.setMouseCoordinates(x, y);
     }
@@ -503,7 +530,7 @@ public class UI implements ActionListener{
     }
     
     /**
-     * Create sub menu for Voronoi Diagram menu item under View menu for showing various bisectors
+     * Create menu for Voronoi Diagram menu item under View menu for showing various bisectors
      */
     private void createVDMenu() {
         vdMenu = new JMenu("Voronoi Diagram");
@@ -533,20 +560,25 @@ public class UI implements ActionListener{
         menuBar.add(vdMenu);
     }
     
+    /**
+     * Create menu for Delaunay Triangulation and add various option menu items
+     */
     private void createDTMenu() {
         dtMenu = new JMenu("Delaunay Triangulation");
         
         shortestPathMenuItem = new JMenuItem("Find Shortest Path");
         highlightPathMenuItem = new JCheckBoxMenuItem("Highlight Shortest Path");
         highlightPathMenuItem.setState(this.delaunayTriangulation.getHighlightShortestPath());
+        showChartMenuItem = new JMenuItem("Show Performance Chart");
                 
         shortestPathMenuItem.addActionListener(this);
         highlightPathMenuItem.addActionListener(this);
+        showChartMenuItem.addActionListener(this);
         
         dtMenu.add(shortestPathMenuItem);
         dtMenu.add(highlightPathMenuItem);
+        dtMenu.add(showChartMenuItem);
         
         menuBar.add(dtMenu);
     }
-    
 }

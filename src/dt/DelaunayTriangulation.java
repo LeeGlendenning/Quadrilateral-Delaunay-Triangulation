@@ -38,6 +38,7 @@ public class DelaunayTriangulation extends JPanel {
     private double stretchFactor;
     private final Integer[] sfVertices;
     private ArrayList<Vertex> curSelectedPath, oldSelectedPath; // Last path user has queried
+    private ArrayList<int[]> performanceData;
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = false, showB2S = false;
     private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
@@ -70,6 +71,7 @@ public class DelaunayTriangulation extends JPanel {
         this.curSelectedPath = new ArrayList();
         this.oldSelectedPath = new ArrayList();
         this.chosenB3S = new ArrayList();
+        this.performanceData = new ArrayList();
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
@@ -100,6 +102,7 @@ public class DelaunayTriangulation extends JPanel {
         this.dtGraph = new Graph();
         this.scaleIterations = 0;
         this.chosenB3S = new ArrayList();
+        this.performanceData = new ArrayList();
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
@@ -126,29 +129,44 @@ public class DelaunayTriangulation extends JPanel {
         
         Utility.debugPrintln("Adding vertex " + p + "\n");
         
+        // Initialize timer for debugging
+        long startTime, endTime, duration;
+        
+        this.performanceData.add(new int[4]);
+        
         // Find B2S between p and other vertices
+        startTime = System.nanoTime();
         for (int i = 0; i < this.dtGraph.getVertices().size(); i++) {
             this.b2s.findBisectorOfTwoSites(this.quad, this.dtGraph.getVertices().get(i).deepCopy(), p);
         }
+        endTime = System.nanoTime();
+        duration = (endTime - startTime) / 1000000;
+        this.performanceData.get(this.performanceData.size()-1)[0] = Math.round(duration);
+        
         Utility.debugPrintln("");
         this.displayEdges.addAll(this.b2s.getDisplayEdges());
         HashMap<List<Vertex>, List<Bisector>> bisectors2S = b2s.getBisectors2S();
         
         // Find B3S between p and all other pairs of vertices
+        startTime = System.nanoTime();
         for (int i = 0; i < this.dtGraph.getVertices().size(); i ++) {
             for (int j = i + 1; j < this.dtGraph.getVertices().size(); j++) {
                 Utility.debugPrintln("Finding B3S between: " + this.dtGraph.getVertices().get(i).deepCopy() + ", " + this.dtGraph.getVertices().get(j).deepCopy() + ", and p = " + p);
                 this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, this.dtGraph.getVertices().get(i).deepCopy(), this.dtGraph.getVertices().get(j).deepCopy(), p);
             }
         }
+        endTime = System.nanoTime();
+        duration = (endTime - startTime) / 1000000;
+        this.performanceData.get(this.performanceData.size()-1)[1] = Math.round(duration);
         Utility.debugPrintln("");
         this.dtGraph.addVertex(p);
         this.displayEdges.addAll(this.b3s.getDisplayEdges());
         
         
         
-        //removeAllEdges();
+        
         // Triangulate the newly added vertex
+        startTime = System.nanoTime();
         for (int i = this.chosenB3S.size(); i < this.b3s.getChosenBisectors().length; i ++) {
             Bisector b = this.b3s.getChosenBisectors()[i];
             if (!vertexInsideQuad(calculateMinQuad(b))) {
@@ -156,6 +174,9 @@ public class DelaunayTriangulation extends JPanel {
             }
             this.chosenB3S.add(b);
         }
+        endTime = System.nanoTime();
+        duration = (endTime - startTime) / 1000000;
+        this.performanceData.get(this.performanceData.size()-1)[2] = Math.round(duration);
         
         
         //Utility.debugPrintln("Vertex " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1) + " neighbour size = " + this.dtGraph.getVertices().get(this.dtGraph.getVertices().size()-1).getNeighbours().size());
@@ -163,14 +184,26 @@ public class DelaunayTriangulation extends JPanel {
         //checkAdjacentTriangles(p);
         this.oldSelectedPath = this.curSelectedPath;
         this.curSelectedPath = new ArrayList();
+        startTime = System.nanoTime();
         this.shortestPaths = findAllPairsShortestPath();
         /*for (double[] d : this.shortestPaths) {
             Utility.debugPrintln(Arrays.toString(d));
         }*/
         updateStretchFactor();
-                
+        endTime = System.nanoTime();
+        duration = (endTime - startTime) / 1000000;
+        this.performanceData.get(this.performanceData.size()-1)[3] = Math.round(duration);
+        
         Utility.debugPrintln("");
         repaint();
+    }
+    
+    /**
+     * 
+     * @return ArrayList holding performance data of operation vs. time
+     */
+    public ArrayList<int[]> getPerformanceData() {
+        return new ArrayList(this.performanceData);
     }
     
     /**
