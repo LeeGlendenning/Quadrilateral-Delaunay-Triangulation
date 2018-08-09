@@ -75,7 +75,8 @@ public class Edge {
         
         Edge e = (Edge)other;
         
-        return e.v1.equals(this.v1) && e.v2.equals(this.v2);
+        return (e.v1.equals(this.v1) && e.v2.equals(this.v2)) ||
+                (e.v2.equals(this.v1) && e.v1.equals(this.v2));
     }
     
 }

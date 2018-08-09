@@ -33,6 +33,7 @@ public class Painter {
      * @param curScale Current scaling factor to draw Quadrilateral at
      */
     public void drawVerticesAndQuads(Graphics2D g2d, List<Vertex> vertices, Quadrilateral quad, int yMax, int vertexRadius, double curScale) {
+        g2d.setStroke(new BasicStroke(1));
         //Utility.debugPrintln("Vertices.size() = " + vertices.size());
         for (Vertex v : vertices) {
             g2d.setColor(v.getColour());
@@ -53,6 +54,8 @@ public class Painter {
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      */
     public void drawBisectorRayVertices(Graphics2D g2d, List<Vertex> voronoiVertices, int yMax, int voronoiVertexRadius) {
+        g2d.setStroke(new BasicStroke(1));
+        g2d.setColor(Color.black);
         for (Vertex bisector : voronoiVertices.toArray(new Vertex[voronoiVertices.size()])) {
             g2d.fill(new Ellipse2D.Double(bisector.x + voronoiVertexRadius, yMax - (bisector.y + voronoiVertexRadius), voronoiVertexRadius * 2, voronoiVertexRadius * 2)); // x, y, width, height
         }
@@ -67,6 +70,8 @@ public class Painter {
      * @param showB2S_hiddenCones If true, draw bisectors between 2 sites that are marked "hidden"
      */
     public void drawB2S(Graphics2D g2d, HashMap<List<Vertex>, List<Bisector>> bisectors2S, int yMax, boolean showB2S_hiddenCones) {
+        g2d.setStroke(new BasicStroke(1));
+        g2d.setColor(Color.red);
         for (Map.Entry<List<Vertex>, List<Bisector>> bisectorEntry : bisectors2S.entrySet()) {
             List<Bisector> bisector = bisectorEntry.getValue();
             
@@ -78,6 +83,7 @@ public class Painter {
                 }
             }
         }
+        g2d.setColor(Color.black);
     }
     
     /**
@@ -88,13 +94,13 @@ public class Painter {
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      */
     public void drawB3S(Graphics2D g2d, Bisector[] voronoiEdgesB3S, int yMax) {
+        g2d.setStroke(new BasicStroke(5));
+        g2d.setColor(Color.red);
         for (Bisector bisector : voronoiEdgesB3S) {
             if (bisector.getTag().startsWith("b3s")){
-                g2d.setColor(Color.red);
                 g2d.drawLine((int)Math.round(bisector.getStartVertex().x), yMax - (int)Math.round(bisector.getStartVertex().y),
                         (int)Math.round(bisector.getEndVertex().x), yMax - (int)Math.round(bisector.getEndVertex().y));
             }
-            
         }
     }
     
@@ -106,7 +112,8 @@ public class Painter {
      * @param chosenB3S Array of VoronoiBisector objects to draw to screen
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      */
-    public void drawChosenB3SAndMinQuads(Graphics2D g2d, Quadrilateral quad, ArrayList<Bisector> chosenB3S, int yMax) {
+    public void drawChosenB3SAndMinQuads(Graphics2D g2d, Quadrilateral quad, List<Bisector> chosenB3S, int yMax) {
+        g2d.setColor(Color.blue);
         for (Bisector bisector : chosenB3S) {
             g2d.setStroke(new BasicStroke(7));
             g2d.drawLine((int)Math.round(bisector.getStartVertex().x), yMax - (int)Math.round(bisector.getStartVertex().y),
@@ -126,6 +133,8 @@ public class Painter {
      * @param showB3S_fgRegion If true, show lines corresponding to the fg region of b3s
      */
     public void drawDisplayEdges(Graphics2D g2d, List<Bisector> displayEdges, int yMax, boolean showB2S_hgRegion, boolean showB3S_fgRegion) {
+        g2d.setStroke(new BasicStroke(1));
+        g2d.setColor(Color.black);
         for (Bisector bisector : displayEdges.toArray(new Bisector[displayEdges.size()])) {
             // TODO: sometimes the bisector start or end vertex are null and I don't know why
             if (bisector.getStartVertex() != null && bisector.getEndVertex() != null &&
@@ -151,6 +160,7 @@ public class Painter {
      */
     public void drawB2S_hgVertices(Graphics2D g2d, Vertex[] h1, Vertex[] h2, Vertex[] g1, Vertex[] g2, int yMax, int vertexRadius) {
         // Draw h12, g12 vertices on quads
+        g2d.setStroke(new BasicStroke(1));
         g2d.setColor(Color.red);
         for(int i = 0; i < h1.length; i ++) {
             g2d.fill(new Ellipse2D.Double(h1[i].x - vertexRadius, yMax - h1[i].y - vertexRadius, vertexRadius * 2, vertexRadius * 2)); // x, y, width, height
@@ -198,6 +208,7 @@ public class Painter {
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      */
     public void drawDelaunayEdges(Graphics2D g2d, List<Edge> delaunayEdges, int yMax) {
+        g2d.setStroke(new BasicStroke(1));
         g2d.setColor(Color.black);
         for (Edge edge : delaunayEdges) {
             g2d.drawLine((int)Math.round(edge.getVertices()[0].x), yMax - (int)Math.round(edge.getVertices()[0].y), 
@@ -234,12 +245,11 @@ public class Painter {
             if (c.equals(Color.red)) {
                 g2d.setStroke(new BasicStroke(2));
             }
+            
             for (int i = 0; i < path.size()-1; i ++) {
                 g2d.drawLine((int)Math.round(path.get(i).x), yMax - (int)Math.round(path.get(i).y), 
                         (int)Math.round(path.get(i+1).x), yMax - (int)Math.round(path.get(i+1).y));
             }
-            
-            g2d.setStroke(new BasicStroke(1));
         }
     }
     

@@ -40,11 +40,11 @@ public class UI implements ActionListener{
     
     private JFrame frame;
     private JMenuBar menuBar;
-    private JMenu fileMenu, editMenu, viewMenu, vdMenu, dtMenu;
+    private JMenu fileMenu, editMenu, viewMenu, bisectorMenu, dtMenu;
     private JMenuItem clearScreenMenuItem, loadVertexMenuItem, saveVertexMenuItem, loadQuadMenuItem, saveQuadMenuItem;
     private JMenuItem newQuadMenuItem, deleteVertexMenuItem, shortestPathMenuItem, showChartMenuItem;
-    private JCheckBoxMenuItem highlightPathMenuItem;
-    private JCheckBoxMenuItem showDTMenuItem, showVDMenuItem, showCoordsMenuItem;
+    private JCheckBoxMenuItem highlightPathMenuItem, showBoundaryTriangleMenuItem;
+    private JCheckBoxMenuItem /*showDTMenuItem, showVDMenuItem,*/ showCoordsMenuItem;
     private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
     
     private final DelaunayTriangulation delaunayTriangulation;
@@ -133,15 +133,19 @@ public class UI implements ActionListener{
                 newQuadrilateral();
                 break;
             // View menu
-            case "Delaunay Triangulation":
+            /*case "Delaunay Triangulation":
                 showVDMenuItem.setState(false);
                 break;
             case "Voronoi Diagram":
                 showDTMenuItem.setState(false);
-                break;
+                break;*/
             case "Show Vertex Coordinates":
                 this.delaunayTriangulation.setShowCoordinates(showCoordsMenuItem.getState());
                 break;
+            case "Show Boundary Triangle":
+                this.delaunayTriangulation.setShowBoundaryTriangle(showBoundaryTriangleMenuItem.getState());
+                break;
+                
             // Voronoi Diagram menu
             case "Show Bisectors 2 Sites":
                 this.delaunayTriangulation.setShowB2S(this.showB2SMenuItem.getState());
@@ -454,7 +458,7 @@ public class UI implements ActionListener{
         createFileMenu();
         createEditMenu();
         createViewMenu();
-        createVDMenu();
+        createBisectorMenu();
         createDTMenu();
         
         // Add menubar to JFrame
@@ -512,19 +516,23 @@ public class UI implements ActionListener{
     private void createViewMenu() {
         viewMenu = new JMenu("View");
         
-        showDTMenuItem = new JCheckBoxMenuItem("Delaunay Triangulation");
+        /*showDTMenuItem = new JCheckBoxMenuItem("Delaunay Triangulation");
         showVDMenuItem = new JCheckBoxMenuItem("Voronoi Diagram");
-        showVDMenuItem.setState(true);
+        showVDMenuItem.setState(true);*/
         showCoordsMenuItem = new JCheckBoxMenuItem("Show Vertex Coordinates");
         showCoordsMenuItem.setState(true);
+        showBoundaryTriangleMenuItem = new JCheckBoxMenuItem("Show Boundary Triangle");
+        showBoundaryTriangleMenuItem.setState(false);
         
-        showDTMenuItem.addActionListener(this);
-        showVDMenuItem.addActionListener(this);
+        /*showDTMenuItem.addActionListener(this);
+        showVDMenuItem.addActionListener(this);*/
         showCoordsMenuItem.addActionListener(this);
+        showBoundaryTriangleMenuItem.addActionListener(this);
         
-        viewMenu.add(showDTMenuItem);
-        viewMenu.add(showVDMenuItem);
+        /*viewMenu.add(showDTMenuItem);
+        viewMenu.add(showVDMenuItem);*/
         viewMenu.add(showCoordsMenuItem);
+        viewMenu.add(showBoundaryTriangleMenuItem);
         
         menuBar.add(viewMenu);
     }
@@ -532,8 +540,8 @@ public class UI implements ActionListener{
     /**
      * Create menu for Voronoi Diagram menu item under View menu for showing various bisectors
      */
-    private void createVDMenu() {
-        vdMenu = new JMenu("Voronoi Diagram");
+    private void createBisectorMenu() {
+        bisectorMenu = new JMenu("Bisectors");
         
         showB2SMenuItem = new JCheckBoxMenuItem("Show Bisectors 2 Sites");
         showB2SMenuItem.setState(this.delaunayTriangulation.getShowB2S());
@@ -551,13 +559,13 @@ public class UI implements ActionListener{
         //showB3SFGMenuItem.addActionListener(this);
         
         //vdMenu.add(showVDMenuItem);
-        vdMenu.add(showB2SMenuItem);
-        vdMenu.add(showOnlyChosenB2SMenuItem);
-        vdMenu.add(showB3SMenuItem);
-        vdMenu.add(showOnlyChosenB3SMenuItem);
+        bisectorMenu.add(showB2SMenuItem);
+        bisectorMenu.add(showOnlyChosenB2SMenuItem);
+        bisectorMenu.add(showB3SMenuItem);
+        bisectorMenu.add(showOnlyChosenB3SMenuItem);
         //showVDMenu.add(showB3SFGMenuItem);
         
-        menuBar.add(vdMenu);
+        menuBar.add(bisectorMenu);
     }
     
     /**

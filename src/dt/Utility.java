@@ -11,7 +11,8 @@ import java.util.Comparator;
 public class Utility {
     
     public static final double RAY_SIZE = 10000000;
-    public static boolean debugMode = false;
+    public static boolean debugMode = true;
+    
     
     /**
      * 
@@ -113,20 +114,24 @@ public class Utility {
     
     /**
      * NOTE: Vertex a should have less or equal x value to point b for sign to be correct
+     *       
      * 
      * @param a Endpoint of line segment
      * @param b Endpoint of line segment
      * @param c Query point
+     * @param tolerance Double tolerance for comparing equivalence of doubles
      * @return +1 if point is left of line (ccw order), 0 if point is on line (collinear), -1 otherwise (cw order)
      */
     public static int isLeftOfSegment(Vertex a, Vertex b, Vertex c, double tolerance){
+        Vertex left = new Vertex(), right = new Vertex();
+        Utility.setLeftAndRightVertex(a, b, left, right, calculateAngle(a, b));
         //Utility.debugPrintln("a = " + a + ", b = " + b + ", c = " + c);
         double cross = (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
         //Utility.debugPrintln("isLeftOfSegment: cross = " + cross);
         
-        Vertex ra = rotateVertex(a, midpoint(a, b), calculateAngle(a, b));
-        Vertex rb = rotateVertex(b, midpoint(a, b), calculateAngle(a, b));
-        Vertex rc = rotateVertex(c, midpoint(a, b), calculateAngle(a, b));
+        Vertex ra = rotateVertex(left, midpoint(left, right), calculateAngle(left, right));
+        Vertex rb = rotateVertex(right, midpoint(left, right), calculateAngle(left, right));
+        Vertex rc = rotateVertex(c, midpoint(left, right), calculateAngle(left, right));
         //Utility.debugPrintln("ra = " + ra + "rb = " + rb + "rc = " + rc);
         
         // Test if point c is on segment ab

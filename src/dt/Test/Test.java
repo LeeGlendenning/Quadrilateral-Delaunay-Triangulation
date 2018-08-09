@@ -29,12 +29,17 @@ public class Test {
         //pts.add(new Vertex(600, 300));
         //pts.add(new Vertex(200, 320));
         
+        // Question case: this is not a triangulation. how to do point location?
+        /*pts.add(new Vertex(209, 407));
+        pts.add(new Vertex(561, 223));
+        pts.add(new Vertex(216, 115));
+        pts.add(new Vertex(374, 226));
+        pts.add(new Vertex(422, 268));*/
         
         
-        
-        pts.add(new Vertex(548, 285));
+        /*pts.add(new Vertex(548, 285));
         pts.add(new Vertex(326, 474));
-        pts.add(new Vertex(276, 271));
+        pts.add(new Vertex(276, 271));*/
         
         
         // Meeting July 18 Test Cases...
@@ -102,7 +107,7 @@ public class Test {
         //Vertex center = new Vertex(13, 17);
         
         // Quad2
-        Vertex[] quad = {new Vertex(20,0), new Vertex(10,30), new Vertex(30,40), new Vertex(40,10)};
+        //Vertex[] quad = {new Vertex(20,0), new Vertex(10,30), new Vertex(30,40), new Vertex(40,10)};
         
         // Quad3 - One cone for vertices having same y
         //Vertex[] quad = {new Vertex(0,0), new Vertex(10,30), new Vertex(20,20), new Vertex(20,0)};
@@ -111,7 +116,7 @@ public class Test {
         //Vertex[] quad = {new Vertex(0,0), new Vertex(10,30), new Vertex(20,30), new Vertex(20,10)};
         
         // Square
-        //Vertex[] quad = {new Vertex(20,20), new Vertex(20,0), new Vertex(0,0), new Vertex(0,20)};
+        Vertex[] quad = {new Vertex(20,20), new Vertex(20,0), new Vertex(0,0), new Vertex(0,20)};
         
         // Diamond
         //Vertex[] quad = {new Vertex(0,20), new Vertex(20,40), new Vertex(40,20), new Vertex(20,0)};

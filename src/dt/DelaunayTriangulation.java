@@ -26,7 +26,8 @@ public class DelaunayTriangulation extends JPanel {
     protected Quadrilateral quad;
     // Consider using synchronized list to avoid concurrent modification...
     private List<Bisector> displayEdges;
-    private ArrayList<Bisector> chosenB3S;
+    private  HashMap<List<Vertex>, List<Bisector>> chosenB2S;
+    private List<Bisector> chosenB3S;
     private double curScale;
     private int scaleIterations;
     private Timer timer;
@@ -43,7 +44,7 @@ public class DelaunayTriangulation extends JPanel {
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = false, showB2S = false;
     private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
     private final boolean doAnimation = false;
-    private boolean showCoordinates = true, highlightShortestPath = true, clearSelectedPath = false;
+    private boolean showCoordinates = true, highlightShortestPath = true, clearSelectedPath = false, showBoundaryTriangle = false;
     
     private int mouseX, mouseY;
     
@@ -63,7 +64,6 @@ public class DelaunayTriangulation extends JPanel {
         
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiVertices = Collections.synchronizedList(new ArrayList());
-        this.dtGraph = new Graph();
         this.scaleIterations = 0;
         this.curScale = 1.0;
         this.stretchFactor = 0;
@@ -72,11 +72,11 @@ public class DelaunayTriangulation extends JPanel {
         this.oldSelectedPath = new ArrayList();
         this.chosenB3S = new ArrayList();
         this.performanceData = new ArrayList();
+        this.dtGraph = new Graph(800, 700);
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
         
-        // Construct VD for initial vertex set
         addVertexSet(vertices);
         
         if (this.doAnimation) {
@@ -99,10 +99,12 @@ public class DelaunayTriangulation extends JPanel {
     public void reset() {
         this.displayEdges = Collections.synchronizedList(new ArrayList());
         this.voronoiVertices = Collections.synchronizedList(new ArrayList());
-        this.dtGraph = new Graph();
+        this.dtGraph = new Graph(800, 700);
         this.scaleIterations = 0;
         this.chosenB3S = new ArrayList();
         this.performanceData = new ArrayList();
+        this.oldSelectedPath = new ArrayList();
+        this.curSelectedPath = new ArrayList();
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
@@ -119,6 +121,9 @@ public class DelaunayTriangulation extends JPanel {
     
     /**
      * Find B2S, B3S, triangulate the new point, then update the shortest paths
+     * locate triangle v is in. connect v to triangle. Check if point in quad for v and each pair of edges in triangle.
+     *     if vertex in quad, edge must be flipped
+     * 
      * @param v New Vertex to add to the Delaunay triangulation
      */
     public void addVertex(Vertex v) {
@@ -126,17 +131,26 @@ public class DelaunayTriangulation extends JPanel {
             Utility.debugPrintln("Vertex not added. Already exists.");
             return;
         }
-        
         Utility.debugPrintln("Adding vertex " + v + "\n");
         
-        this.performanceData.add(new int[4]);
+        this.performanceData.add(new int[4]); // Init new performance data array for runtime tracking
         
-        calculateB2S(v);
-        calculateB3S(v);
+        Vertex[] triangle = this.dtGraph.locateTriangle(v);
+        Utility.debugPrintln("V contained by vertices: " + Arrays.toString(triangle));
         
+        // Connect new vertex with all vertices in the located triangle
         this.dtGraph.addVertex(v);
+        for (Vertex tVert : triangle) {
+            this.dtGraph.addEdge(v, tVert);
+        }
         
-        updateTriangulation();
+        HashMap<List<Vertex>, List<Bisector>> bisectors2S = calculateB2S(v, Arrays.asList(triangle));
+        this.chosenB2S = bisectors2S;
+        List<Bisector> bisectors3S = calculateB3S(v, Arrays.asList(triangle), bisectors2S); // Calculate b3s' for v and containing triangle
+        this.chosenB3S = bisectors3S;
+        checkForBadEdges(v, bisectors3S); // If necessary, flip bad edges
+        
+        // Calculate all pairs shortest paths and stretch factor of the DT
         updateShortestPaths();
         
         Utility.debugPrintln("");
@@ -146,12 +160,23 @@ public class DelaunayTriangulation extends JPanel {
     /**
      * 
      * @param v Vertex to find all B2S for
+     * @param vertices List of vertices to calculate B2S with v
      */
-    private void calculateB2S(Vertex v) {
+    private HashMap<List<Vertex>, List<Bisector>> calculateB2S(Vertex v, List<Vertex> vertices) {
+        HashMap<List<Vertex>, List<Bisector>> tempB2S = new HashMap();
         // Find B2S between p and other vertices
         long startTime = System.nanoTime();
-        for (int i = 0; i < this.dtGraph.getVertices().size(); i++) {
-            this.b2s.findBisectorOfTwoSites(this.quad, this.dtGraph.getVertices().get(i).deepCopy(), v);
+        int ii;
+        for (int i = 0; i < vertices.size(); i++) {
+            if (i == vertices.size()-1) {
+                ii = 0;
+            } else {
+                ii = i+1;
+            }
+            // Calculate b2s between each of the vertices in the list
+            tempB2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, vertices.get(i).deepCopy(), vertices.get(ii).deepCopy()));
+            // Calculate b2s between v and each of the vertices in the list
+            tempB2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, vertices.get(i).deepCopy(), v));
         }
         long endTime = System.nanoTime();
         long duration = (endTime - startTime) / 1000000;
@@ -159,21 +184,26 @@ public class DelaunayTriangulation extends JPanel {
         
         Utility.debugPrintln("");
         this.displayEdges.addAll(this.b2s.getDisplayEdges());
+        
+        return tempB2S;
     }
     
     /**
      * 
      * @param v Vertex to find all B3S for
+     * @param vertices List of vertices to calculate B3S with v
      */
-    private void calculateB3S(Vertex v) {
-        HashMap<List<Vertex>, List<Bisector>> bisectors2S = this.b2s.getBisectors2S();
-        
+    private List<Bisector> calculateB3S(Vertex v, List<Vertex> vertices, HashMap<List<Vertex>, List<Bisector>> bisectors2S) {
+        List<Bisector> tempB3S = new ArrayList();
         // Find B3S between p and all other pairs of vertices
         long startTime = System.nanoTime();
-        for (int i = 0; i < this.dtGraph.getVertices().size(); i ++) {
-            for (int j = i + 1; j < this.dtGraph.getVertices().size(); j++) {
-                Utility.debugPrintln("Finding B3S between: " + this.dtGraph.getVertices().get(i).deepCopy() + ", " + this.dtGraph.getVertices().get(j).deepCopy() + ", and v = " + v);
-                this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, this.dtGraph.getVertices().get(i).deepCopy(), this.dtGraph.getVertices().get(j).deepCopy(), v);
+        for (int i = 0; i < vertices.size(); i ++) {
+            for (int j = i + 1; j < vertices.size(); j++) {
+                Utility.debugPrintln("Finding B3S between: " + vertices.get(i).deepCopy() + ", " + vertices.get(j).deepCopy() + ", and v = " + v);
+                Bisector b = this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, vertices.get(i).deepCopy(), vertices.get(j).deepCopy(), v);
+                if (b != null) {
+                    tempB3S.add(b);
+                }
             }
         }
         long endTime = System.nanoTime();
@@ -182,25 +212,120 @@ public class DelaunayTriangulation extends JPanel {
         Utility.debugPrintln("");
         
         this.displayEdges.addAll(this.b3s.getDisplayEdges());
+        return tempB3S;
     }
     
     /**
-     * Update the edges of the Delaunay triangulation
+     * 
+     * @param v Newly triangulated vertex
      */
-    private void updateTriangulation() {
-        // Triangulate the newly added vertex
+    private void checkForBadEdges(Vertex v, List<Bisector> b3sList) {
         long startTime = System.nanoTime();
-        for (int i = this.chosenB3S.size(); i < this.b3s.getChosenBisectors().length; i ++) {
-            Bisector b = this.b3s.getChosenBisectors()[i];
-            if (!vertexInsideQuad(calculateMinQuad(b))) {
-                triangulateVertices(this.b3s.getChosenBisectors()[i].getAdjacentPtsArray());
+        
+        for (int i = 0; i < b3sList.size(); i ++) {
+            Bisector b = b3sList.get(i);
+            Vertex vInQuad;
+            
+            // List holds the vertices that could possibly be inside the min quads for the b3s
+            List<Vertex> ptsToCheck = new ArrayList();
+            Utility.debugPrintln("Finding intersection of neighbour points for " + b.getAdjacentPtsArray()[0] + " and " + b.getAdjacentPtsArray()[1]);
+            ptsToCheck.addAll(intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[0].x, b.getAdjacentPtsArray()[0].y).getNeighbours(), 
+                    this.dtGraph.getVertex(b.getAdjacentPtsArray()[1].x, b.getAdjacentPtsArray()[1].y).getNeighbours()));
+            Utility.debugPrintln("Finding intersection of neighbour points for " + b.getAdjacentPtsArray()[1] + " and " + b.getAdjacentPtsArray()[2]);
+            ptsToCheck.addAll(intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[1].x, b.getAdjacentPtsArray()[1].y).getNeighbours(), 
+                    this.dtGraph.getVertex(b.getAdjacentPtsArray()[2].x, b.getAdjacentPtsArray()[2].y).getNeighbours()));
+            Utility.debugPrintln("Finding intersection of neighbour points for " + b.getAdjacentPtsArray()[2] + " and " + b.getAdjacentPtsArray()[0]);
+            ptsToCheck.addAll(intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[2].x, b.getAdjacentPtsArray()[2].y).getNeighbours(), 
+                    this.dtGraph.getVertex(b.getAdjacentPtsArray()[0].x, b.getAdjacentPtsArray()[0].y).getNeighbours()));
+            
+            if ((vInQuad = vertexInsideQuad(calculateMinQuad(b), ptsToCheck)) != null) {
+                Vertex v1 = null, v2 = null;
+                // Get the two vertices in the triangle that aren't v
+                for (Vertex adjV : b.getAdjacentPtsArray()) {
+                    if (!adjV.equals(v)) {
+                        if (v1 == null) {
+                            v1 = adjV;
+                        } else {
+                            v2 = adjV;
+                        }
+                    }
+                }
+                // Flip the edge defined by the 2 vertices in the triangle that aren't v
+                // Then calculate new b3s' and add to queue
+                Utility.debugPrintln("Flipping bad edge");
+                if (flipEdge(new Edge(v1, v2), v, vInQuad)) {
+                    // Calculate b2s between (v,v1) (v,v2) and (v,vInQuad)
+                    HashMap<List<Vertex>, List<Bisector>> bisectors2S = new HashMap();
+                    bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v.deepCopy(), v1.deepCopy()));
+                    bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v.deepCopy(), v2.deepCopy()));
+                    bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v.deepCopy(), vInQuad.deepCopy()));
+                    
+                    // Calculate b3s for (v1, v, vInQuad) and (v2, v, vInQuad) and add to b3sList to be checked in further iterations
+                    b3sList.add(this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v1.deepCopy(), vInQuad.deepCopy(), v));
+                    b3sList.add(this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v2.deepCopy(), vInQuad.deepCopy(), v));
+                    
+                    // TODO: deal with timing stuff?
+                    long endTime = System.nanoTime();
+                    long duration = (endTime - startTime) / 1000000;
+                    this.performanceData.get(this.performanceData.size()-1)[2] = Math.round(duration);
+                    
+                    return;
+                }
             }
-            this.chosenB3S.add(b);
         }
+        
         long endTime = System.nanoTime();
         long duration = (endTime - startTime) / 1000000;
         this.performanceData.get(this.performanceData.size()-1)[2] = Math.round(duration);
+    }
+    
+    /**
+     * 
+     * @param vSet1 An array of vertices
+     * @param vSet2 An array of vertices
+     * @return The vertex in common between the two arrays
+     */
+    private List<Vertex> intersectVertexSets(List<Vertex> vSet1, List<Vertex> vSet2) {
+        List<Vertex> intersection = new ArrayList();
+        for (Vertex v1 : vSet1) {
+            for (Vertex v2 : vSet2) {
+                if (v1.equals(v2)) {
+                    Utility.debugPrintln("Common vertex: " + v1);
+                    intersection.add(v1);
+                }
+            }
+        }
         
+        if (intersection.isEmpty()) {
+            Utility.debugPrintln("[intersectVertexSets] Intersection of vertex sets is empty. This shouldn't happen");
+        }
+        
+        return intersection;
+    }
+    
+    /**
+     * 
+     * @param e Edge to flip
+     * @param newV Newly added vertex
+     * @param vInQuad Vertex causing the edge flip
+     */
+    private boolean flipEdge(Edge e, Vertex newV, Vertex vInQuad) {
+        // Check if flipping edge leads to edge overlap
+        for (Edge compareEdge : this.dtGraph.getEdges()) {
+            Vertex intersectionPt = Utility.doLineSegmentsIntersect(compareEdge.getVertices()[0], 
+                    compareEdge.getVertices()[1], newV, vInQuad);
+            if (!compareEdge.equals(e) && intersectionPt != null && 
+                    !intersectionPt.equals(newV) && !intersectionPt.equals(vInQuad)) {
+                Utility.debugPrintln("Edge flip would leave to edge overlap. skipping...");
+                return false;
+            }
+        }
+        
+        Utility.debugPrintln("Flipping edge " + e);
+        this.dtGraph.removeEdge(e);
+        Utility.debugPrintln("Adding new flipped edge " + new Edge(newV, vInQuad));
+        this.dtGraph.addEdge(newV, vInQuad);
+        return true;
     }
     
     /**
@@ -219,127 +344,23 @@ public class DelaunayTriangulation extends JPanel {
     }
     
     /**
-     * Remove all edges of the triangulation
-     */
-    /*private void removeAllEdges() {
-        for (Edge e : this.dtGraph.getEdges()) {
-            this.dtGraph.removeEdge(e);
-        }
-    }*/
-    
-    /**
      * 
      * @return True if a vertex in the vertex set lies inside quad. False otherwise
      */
-    private boolean vertexInsideQuad(Vertex[] quad) {
-        
-        /*Utility.debugPrintln("vertexInsideQuad: ");
-        int ii;
-        for (int i = 0; i < quad.length; i ++) {
-            if (i == quad.length-1) {
-                ii = 0;
-            } else {
-                ii = i+1;
+    private Vertex vertexInsideQuad(Vertex[] quad, List<Vertex> pts) {
+        for (Vertex v : pts) {
+            Utility.debugPrintln("Checking if " + v + " inside quad");
+            if (Utility.isLeftOfSegment(quad[0], quad[1], v, 0.1) == -1 &&
+                    Utility.isLeftOfSegment(quad[1], quad[2], v, 0.1) == -1 &&
+                    Utility.isLeftOfSegment(quad[2], quad[3], v, 0.1) == -1 &&
+                    Utility.isLeftOfSegment(quad[3], quad[0], v, 0.1) == -1) {
+                Utility.debugPrintln("Vertex " + v + " inside");
+                return v;
             }
-            Utility.debugPrintln(quad[i] + " " + quad[ii]);
-        }*/
-        
-        for (Vertex p : this.dtGraph.getVertices()) {
-            
-            if (Utility.isLeftOfSegment(quad[0], quad[1], p, 0.1) == -1 &&
-                    Utility.isLeftOfSegment(quad[1], quad[2], p, 0.1) == -1 &&
-                    Utility.isLeftOfSegment(quad[2], quad[3], p, 0.1) == -1 &&
-                    Utility.isLeftOfSegment(quad[3], quad[0], p, 0.1) == -1) {
-                //Utility.debugPrintln("Vertex " + p + " inside");
-                return true;
-            }
-            
         }
-        return false;
+        Utility.debugPrintln("No vertex inside quad");
+        return null;
     }
-    
-    /**
-     * 
-     * @param pts Array of 3 vertices to connect
-     */
-    private void triangulateVertices(Vertex[] verts) {
-        int ii;
-        for (int i = 0; i < verts.length; i ++) {
-            if (i == verts.length-1) {
-                ii = 0;
-            } else {
-                ii = i+1;
-            }
-            // If the edge doesn't already exist
-            if (!this.dtGraph.getEdges().contains(new Edge(verts[i], verts[ii]))) {
-                // Check if the new edge overlaps an existing edge. if so, delete old edge
-                for (Edge e : this.dtGraph.getEdges()) {
-                    Vertex intersection;
-                    if ((intersection = Utility.doLineSegmentsIntersect(e.getVertices()[0], e.getVertices()[1], verts[i], verts[ii])) != null &&
-                            !intersection.equals(verts[i]) && !intersection.equals(verts[ii])) {
-                        this.dtGraph.removeEdge(e);
-                    }
-                }
-                    
-                //Utility.debugPrintln("Adding edge between " + verts[i] + " and " + verts[ii]);
-                this.dtGraph.addEdge(verts[i], verts[ii]);
-            }
-        }
-    }
-    
-    /**
-     * For a new vertex added to the DT, check triangles formed from a B3S having
-     * the new vertex in the adjacent vertex list
-     */
-    /*private void checkAdjacentTriangles(Vertex v) {
-        Utility.debugPrintln("Checking adjacent triangles...");
-        
-        for (Bisector b : this.chosenB3S) {
-            // If all vertices contributing to the B3S are adjacent to v,
-            // then the B3S may be a problem and needs to be retriangulated
-            Utility.debugPrintln("Checking B3S at " + b.getStartVertex());
-            for (Vertex adjV : b.getAdjacentPtsArray()) {
-                if (!v.getNeighbours().contains(adjV)) {
-                    //Utility.debugPrintln("v neighbours does not contain adjVert: " + adjV);
-                    return;
-                } else {
-                    Utility.debugPrintln("v neighbours contains adjVert: " + adjV);
-                }
-            }
-            
-            Utility.debugPrintln("Retriangulating");
-            if (vertexInsideQuad(calculateMinQuad(b))) {
-                removeInvalidEdges(b);
-            } else {
-                triangulateVertices(b.getAdjacentPtsArray());
-            }
-        }
-    }*/
-    
-    /**
-     * 
-     * @param b3s Bisector between 3 sites to retriangulate
-     */
-    /*private void removeInvalidEdges(Bisector b3s) {
-        // Check if the edges associated to the b3s should be removed from DT
-        
-        Vertex[] adjVerts = b3s.getAdjacentPtsArray();
-
-        int ii;
-        // Remove edges associated to the B3S
-        for (int i = 0; i < adjVerts.length; i ++) {
-            if (i == adjVerts.length-1) {
-                ii = 0;
-            } else {
-                ii = i+1;
-            }
-
-            // Remove edges if they exist - which they should
-            if (this.dtGraph.getEdges().contains(new Edge(adjVerts[i], adjVerts[ii]))) {
-                this.dtGraph.removeEdge(new Edge(adjVerts[i], adjVerts[ii]));
-            }
-        }
-    }*/
     
     /**
      * @param chosenB3S Chosen Bisector between 3 vertices
@@ -490,8 +511,8 @@ public class DelaunayTriangulation extends JPanel {
      */
     private double[][] findAllPairsShortestPath() {
         // 2D array representing distance between each vertex in DT
-        double[][] dist = new double[this.dtGraph.getVertices().size()][this.dtGraph.getVertices().size()];
-        this.next = new Integer[this.dtGraph.getVertices().size()][this.dtGraph.getVertices().size()];
+        double[][] dist = new double[this.dtGraph.getDisplayVertices().size()][this.dtGraph.getDisplayVertices().size()];
+        this.next = new Integer[this.dtGraph.getDisplayVertices().size()][this.dtGraph.getDisplayVertices().size()];
         // Initialize 2D array with infinity
         for (double[] arr : dist) {
             Arrays.fill(arr, Double.MAX_VALUE);
@@ -502,12 +523,12 @@ public class DelaunayTriangulation extends JPanel {
         }
         
         // Set distance from vertices sharing an edge to the weight of the edge
-        for (Edge e : this.dtGraph.getEdges()) {
-            dist[this.dtGraph.getVertices().indexOf(e.getVertices()[0])][this.dtGraph.getVertices().indexOf(e.getVertices()[1])] = e.getWeight();
-            dist[this.dtGraph.getVertices().indexOf(e.getVertices()[1])][this.dtGraph.getVertices().indexOf(e.getVertices()[0])] = e.getWeight();
+        for (Edge e : this.dtGraph.getDisplayEdges()) {
+            dist[this.dtGraph.getDisplayVertices().indexOf(e.getVertices()[0])][this.dtGraph.getDisplayVertices().indexOf(e.getVertices()[1])] = e.getWeight();
+            dist[this.dtGraph.getDisplayVertices().indexOf(e.getVertices()[1])][this.dtGraph.getDisplayVertices().indexOf(e.getVertices()[0])] = e.getWeight();
         
-            next[this.dtGraph.getVertices().indexOf(e.getVertices()[0])][this.dtGraph.getVertices().indexOf(e.getVertices()[1])] = this.dtGraph.getVertices().indexOf(e.getVertices()[1]);
-            next[this.dtGraph.getVertices().indexOf(e.getVertices()[1])][this.dtGraph.getVertices().indexOf(e.getVertices()[0])] = this.dtGraph.getVertices().indexOf(e.getVertices()[0]);
+            next[this.dtGraph.getDisplayVertices().indexOf(e.getVertices()[0])][this.dtGraph.getDisplayVertices().indexOf(e.getVertices()[1])] = this.dtGraph.getDisplayVertices().indexOf(e.getVertices()[1]);
+            next[this.dtGraph.getDisplayVertices().indexOf(e.getVertices()[1])][this.dtGraph.getDisplayVertices().indexOf(e.getVertices()[0])] = this.dtGraph.getDisplayVertices().indexOf(e.getVertices()[0]);
         }
         
         // Set distance from a vertex to itself as 0 (diagonal)
@@ -552,10 +573,10 @@ public class DelaunayTriangulation extends JPanel {
             return new ArrayList();
         }
         ArrayList<Vertex> path = new ArrayList();
-        path.add(this.dtGraph.getVertices().get(u));
+        path.add(this.dtGraph.getDisplayVertices().get(u));
         while (u != v) {
             u = this.next[u][v];
-            path.add(this.dtGraph.getVertices().get(u));
+            path.add(this.dtGraph.getDisplayVertices().get(u));
         }
         
         this.oldSelectedPath = new ArrayList(this.curSelectedPath);
@@ -582,8 +603,9 @@ public class DelaunayTriangulation extends JPanel {
         Integer v1 = null, v2 = null;
         for (int i = 0; i < this.shortestPaths.length; i ++) {
             for (int j = i+1; j < this.shortestPaths.length; j ++) {
-                if (this.shortestPaths[i][j] / (Utility.euclideanDistance(this.dtGraph.getVertices().get(i), this.dtGraph.getVertices().get(j))) > stretch) {
-                    stretch = this.shortestPaths[i][j] / (Utility.euclideanDistance(this.dtGraph.getVertices().get(i), this.dtGraph.getVertices().get(j)));
+                if (this.shortestPaths[i][j] != Double.MAX_VALUE /*Avoid infinitely large paths bc no edge*/&&
+                        this.shortestPaths[i][j] / (Utility.euclideanDistance(this.dtGraph.getDisplayVertices().get(i), this.dtGraph.getDisplayVertices().get(j))) > stretch) {
+                    stretch = this.shortestPaths[i][j] / (Utility.euclideanDistance(this.dtGraph.getDisplayVertices().get(i), this.dtGraph.getDisplayVertices().get(j)));
                     v1 = i;
                     v2 = j;
                 }
@@ -628,6 +650,7 @@ public class DelaunayTriangulation extends JPanel {
      * @param i Vertex to remove from vertex set
      */
     public void removeVertex(int i) {
+        i += 3; // To account for boundary vertices
         if (this.dtGraph.getVertices().size() > i) {
             this.dtGraph.removeVertex(new Vertex(this.dtGraph.getVertices().get(i).x, this.dtGraph.getVertices().get(i).y));
             Vertex[] tempPts = this.dtGraph.getVertices().toArray(new Vertex[this.dtGraph.getVertices().size()]);
@@ -748,6 +771,15 @@ public class DelaunayTriangulation extends JPanel {
     
     /**
      * 
+     * @param setting Boolean to set
+     */
+    public void setShowBoundaryTriangle(boolean setting) {
+        this.showBoundaryTriangle = setting;
+        this.repaint();
+    }
+    
+    /**
+     * 
      * @return Boolean highlightShortestPath
      */
     public boolean getHighlightShortestPath() {
@@ -782,31 +814,31 @@ public class DelaunayTriangulation extends JPanel {
 
         int vertexRadius = 3, voronoiVertexRadius = 1;
         int yMax = this.getBounds().getSize().height;
-
-        painter.drawVerticesAndQuads(g2d, this.dtGraph.getVertices(), this.quad, yMax, vertexRadius, this.curScale);
-
-        g2d.setColor(Color.black);
+        
+        if (this.showBoundaryTriangle) {
+            painter.drawVerticesAndQuads(g2d, this.dtGraph.getVertices(), this.quad, yMax, vertexRadius, this.curScale);
+        } else {
+            // Take away boundary vertices from vertex set
+            painter.drawVerticesAndQuads(g2d, this.dtGraph.getDisplayVertices(), this.quad, yMax, vertexRadius, this.curScale);
+        }
+        
         painter.drawBisectorRayVertices(g2d, this.voronoiVertices, yMax, voronoiVertexRadius);
         
         // Draw bisector segments between 2 sites
-        if (this.showB2S) {
-            painter.drawB2S(g2d, this.b2s.getBisectors2S(), yMax, this.showB2S_hiddenCones);
+        if (this.showB2S && this.chosenB2S != null) {
+            painter.drawB2S(g2d, this.chosenB2S, yMax, this.showB2S_hiddenCones);
         }
         
         // Draw bisector segments between 3 sites
         if (this.showB3S && this.showB3S_hidden) {
-            g2d.setStroke(new BasicStroke(5));
             painter.drawB3S(g2d, this.b3s.getVoronoiEdges(), yMax);
         }
         
         if (this.showB3S && this.chosenB3S != null) {
-            g2d.setColor(Color.blue);
             painter.drawChosenB3SAndMinQuads(g2d, this.quad, this.chosenB3S, yMax);
         }
         
         if (this.showB3S_fgRegion || this.showB2S_hgRegion) {
-            g2d.setColor(Color.black);
-            g2d.setStroke(new BasicStroke(1));
             painter.drawDisplayEdges(g2d, this.displayEdges, yMax, this.showB2S_hgRegion, this.showB3S_fgRegion);
         }
         
@@ -815,12 +847,17 @@ public class DelaunayTriangulation extends JPanel {
         }
         
         if (this.showCoordinates) {
-            painter.drawVertexCoordinates(g2d, this.dtGraph.getVertices(), yMax);
+            painter.drawVertexCoordinates(g2d, this.dtGraph.getDisplayVertices(), yMax);
         }
         
         painter.drawMouseCoordinates(g2d, mouseX, mouseY, yMax);
         
-        painter.drawDelaunayEdges(g2d, this.dtGraph.getEdges(), yMax);
+        if (this.showBoundaryTriangle) {
+            painter.drawDelaunayEdges(g2d, this.dtGraph.getEdges(), yMax);
+        } else {
+            // Take away boundary vertices from vertex set
+            painter.drawDelaunayEdges(g2d, this.dtGraph.getDisplayEdges(), yMax);
+        }
         
         painter.drawStretchFactor(g2d, this.sfVertices, this.stretchFactor);
         

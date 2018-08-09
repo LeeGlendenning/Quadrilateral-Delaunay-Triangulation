@@ -12,7 +12,6 @@ import java.util.ArrayList;
 public class Vertex {
 
     private final ArrayList<Edge> neighborhood;
-    private String label;
     public double x, y;
     private final Color colour;
     
@@ -57,7 +56,6 @@ public class Vertex {
         if(this.neighborhood.contains(edge)){
             return;
         }
-        
         this.neighborhood.add(edge);
     }
     
@@ -77,16 +75,6 @@ public class Vertex {
      */
     public Edge getNeighbor(int index){
         return this.neighborhood.get(index);
-    }
-    
-    
-    /**
-     * 
-     * @param index The index of the edge to remove from this.neighborhood
-     * @return Edge The removed Edge
-     */
-    Edge removeNeighbor(int index){
-        return this.neighborhood.remove(index);
     }
     
     /**
@@ -121,7 +109,6 @@ public class Vertex {
      */
     @Override
     public boolean equals(Object other){
-        //System.out.println("Checking equals Vertex");
         double tolerance = 0.01;
         return other.getClass() == this.getClass() && Math.abs(this.x - ((Vertex) other).x) < tolerance && Math.abs(this.y - ((Vertex) other).y) < tolerance;
     }
@@ -131,7 +118,7 @@ public class Vertex {
         int hash = 7;
         hash = 97 * hash + (int) (Double.doubleToLongBits(this.x) ^ (Double.doubleToLongBits(this.x) >>> 32));
         hash = 97 * hash + (int) (Double.doubleToLongBits(this.y) ^ (Double.doubleToLongBits(this.y) >>> 32));
-        //System.out.println("inside hashCode. returning " + hash);
+        //Utility.debugPrintln("inside hashCode. returning " + hash);
         return hash;
     }
     

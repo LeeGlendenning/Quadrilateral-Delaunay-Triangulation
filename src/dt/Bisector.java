@@ -1,6 +1,7 @@
 package dt;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -51,7 +52,7 @@ public class Bisector {
      * 
      * @return Deep copy of adjacent vertices array as an ArrayList
      */
-    public ArrayList<Vertex> getAdjacentPtsArrayList() {
+    public List<Vertex> getAdjacentPtsList() {
         ArrayList<Vertex> adjCopy = new ArrayList();
         for (int i = 0; i < this.adjacentVertices.size(); i ++) {
             adjCopy.add(new Vertex(this.adjacentVertices.get(i).x, this.adjacentVertices.get(i).y));
