@@ -1,6 +1,5 @@
 package dt;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -42,7 +41,7 @@ public class DelaunayTriangulation extends JPanel {
     private ArrayList<int[]> performanceData;
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = false, showB2S = false;
-    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
+    private boolean showB3S_fgRegion = true, showB3S_hidden = false, showB3S = false;
     private final boolean doAnimation = false;
     private boolean showCoordinates = true, highlightShortestPath = true, clearSelectedPath = false, showBoundaryTriangle = false;
     
@@ -101,6 +100,7 @@ public class DelaunayTriangulation extends JPanel {
         this.voronoiVertices = Collections.synchronizedList(new ArrayList());
         this.dtGraph = new Graph(800, 700);
         this.scaleIterations = 0;
+        this.chosenB2S = new HashMap();
         this.chosenB3S = new ArrayList();
         this.performanceData = new ArrayList();
         this.oldSelectedPath = new ArrayList();
@@ -147,7 +147,10 @@ public class DelaunayTriangulation extends JPanel {
         HashMap<List<Vertex>, List<Bisector>> bisectors2S = calculateB2S(v, Arrays.asList(triangle));
         this.chosenB2S = bisectors2S;
         List<Bisector> bisectors3S = calculateB3S(v, Arrays.asList(triangle), bisectors2S); // Calculate b3s' for v and containing triangle
-        this.chosenB3S = bisectors3S;
+        this.chosenB3S = new ArrayList();
+        for (Bisector b : bisectors3S) {
+            this.chosenB3S.add(b.deepCopy());
+        }
         checkForBadEdges(v, bisectors3S); // If necessary, flip bad edges
         
         // Calculate all pairs shortest paths and stretch factor of the DT
@@ -183,7 +186,7 @@ public class DelaunayTriangulation extends JPanel {
         this.performanceData.get(this.performanceData.size()-1)[0] = Math.round(duration);
         
         Utility.debugPrintln("");
-        this.displayEdges.addAll(this.b2s.getDisplayEdges());
+        //this.displayEdges.addAll(this.b2s.getDisplayEdges());
         
         return tempB2S;
     }
@@ -211,7 +214,9 @@ public class DelaunayTriangulation extends JPanel {
         this.performanceData.get(this.performanceData.size()-1)[1] = Math.round(duration);
         Utility.debugPrintln("");
         
-        this.displayEdges.addAll(this.b3s.getDisplayEdges());
+        if (showB3S_fgRegion) {
+            this.displayEdges.addAll(cleanFGEdges(this.b3s.getDisplayEdges()));
+        }
         return tempB3S;
     }
     
@@ -238,7 +243,7 @@ public class DelaunayTriangulation extends JPanel {
             ptsToCheck.addAll(intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[2].x, b.getAdjacentPtsArray()[2].y).getNeighbours(), 
                     this.dtGraph.getVertex(b.getAdjacentPtsArray()[0].x, b.getAdjacentPtsArray()[0].y).getNeighbours()));
             
-            if ((vInQuad = vertexInsideQuad(calculateMinQuad(b), ptsToCheck)) != null) {
+            if ((vInQuad = vertexInsideQuad(calculateMinQuad(this.chosenB3S.get(i)), ptsToCheck)) != null) {
                 Vertex v1 = null, v2 = null;
                 // Get the two vertices in the triangle that aren't v
                 for (Vertex adjV : b.getAdjacentPtsArray()) {
@@ -250,6 +255,13 @@ public class DelaunayTriangulation extends JPanel {
                         }
                     }
                 }
+                
+                if (this.dtGraph.getBoundaryTriangle().contains(v1) && 
+                        this.dtGraph.getBoundaryTriangle().contains(v2)) {
+                    // The "bad edge" is a boundary edge so don't flip it
+                    return;
+                }
+                
                 // Flip the edge defined by the 2 vertices in the triangle that aren't v
                 // Then calculate new b3s' and add to queue
                 Utility.debugPrintln("Flipping bad edge");
@@ -369,7 +381,7 @@ public class DelaunayTriangulation extends JPanel {
     public Vertex[] calculateMinQuad(Bisector chosenB3S) {
         Double scale;
         if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(chosenB3S)) != null) {
-            //Utility.debugPrintln("Scale = " + scale + "\n");
+            Utility.debugPrintln("Scale = " + scale + "\n");
             chosenB3S.setMinQuadScale(scale);
             return this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), scale);
         }
@@ -803,6 +815,31 @@ public class DelaunayTriangulation extends JPanel {
     }
     
     /**
+     * 
+     * @param fgEdges List of edges that make up the FG region
+     * @return List of FG edges ignoring the boundary triangle vertices
+     */
+    private List<Bisector> cleanFGEdges(List<Bisector> fgEdges) {
+        List<Bisector> cleanEdges = new ArrayList();
+        List<Vertex> boundaryVerts = this.dtGraph.getBoundaryTriangle();
+        Utility.debugPrintln(boundaryVerts.toString());
+        for (Bisector b : fgEdges) {
+            boolean edgeIsClean = true;
+            for (Vertex v : b.getAdjacentPtsArray()) {
+                Utility.debugPrintln("Checking if boundary verts includes " + v);
+                if (boundaryVerts.contains(v)) {
+                    edgeIsClean = false;
+                    break;
+                }
+            }
+            if (edgeIsClean) {
+                cleanEdges.add(b);
+            }
+        }
+        return cleanEdges;
+    }
+    
+    /**
      * Draws the Voronoi diagram to the window
      *
      * @param g Graphics object used to draw to the screen
@@ -838,8 +875,8 @@ public class DelaunayTriangulation extends JPanel {
             painter.drawChosenB3SAndMinQuads(g2d, this.quad, this.chosenB3S, yMax);
         }
         
-        if (this.showB3S_fgRegion || this.showB2S_hgRegion) {
-            painter.drawDisplayEdges(g2d, this.displayEdges, yMax, this.showB2S_hgRegion, this.showB3S_fgRegion);
+        if (this.showB3S_fgRegion /*|| this.showB2S_hgRegion*/) {
+            painter.drawFGRegion(g2d, this.displayEdges, yMax/*, this.showB2S_hgRegion, this.showB3S_fgRegion*/);
         }
         
         if (this.showB2S_hgVertices) {

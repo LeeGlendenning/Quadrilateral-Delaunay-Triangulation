@@ -121,10 +121,10 @@ public class FindBisectorsThreeSites {
 
             Vertex[] ray1 = findB3SUVRays(q, a2, a1, a1); // Ray from a1 to left
             Vertex[] ray2 = findB3SUVRays(q, a1, a2, a2); // Ray from a2 to right
-
-            this.displayEdges.add(new Bisector(new Vertex[]{}, a1, a2, "b3s_step"));
-            this.displayEdges.add(new Bisector(new Vertex[]{}, ray1[0], ray1[1], "b3s_step"));
-            this.displayEdges.add(new Bisector(new Vertex[]{}, ray2[0], ray2[1], "b3s_step"));
+            
+            this.displayEdges.add(new Bisector(new Vertex[]{a1, a2, a3}, a1, a2, "b3s_step"));
+            this.displayEdges.add(new Bisector(new Vertex[]{a1, a2, a3}, ray1[0], ray1[1], "b3s_step"));
+            this.displayEdges.add(new Bisector(new Vertex[]{a1, a2, a3}, ray2[0], ray2[1], "b3s_step"));
 
             if (Utility.isLeftOfSegment(a1, a2, a3, caseTolerance) == 0 ||
                     Utility.isLeftOfSegment(ray1[0], ray1[1], a3, caseTolerance) == 0 ||
@@ -144,9 +144,9 @@ public class FindBisectorsThreeSites {
             Vertex[] ray1 = findB3SUVRays(q, a2, a1, a1); // Ray from a1 to left
             Vertex[] ray2 = findB3SUVRays(q, a1, a2, a2); // Ray from a2 to right
 
-            this.displayEdges.add(new Bisector(new Vertex[]{}, a1, a2, "b3s_step"));
-            this.displayEdges.add(new Bisector(new Vertex[]{}, ray1[0], ray1[1], "b3s_step"));
-            this.displayEdges.add(new Bisector(new Vertex[]{}, ray2[0], ray2[1], "b3s_step"));
+            this.displayEdges.add(new Bisector(new Vertex[]{a1, a2, a3}, a1, a2, "b3s_step"));
+            this.displayEdges.add(new Bisector(new Vertex[]{a1, a2, a3}, ray1[0], ray1[1], "b3s_step"));
+            this.displayEdges.add(new Bisector(new Vertex[]{a1, a2, a3}, ray2[0], ray2[1], "b3s_step"));
             
             if (uv[0] == null) {
                 uv[0] = Utility.midpoint(a1, a2);
@@ -335,10 +335,10 @@ public class FindBisectorsThreeSites {
         */
         
         // Draw FG region
-        this.displayEdges.add(new Bisector(new Vertex[]{}, u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new Bisector(new Vertex[]{}, u, Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new Bisector(new Vertex[]{}, v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new Bisector(new Vertex[]{}, v, Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
                 
         return new Vertex[]{u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle)};
     }

@@ -127,19 +127,19 @@ public class Painter {
      * Draw lines for debugging that show the process of the triangulation
      * 
      * @param g2d Graphics2D object used to draw to the screen
-     * @param displayEdges List of line segments to draw
+     * @param fgEdges List of line segments making up the FG region to draw
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      * @param showB2S_hgRegion If true, show lines corresponding to the hg region of b2s
      * @param showB3S_fgRegion If true, show lines corresponding to the fg region of b3s
      */
-    public void drawDisplayEdges(Graphics2D g2d, List<Bisector> displayEdges, int yMax, boolean showB2S_hgRegion, boolean showB3S_fgRegion) {
+    public void drawFGRegion(Graphics2D g2d, List<Bisector> fgEdges, int yMax/*, boolean showB2S_hgRegion, boolean showB3S_fgRegion*/) {
         g2d.setStroke(new BasicStroke(1));
-        g2d.setColor(Color.black);
-        for (Bisector bisector : displayEdges.toArray(new Bisector[displayEdges.size()])) {
+        g2d.setColor(Color.gray);
+        for (Bisector bisector : fgEdges.toArray(new Bisector[fgEdges.size()])) {
             // TODO: sometimes the bisector start or end vertex are null and I don't know why
             if (bisector.getStartVertex() != null && bisector.getEndVertex() != null &&
-                    (bisector.getTag().equals("b2s_step") && showB2S_hgRegion ||
-                    bisector.getTag().equals("b3s_step") && showB3S_fgRegion ||
+                    (/*bisector.getTag().equals("b2s_step") && showB2S_hgRegion ||*/
+                    bisector.getTag().equals("b3s_step") /*&& showB3S_fgRegion*/ ||
                     bisector.getTag().equals("debug"))) {
                 g2d.drawLine((int)Math.round(bisector.getStartVertex().x), yMax - (int)Math.round(bisector.getStartVertex().y),
                         (int)Math.round(bisector.getEndVertex().x), yMax - (int)Math.round(bisector.getEndVertex().y));
