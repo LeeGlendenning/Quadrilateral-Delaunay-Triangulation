@@ -306,7 +306,9 @@ public class Graph {
     public void removeEdge(Edge e){
        e.getVertices()[0].removeNeighbor(e);
        e.getVertices()[1].removeNeighbor(e);
+       Utility.debugPrintln("Edge count before remove = " + this.edges.size());
        this.edges.remove(e);
+       Utility.debugPrintln("Edge count after remove = " + this.edges.size());
     }
     
     /**
@@ -345,11 +347,15 @@ public class Graph {
      * @param v The vertex to remove
      */
     public void removeVertex(Vertex v){
+        Utility.debugPrintln("Removing vertex " + v);
         this.vertices.remove(v);
         
-        while(v.getNeighborCount() > 0){
-            this.removeEdge(v.getNeighbor((0)));
+        for (int i = v.getNeighborCount()-1; i >= 0; i --) {
+            Utility.debugPrintln("Removing neighbor ");
+            this.removeEdge(v.getNeighbor(i));
         }
+        
+        
         
     }
     

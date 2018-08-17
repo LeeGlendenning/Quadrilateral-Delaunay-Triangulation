@@ -39,9 +39,10 @@ public class DelaunayTriangulation extends JPanel {
     private final Integer[] sfVertices;
     private ArrayList<Vertex> curSelectedPath, oldSelectedPath; // Last path user has queried
     private ArrayList<int[]> performanceData;
+    private final int vertexRadius = 3;
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = false, showB2S = false;
-    private boolean showB3S_fgRegion = true, showB3S_hidden = false, showB3S = false;
+    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
     private final boolean doAnimation = false;
     private boolean showCoordinates = true, highlightShortestPath = true, clearSelectedPath = false, showBoundaryTriangle = false;
     
@@ -642,6 +643,44 @@ public class DelaunayTriangulation extends JPanel {
      *  User Interface methods
      */
     
+    /**
+     * 
+     * @param x X coordinate of mouse click
+     * @param y Y coordinate of mouse click
+     * @return Vertex at given (x,y) or null if no such vertex exists
+     */
+    public Vertex vertexAt(int x, int y) {
+        for (Vertex v : this.dtGraph.getVertices()) {
+            if (v.x <= x+this.vertexRadius && v.x >= x-this.vertexRadius &&
+                    v.y <= y+this.vertexRadius && v.y >= y-this.vertexRadius) {
+                return v;
+            }
+        }
+        return null;
+    }
+    
+    public void removeVertex(Vertex v) {
+        this.dtGraph.removeVertex(this.dtGraph.getVertex(v.x, v.y));
+    }
+    
+    /**
+     * 
+     * @param v Vertex to move
+     * @param x New x location of vertex
+     * @param y New y location of vertex
+     */
+    public void moveVertex(Vertex v, int x, int y) {
+        System.out.println("Moving vertex " + v);
+        Vertex vNew = new Vertex(x, y);
+        this.dtGraph.removeVertex(this.dtGraph.getVertex(v.x, v.y));
+        addVertex(vNew);
+        this.repaint();
+    }
+    
+    /**
+     * 
+     * @param verts New list of Vertices to create Quad for
+     */
     public void newQuad(Vertex[] verts) {
         this.quad = new Quadrilateral(verts);
         Vertex[] tempPts = this.dtGraph.getVertices().toArray(new Vertex[this.dtGraph.getVertices().size()]);
@@ -652,6 +691,10 @@ public class DelaunayTriangulation extends JPanel {
         }
     }
     
+    /**
+     * 
+     * @param vertices New list of Vertices to create DT for
+     */
     public void newVertexSet(List<Vertex> vertices) {
         reset();
         addVertexSet(vertices);
@@ -849,14 +892,14 @@ public class DelaunayTriangulation extends JPanel {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        int vertexRadius = 3, voronoiVertexRadius = 1;
+        int voronoiVertexRadius = 1;
         int yMax = this.getBounds().getSize().height;
         
         if (this.showBoundaryTriangle) {
-            painter.drawVerticesAndQuads(g2d, this.dtGraph.getVertices(), this.quad, yMax, vertexRadius, this.curScale);
+            painter.drawVerticesAndQuads(g2d, this.dtGraph.getVertices(), this.quad, yMax, this.vertexRadius, this.curScale);
         } else {
             // Take away boundary vertices from vertex set
-            painter.drawVerticesAndQuads(g2d, this.dtGraph.getDisplayVertices(), this.quad, yMax, vertexRadius, this.curScale);
+            painter.drawVerticesAndQuads(g2d, this.dtGraph.getDisplayVertices(), this.quad, yMax, this.vertexRadius, this.curScale);
         }
         
         painter.drawBisectorRayVertices(g2d, this.voronoiVertices, yMax, voronoiVertexRadius);
@@ -880,7 +923,7 @@ public class DelaunayTriangulation extends JPanel {
         }
         
         if (this.showB2S_hgVertices) {
-            painter.drawB2S_hgVertices(g2d, b2s.geth1(), b2s.geth2(), b2s.getg1(), b2s.getg2(), yMax, vertexRadius);
+            painter.drawB2S_hgVertices(g2d, b2s.geth1(), b2s.geth2(), b2s.getg1(), b2s.getg2(), yMax, this.vertexRadius);
         }
         
         if (this.showCoordinates) {
@@ -898,11 +941,12 @@ public class DelaunayTriangulation extends JPanel {
         
         painter.drawStretchFactor(g2d, this.sfVertices, this.stretchFactor);
         
-        // Clear old highlighted path
-        painter.highlightShortestPath(g2d, this.oldSelectedPath, yMax, this.highlightShortestPath, Color.black);
-        // Draw desired highlighted path
-        painter.highlightShortestPath(g2d, this.curSelectedPath, yMax, this.highlightShortestPath, Color.red);
-        
+        if (this.sfVertices[0] != null && this.sfVertices[1] != null) {
+            // Clear old highlighted path
+            painter.highlightStretchFactorPath(g2d, this.oldSelectedPath, yMax, this.highlightShortestPath, Color.black);
+            // Draw desired highlighted path
+            painter.highlightStretchFactorPath(g2d, shortestPath(this.sfVertices[0], this.sfVertices[1]), yMax, this.highlightShortestPath, Color.red);
+        }
         
     }
 

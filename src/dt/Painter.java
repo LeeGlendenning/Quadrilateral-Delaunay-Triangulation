@@ -239,7 +239,7 @@ public class Painter {
      * @param highlightPath Boolean whether to highlight the path or not
      * @param c Colour to draw/highlight the path
      */
-    public void highlightShortestPath(Graphics2D g2d, ArrayList<Vertex> path, int yMax, boolean highlightPath, Color c) {
+    public void highlightStretchFactorPath(Graphics2D g2d, ArrayList<Vertex> path, int yMax, boolean highlightPath, Color c) {
         if (highlightPath) {
             g2d.setColor(c);
             if (c.equals(Color.red)) {

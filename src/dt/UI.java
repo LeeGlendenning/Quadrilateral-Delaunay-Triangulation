@@ -47,6 +47,8 @@ public class UI implements ActionListener{
     private JCheckBoxMenuItem /*showDTMenuItem, showVDMenuItem,*/ showCoordsMenuItem;
     private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
     
+    private boolean isMousePressed = false, mouseWasDragged = false;
+    private Vertex selectedVertex = null, newVertex = null;
     private final DelaunayTriangulation delaunayTriangulation;
     
     public UI(Quadrilateral q, ArrayList<Vertex> vertexSet) {
@@ -65,8 +67,25 @@ public class UI implements ActionListener{
         this.delaunayTriangulation.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                //Utility.debugPrintln(e.getX() + "," + e.getY());
-                addVertex(e.getX(), e.getY());
+                mouseWasDragged = false;
+                // User has clicked an existing vertex
+                if ((selectedVertex = delaunayTriangulation.vertexAt(e.getX(), delaunayTriangulation.getBounds().getSize().height - e.getY())) != null) {
+                    System.out.println("Existing point");
+                    isMousePressed = true;
+                } else {
+                    // Add new vertex
+                    addVertex(e.getX(), e.getY());
+                }
+            }
+            
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                System.out.println("mouseReleased");
+                isMousePressed = false;
+                if (mouseWasDragged) {
+                    delaunayTriangulation.moveVertex(selectedVertex, e.getX(), delaunayTriangulation.getBounds().getSize().height - e.getY());
+                    mouseWasDragged = false;
+                }
             }
         });
         
@@ -76,6 +95,11 @@ public class UI implements ActionListener{
             public void mouseMoved(MouseEvent me)
             {
                 displayCoordinates(me.getX(), me.getY());
+            }
+            
+            @Override
+            public void mouseDragged(MouseEvent me) {
+                mouseWasDragged = true;
             }
         });
         

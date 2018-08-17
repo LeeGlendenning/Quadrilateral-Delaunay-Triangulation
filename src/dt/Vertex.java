@@ -2,6 +2,8 @@ package dt;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Vertex data structure used by Graph and Quadrilateral classes
@@ -11,7 +13,7 @@ import java.util.ArrayList;
  */
 public class Vertex {
 
-    private final ArrayList<Edge> neighborhood;
+    private final List<Edge> neighborhood;
     public double x, y;
     private final Color colour;
     
@@ -24,7 +26,7 @@ public class Vertex {
         this.x = x;
         this.y = y;
         this.colour = Color.black;
-        this.neighborhood = new ArrayList();
+        this.neighborhood = Collections.synchronizedList(new ArrayList());
     }
     
     /**
