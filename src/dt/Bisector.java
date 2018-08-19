@@ -102,7 +102,7 @@ public class Bisector {
      */
     public Bisector deepCopy() {
         Bisector copy = new Bisector(Utility.deepCopyVertexArray(this.getAdjacentPtsArray()), 
-                new Vertex(this.startVertex.x, this.startVertex.y), new Vertex(this.endVertex.x, this.endVertex.y), this.tag);
+                this.startVertex.deepCopy(), endVertex.deepCopy(), this.tag);
         copy.setMinQuadScale(this.minQuadScale);
         
         return copy;

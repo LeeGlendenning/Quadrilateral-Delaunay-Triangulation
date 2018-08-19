@@ -55,8 +55,7 @@ public class FindBisectorsThreeSites {
         if (bisectorCase == 2) { // case 2: single vertex is bisector of 3 
             Bisector bisector = findIntersectionB3S(bisectors2S, pLeft, pRight, v3, key3, key2);
             if (bisector != null) {
-                //this.voronoiEdgesB3S.add(bisector);
-                this.chosenBisectors.add(bisector);
+                this.chosenBisectors.add(bisector.deepCopy());
             } else {
                 Utility.debugPrintln("[findBisectorOfThreeSites] case 2 bisector null - this shouldn't happen.");
             }
@@ -65,13 +64,11 @@ public class FindBisectorsThreeSites {
             Utility.debugPrintln("Handling case 3 - not collinear");
             //BC(a1; a2; a3) is a polygonal chain completed with one ray at the end
             
-            Utility.debugPrintln("Finding overlaps");
+            //Utility.debugPrintln("Finding overlaps");
             Bisector bisector = findOverlapsB3S(bisectors2S, pLeft, pRight, v3, key1, key2, key3);
             if (bisector != null) {
-                //for (Bisector bisector : bisectors) {
-                    Utility.debugPrintln("Adding bisector to voronoiEdges");
-                    this.chosenBisectors.add(bisector);
-                //}
+                //Utility.debugPrintln("Adding bisector to voronoiEdges");
+                this.chosenBisectors.add(bisector.deepCopy());
             } else {
                 Utility.debugPrintln("[findBisectorOfThreeSites] case 3 bisector overlaps empty - this shouldn't happen.");
             }
@@ -81,11 +78,7 @@ public class FindBisectorsThreeSites {
             //BC(a1; a2; a3) consists of one or two cones
             Bisector bisector = findConeIntersectionsB3S(bisectors2S, pLeft, pRight, v3);
             if (bisector != null) {
-                this.chosenBisectors.add(bisector);
-                /*for (Bisector[] cone : cones) {
-                    this.voronoiEdgesB3S.add(cone[0]);
-                    this.voronoiEdgesB3S.add(cone[1]);
-                }*/
+                this.chosenBisectors.add(bisector.deepCopy());
             } else {
                 Utility.debugPrintln("[findBisectorOfThreeSites] case 3 bisector cone overlaps empty - this shouldn't happen.");
             }
@@ -234,10 +227,10 @@ public class FindBisectorsThreeSites {
      * @return A key to the HashMap holding the bisector of v1 and v2
      */
     private List<Vertex> getB2SKey(HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex v1, Vertex v2) {
-        Utility.debugPrintln("Looking for key " + v1 + ", " + v2 + " or reversed");
+        /*Utility.debugPrintln("Looking for key " + v1 + ", " + v2 + " or reversed");
         for (Map.Entry<List<Vertex>, List<Bisector>> entry : bisectors2S.entrySet()) {
             Utility.debugPrintln(" *" + entry.getKey().toString());
-        }
+        }*/
         // Get the Bisector from the HashMap and add this ray to it
         if (bisectors2S.containsKey(Arrays.asList(v1, v2))) {
             return Arrays.asList(v1, v2);
@@ -540,7 +533,7 @@ public class FindBisectorsThreeSites {
                                 this.voronoiEdgesB3S.add(coneIntersection[1]);
                                 
                                 Bisector chosenB3S = new Bisector(adjacentUnion, chosenPt, chosenPt, "b3s_chosen_cone");
-                                this.chosenBisectors.add(chosenB3S);
+                                this.chosenBisectors.add(chosenB3S.deepCopy());
                                 return chosenB3S;
                             }
                         }

@@ -54,6 +54,11 @@ public class UI implements ActionListener{
     public UI(Quadrilateral q, ArrayList<Vertex> vertexSet) {
         this.delaunayTriangulation = new DelaunayTriangulation(q, vertexSet);
         createFrame();
+        /*try {
+            loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\minQuad scaling bug"));
+        } catch (FileNotFoundException ex) {
+            Utility.debugPrintln("File not found");
+        }*/
     }
     
     /**

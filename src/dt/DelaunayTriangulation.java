@@ -110,6 +110,7 @@ public class DelaunayTriangulation extends JPanel {
         this.oldSelectedPath = new ArrayList();
         this.curSelectedPath = new ArrayList();
         this.sfVertices[0] = this.sfVertices[1] = null;
+        this.stretchFactor = 0.0;
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
@@ -155,7 +156,10 @@ public class DelaunayTriangulation extends JPanel {
         this.chosenB3S = new ArrayList();
         for (Bisector b : bisectors3S) {
             this.chosenB3S.add(b.deepCopy());
+            // Set scaling for minQuad
+            calculateMinQuad(this.chosenB3S.get(this.chosenB3S.size()-1));
         }
+        
         checkForBadEdges(v, bisectors3S); // If necessary, flip bad edges
         
         // Calculate all pairs shortest paths and stretch factor of the DT
@@ -231,7 +235,7 @@ public class DelaunayTriangulation extends JPanel {
      */
     private void checkForBadEdges(Vertex v, List<Bisector> b3sList) {
         long startTime = System.nanoTime();
-        
+        //Utility.debugPrintln("Checking " + b3sList.size() + " b3s'");
         for (int i = 0; i < b3sList.size(); i ++) {
             Bisector b = b3sList.get(i);
             Vertex vInQuad;
@@ -248,6 +252,7 @@ public class DelaunayTriangulation extends JPanel {
             ptsToCheck.addAll(intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[2].x, b.getAdjacentPtsArray()[2].y).getNeighbours(), 
                     this.dtGraph.getVertex(b.getAdjacentPtsArray()[0].x, b.getAdjacentPtsArray()[0].y).getNeighbours()));
             
+            //Utility.debugPrintln("Finding minQuad for " + this.chosenB3S.get(i).getEndVertex());
             if ((vInQuad = vertexInsideQuad(calculateMinQuad(this.chosenB3S.get(i)), ptsToCheck)) != null) {
                 Vertex v1 = null, v2 = null;
                 // Get the two vertices in the triangle that aren't v
@@ -264,6 +269,7 @@ public class DelaunayTriangulation extends JPanel {
                 if ((v1 == null || v2 == null /*TODO: verify this is correct*/) || 
                         this.dtGraph.getBoundaryTriangle().contains(v1) && 
                         this.dtGraph.getBoundaryTriangle().contains(v2)) {
+                    Utility.debugPrintln("vInQuad was either part of min quad or boundary triangle. Skipped.");
                     // The "bad edge" is a boundary edge so don't flip it
                     return;
                 }
@@ -280,9 +286,9 @@ public class DelaunayTriangulation extends JPanel {
                     
                     // Calculate b3s for (v1, v, vInQuad) and (v2, v, vInQuad) and add to b3sList to be checked in further iterations
                     Utility.debugPrintln("calcing b3s for " + v + ", " + v1 + ", " + vInQuad);
-                    b3sList.add(this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v1.deepCopy(), vInQuad.deepCopy(), v));
+                    b3sList.add(this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v1.deepCopy(), vInQuad.deepCopy(), v.deepCopy()));
                     Utility.debugPrintln("calcing b3s for " + v + ", " + v2 + ", " + vInQuad);
-                    b3sList.add(this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v2.deepCopy(), vInQuad.deepCopy(), v));
+                    b3sList.add(this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v2.deepCopy(), vInQuad.deepCopy(), v.deepCopy()));
                     
                     // TODO: deal with timing stuff?
                     long endTime = System.nanoTime();
@@ -389,9 +395,11 @@ public class DelaunayTriangulation extends JPanel {
     public Vertex[] calculateMinQuad(Bisector chosenB3S) {
         Double scale;
         if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(chosenB3S)) != null) {
-            Utility.debugPrintln("Scale = " + scale + "\n");
+            //Utility.debugPrintln("Set scale = " + scale + "\n");
             chosenB3S.setMinQuadScale(scale);
             return this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), scale);
+        } else {
+            System.out.println("[calculateMinQuad] DID NOT SET SCALE! - this is a problem");
         }
         return null;
     }
