@@ -41,8 +41,60 @@ public class Painter {
             // Subtract vertexRadius because vertices are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(v.x - vertexRadius, yMax - (v.y + vertexRadius), vertexRadius * 2, vertexRadius * 2)); // x, y, width, height
             quad.drawQuad(g2d, v, 1.0, yMax); // Original quad
-            quad.drawQuad(g2d, v, curScale, yMax); // Scaled quad for animation
+            //quad.drawQuad(g2d, v, curScale, yMax); // Scaled quad for animation
         }
+    }
+    
+    /**
+     * 
+     * @param g2d Graphics2D object used to draw to the screen
+     * @param v Moving vertex to draw to screen
+     * @param quad Quadrilateral to draw around the vertices
+     * @param movingVertIndex Vertex #
+     * @param vertexRadius Visual radius of vertices in vertex set
+     * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
+     * @param c Color used to draw the moving vertex
+     */
+    public void drawMovingVertex(Graphics2D g2d, Vertex v, Quadrilateral quad, int movingVertIndex, int vertexRadius, int yMax, Color c) {
+        g2d.setStroke(new BasicStroke(1));
+        g2d.setColor(c);
+        g2d.fill(new Ellipse2D.Double(v.x - vertexRadius, yMax - (v.y + vertexRadius), vertexRadius * 2, vertexRadius * 2)); // x, y, width, height
+        quad.drawQuad(g2d, v, 1.0, yMax); // Original quad
+        
+        // Draw vertex # and coordinates
+        int fontSize = 14;
+        g2d.setFont(new Font("default", Font.BOLD, fontSize));
+        g2d.drawString(movingVertIndex + ": ", Math.round(v.x)+2, Math.round(yMax - v.y));
+        if (c.equals(Color.black)) {
+            g2d.setColor(Color.red);
+        }
+        g2d.setFont(new Font("default", Font.PLAIN, fontSize));
+        g2d.drawString(Math.round(v.x) + ", " + Math.round(v.y), Math.round(v.x)+25, Math.round(yMax - v.y));
+    }
+    
+    /**
+     * 
+     * @param g2d Graphics2D object used to draw to the screen
+     * @param v Moving vertex to draw to screen
+     * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
+     * @param c Color used to draw the moving vertex
+     */
+    public void eraseEdgesAndCoords(Graphics2D g2d, Vertex v, int yMax, Color c) {
+        Utility.debugPrintln("erasing coords for " + v);
+        g2d.setStroke(new BasicStroke(1));
+        g2d.setColor(c);
+        int fontSize = 14;
+        g2d.setFont(new Font("default", Font.PLAIN, fontSize));
+        g2d.drawString(Math.round(v.x) + ", " + Math.round(v.y), Math.round(v.x)+25, Math.round(yMax - v.y));
+        
+        for (int i = 0; i < v.getNeighborCount(); i ++) {
+            Edge edge = v.getNeighbor(i);
+            Utility.debugPrintln("erasing edge " + edge);
+            g2d.drawLine((int)Math.round(edge.getVertices()[0].x), yMax - (int)Math.round(edge.getVertices()[0].y), 
+                    (int)Math.round(edge.getVertices()[1].x), yMax - (int)Math.round(edge.getVertices()[1].y));
+        }
+        g2d.setColor(Color.red);
+        g2d.drawLine(100, yMax - 100, 200, yMax - 200);
     }
     
     /**
@@ -129,10 +181,8 @@ public class Painter {
      * @param g2d Graphics2D object used to draw to the screen
      * @param fgEdges List of line segments making up the FG region to draw
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
-     * @param showB2S_hgRegion If true, show lines corresponding to the hg region of b2s
-     * @param showB3S_fgRegion If true, show lines corresponding to the fg region of b3s
      */
-    public void drawFGRegion(Graphics2D g2d, List<Bisector> fgEdges, int yMax/*, boolean showB2S_hgRegion, boolean showB3S_fgRegion*/) {
+    public void drawFGRegion(Graphics2D g2d, List<Bisector> fgEdges, int yMax) {
         g2d.setStroke(new BasicStroke(1));
         g2d.setColor(Color.gray);
         for (Bisector bisector : fgEdges.toArray(new Bisector[fgEdges.size()])) {

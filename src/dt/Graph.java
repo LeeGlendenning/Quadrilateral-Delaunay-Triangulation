@@ -306,9 +306,8 @@ public class Graph {
     public void removeEdge(Edge e){
        e.getVertices()[0].removeNeighbor(e);
        e.getVertices()[1].removeNeighbor(e);
-       Utility.debugPrintln("Edge count before remove = " + this.edges.size());
+       Utility.debugPrintln("Removing edge: " + e);
        this.edges.remove(e);
-       Utility.debugPrintln("Edge count after remove = " + this.edges.size());
     }
     
     /**

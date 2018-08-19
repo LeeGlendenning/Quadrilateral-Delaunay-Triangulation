@@ -72,6 +72,7 @@ public class UI implements ActionListener{
                 if ((selectedVertex = delaunayTriangulation.vertexAt(e.getX(), delaunayTriangulation.getBounds().getSize().height - e.getY())) != null) {
                     System.out.println("Existing point");
                     isMousePressed = true;
+                    delaunayTriangulation.setMovingVertexLoc(selectedVertex);
                 } else {
                     // Add new vertex
                     addVertex(e.getX(), e.getY());
@@ -92,14 +93,15 @@ public class UI implements ActionListener{
         // Mouse listener for showing mouse coordinates
         this.delaunayTriangulation.addMouseMotionListener(new MouseMotionAdapter() {
             @Override
-            public void mouseMoved(MouseEvent me)
+            public void mouseMoved(MouseEvent e)
             {
-                displayCoordinates(me.getX(), me.getY());
+                displayCoordinates(e.getX(), e.getY());
             }
             
             @Override
-            public void mouseDragged(MouseEvent me) {
+            public void mouseDragged(MouseEvent e) {
                 mouseWasDragged = true;
+                delaunayTriangulation.setMovingVertex(e.getX(), delaunayTriangulation.getBounds().getSize().height - e.getY());
             }
         });
         

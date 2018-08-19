@@ -46,6 +46,9 @@ public class DelaunayTriangulation extends JPanel {
     private final boolean doAnimation = false;
     private boolean showCoordinates = true, highlightShortestPath = true, clearSelectedPath = false, showBoundaryTriangle = false;
     
+    private boolean startMovingVertex = false;
+    private Vertex movingVertex = null, movingVertexOldLoc = null, movingVertexOriginalLoc = null;
+    private int movingVertIndex = -1;
     private int mouseX, mouseY;
     
     //private final ArrayList<Vertex> h1, h2, g1, g2;
@@ -106,6 +109,7 @@ public class DelaunayTriangulation extends JPanel {
         this.performanceData = new ArrayList();
         this.oldSelectedPath = new ArrayList();
         this.curSelectedPath = new ArrayList();
+        this.sfVertices[0] = this.sfVertices[1] = null;
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
@@ -670,11 +674,29 @@ public class DelaunayTriangulation extends JPanel {
      * @param y New y location of vertex
      */
     public void moveVertex(Vertex v, int x, int y) {
-        System.out.println("Moving vertex " + v);
-        Vertex vNew = new Vertex(x, y);
-        this.dtGraph.removeVertex(this.dtGraph.getVertex(v.x, v.y));
-        addVertex(vNew);
-        this.repaint();
+        //if (this.dtGraph.getVertex(v.x, v.y) != null) {
+            System.out.println("Moving vertex " + v + ": " + v.getNeighborCount());
+            Vertex vNew = new Vertex(x, y);
+            this.movingVertex = null;
+            this.movingVertexOldLoc = null;
+            
+            this.dtGraph.removeVertex(this.dtGraph.getVertex(v.x, v.y));
+            System.out.println("Repainting...");
+            this.repaint();
+            System.out.println("Done repainting...");
+            addVertex(vNew);
+            this.repaint();
+        //}
+    }
+    
+    /**
+     * 
+     * @param v Original location of moving vertex
+     */
+    public void setMovingVertexLoc(Vertex v) {
+        this.movingVertIndex = this.dtGraph.getVertices().indexOf(this.dtGraph.getVertex(v.x, v.y));
+        this.movingVertexOriginalLoc = v.deepCopy();
+        this.startMovingVertex = true;
     }
     
     /**
@@ -717,6 +739,22 @@ public class DelaunayTriangulation extends JPanel {
         } else {
             Utility.debugPrintln("Couldn't delete vertex because it doesn't exist.");
         }
+    }
+    
+    /**
+     * 
+     * @param x X coordinate of moving vertex
+     * @param y Y coordinate of moving vertex
+     */
+    public void setMovingVertex(int x, int y) {
+        if (this.movingVertex == null ) {
+            this.movingVertexOldLoc = new Vertex(x, y);
+            this.movingVertex = new Vertex(x, y);
+        } else {
+            this.movingVertexOldLoc = this.movingVertex.deepCopy();
+            this.movingVertex = new Vertex(x, y);
+        }
+        this.repaint();
     }
     
     /**
@@ -891,7 +929,6 @@ public class DelaunayTriangulation extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
-
         int voronoiVertexRadius = 1;
         int yMax = this.getBounds().getSize().height;
         
@@ -946,6 +983,19 @@ public class DelaunayTriangulation extends JPanel {
             painter.highlightStretchFactorPath(g2d, this.oldSelectedPath, yMax, this.highlightShortestPath, Color.black);
             // Draw desired highlighted path
             painter.highlightStretchFactorPath(g2d, shortestPath(this.sfVertices[0], this.sfVertices[1]), yMax, this.highlightShortestPath, Color.red);
+        }
+        
+        if (this.movingVertex != null) {
+            // Paint over old location of vertex
+            painter.drawMovingVertex(g2d, this.movingVertexOldLoc, this.quad, this.movingVertIndex-this.dtGraph.getBoundaryTriangle().size(), this.vertexRadius, yMax, this.getBackground());
+            // Draw vertex at new location
+            painter.drawMovingVertex(g2d, this.movingVertex, this.quad, this.movingVertIndex-this.dtGraph.getBoundaryTriangle().size(), this.vertexRadius, yMax, Color.black);
+        }
+        
+        if (this.startMovingVertex) {
+            Utility.debugPrintln("moving vert edge #: " + this.dtGraph.getVertex(movingVertexOriginalLoc.x, movingVertexOriginalLoc.y).getNeighborCount());
+            painter.eraseEdgesAndCoords(g2d, this.dtGraph.getVertex(this.movingVertexOriginalLoc.x, this.movingVertexOriginalLoc.y), yMax, this.getBackground());
+            this.startMovingVertex = false;
         }
         
     }
