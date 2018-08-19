@@ -61,7 +61,7 @@ public class UI implements ActionListener{
      */
     private void createFrame() {
         // Set up display window
-        this.frame = new JFrame("Voronoi Diagram");
+        this.frame = new JFrame("Delaunay Triangulation");
         
         // Mouse listener for handling adding vertexs when mouse clicks
         this.delaunayTriangulation.addMouseListener(new MouseAdapter() {
@@ -70,7 +70,7 @@ public class UI implements ActionListener{
                 mouseWasDragged = false;
                 // User has clicked an existing vertex
                 if ((selectedVertex = delaunayTriangulation.vertexAt(e.getX(), delaunayTriangulation.getBounds().getSize().height - e.getY())) != null) {
-                    System.out.println("Existing point");
+                    Utility.debugPrintln("Existing point");
                     isMousePressed = true;
                     delaunayTriangulation.setMovingVertexLoc(selectedVertex);
                 } else {
@@ -81,7 +81,6 @@ public class UI implements ActionListener{
             
             @Override
             public void mouseReleased(MouseEvent e) {
-                System.out.println("mouseReleased");
                 isMousePressed = false;
                 if (mouseWasDragged) {
                     delaunayTriangulation.moveVertex(selectedVertex, e.getX(), delaunayTriangulation.getBounds().getSize().height - e.getY());
@@ -548,7 +547,7 @@ public class UI implements ActionListener{
         showCoordsMenuItem = new JCheckBoxMenuItem("Show Vertex Coordinates");
         showCoordsMenuItem.setState(true);
         showBoundaryTriangleMenuItem = new JCheckBoxMenuItem("Show Boundary Triangle");
-        showBoundaryTriangleMenuItem.setState(false);
+        showBoundaryTriangleMenuItem.setState(true);
         
         /*showDTMenuItem.addActionListener(this);
         showVDMenuItem.addActionListener(this);*/

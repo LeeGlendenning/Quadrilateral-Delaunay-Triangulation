@@ -42,9 +42,9 @@ public class DelaunayTriangulation extends JPanel {
     private final int vertexRadius = 3;
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = false, showB2S = false;
-    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
+    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = true;
     private final boolean doAnimation = false;
-    private boolean showCoordinates = true, highlightShortestPath = true, clearSelectedPath = false, showBoundaryTriangle = false;
+    private boolean showCoordinates = true, highlightShortestPath = true, clearSelectedPath = false, showBoundaryTriangle = true;
     
     private boolean startMovingVertex = false;
     private Vertex movingVertex = null, movingVertexOldLoc = null, movingVertexOriginalLoc = null;
@@ -252,7 +252,7 @@ public class DelaunayTriangulation extends JPanel {
                 Vertex v1 = null, v2 = null;
                 // Get the two vertices in the triangle that aren't v
                 for (Vertex adjV : b.getAdjacentPtsArray()) {
-                    if (!adjV.equals(v)) {
+                    if (!adjV.equals(v) && !adjV.equals(vInQuad)) {
                         if (v1 == null) {
                             v1 = adjV;
                         } else {
@@ -261,7 +261,8 @@ public class DelaunayTriangulation extends JPanel {
                     }
                 }
                 
-                if (this.dtGraph.getBoundaryTriangle().contains(v1) && 
+                if ((v1 == null || v2 == null /*TODO: verify this is correct*/) || 
+                        this.dtGraph.getBoundaryTriangle().contains(v1) && 
                         this.dtGraph.getBoundaryTriangle().contains(v2)) {
                     // The "bad edge" is a boundary edge so don't flip it
                     return;
@@ -278,7 +279,9 @@ public class DelaunayTriangulation extends JPanel {
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v.deepCopy(), vInQuad.deepCopy()));
                     
                     // Calculate b3s for (v1, v, vInQuad) and (v2, v, vInQuad) and add to b3sList to be checked in further iterations
+                    Utility.debugPrintln("calcing b3s for " + v + ", " + v1 + ", " + vInQuad);
                     b3sList.add(this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v1.deepCopy(), vInQuad.deepCopy(), v));
+                    Utility.debugPrintln("calcing b3s for " + v + ", " + v2 + ", " + vInQuad);
                     b3sList.add(this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v2.deepCopy(), vInQuad.deepCopy(), v));
                     
                     // TODO: deal with timing stuff?
@@ -674,19 +677,14 @@ public class DelaunayTriangulation extends JPanel {
      * @param y New y location of vertex
      */
     public void moveVertex(Vertex v, int x, int y) {
-        //if (this.dtGraph.getVertex(v.x, v.y) != null) {
-            System.out.println("Moving vertex " + v + ": " + v.getNeighborCount());
-            Vertex vNew = new Vertex(x, y);
-            this.movingVertex = null;
-            this.movingVertexOldLoc = null;
-            
-            this.dtGraph.removeVertex(this.dtGraph.getVertex(v.x, v.y));
-            System.out.println("Repainting...");
-            this.repaint();
-            System.out.println("Done repainting...");
-            addVertex(vNew);
-            this.repaint();
-        //}
+        Utility.debugPrintln("Moving vertex " + v + ": " + v.getNeighborCount());
+        Vertex vNew = new Vertex(x, y);
+        this.movingVertex = null;
+        this.movingVertexOldLoc = null;
+
+        this.dtGraph.removeVertex(this.dtGraph.getVertex(v.x, v.y));
+        addVertex(vNew);
+        this.repaint();
     }
     
     /**
