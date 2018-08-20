@@ -55,7 +55,7 @@ public class UI implements ActionListener{
         this.delaunayTriangulation = new DelaunayTriangulation(q, vertexSet);
         createFrame();
         /*try {
-            loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\minQuad scaling bug"));
+            loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\flipped edge bug"));
         } catch (FileNotFoundException ex) {
             Utility.debugPrintln("File not found");
         }*/

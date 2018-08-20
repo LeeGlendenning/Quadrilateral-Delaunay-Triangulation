@@ -253,7 +253,10 @@ public class DelaunayTriangulation extends JPanel {
                     this.dtGraph.getVertex(b.getAdjacentPtsArray()[0].x, b.getAdjacentPtsArray()[0].y).getNeighbours()));
             
             //Utility.debugPrintln("Finding minQuad for " + this.chosenB3S.get(i).getEndVertex());
-            if ((vInQuad = vertexInsideQuad(calculateMinQuad(this.chosenB3S.get(i)), ptsToCheck)) != null) {
+            if ((vInQuad = vertexInsideQuad(calculateMinQuad(this.chosenB3S.get(i)), b.getAdjacentPtsList(), ptsToCheck)) != null) {
+                if (v.equals(vInQuad)) {
+                    System.out.println("!!!! v = vInQuad");
+                }
                 Vertex v1 = null, v2 = null;
                 // Get the two vertices in the triangle that aren't v
                 for (Vertex adjV : b.getAdjacentPtsArray()) {
@@ -370,13 +373,16 @@ public class DelaunayTriangulation extends JPanel {
     }
     
     /**
-     * 
+     * @param quad Array of vertices defining the quad
+     * @param vIgnore List of vertices on the quad boundary
+     * @param pts List of vertices to check
      * @return True if a vertex in the vertex set lies inside quad. False otherwise
      */
-    private Vertex vertexInsideQuad(Vertex[] quad, List<Vertex> pts) {
+    private Vertex vertexInsideQuad(Vertex[] quad, List<Vertex> vIgnore, List<Vertex> pts) {
         for (Vertex v : pts) {
             Utility.debugPrintln("Checking if " + v + " inside quad");
-            if (Utility.isLeftOfSegment(quad[0], quad[1], v, 0.1) == -1 &&
+            if (!vIgnore.contains(v) &&
+                    Utility.isLeftOfSegment(quad[0], quad[1], v, 0.1) == -1 &&
                     Utility.isLeftOfSegment(quad[1], quad[2], v, 0.1) == -1 &&
                     Utility.isLeftOfSegment(quad[2], quad[3], v, 0.1) == -1 &&
                     Utility.isLeftOfSegment(quad[3], quad[0], v, 0.1) == -1) {
@@ -913,7 +919,7 @@ public class DelaunayTriangulation extends JPanel {
         for (Bisector b : fgEdges) {
             boolean edgeIsClean = true;
             for (Vertex v : b.getAdjacentPtsArray()) {
-                Utility.debugPrintln("Checking if boundary verts includes " + v);
+                //Utility.debugPrintln("Checking if boundary verts includes " + v);
                 if (boundaryVerts.contains(v)) {
                     edgeIsClean = false;
                     break;
