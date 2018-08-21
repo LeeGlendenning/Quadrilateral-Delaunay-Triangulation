@@ -227,10 +227,10 @@ public class FindBisectorsThreeSites {
      * @return A key to the HashMap holding the bisector of v1 and v2
      */
     private List<Vertex> getB2SKey(HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex v1, Vertex v2) {
-        Utility.debugPrintln("Looking for key " + v1 + ", " + v2 + " or reversed");
+        /*Utility.debugPrintln("Looking for key " + v1 + ", " + v2 + " or reversed");
         for (Map.Entry<List<Vertex>, List<Bisector>> entry : bisectors2S.entrySet()) {
             Utility.debugPrintln(" *" + entry.getKey().toString());
-        }
+        }*/
         // Get the Bisector from the HashMap and add this ray to it
         if (bisectors2S.containsKey(Arrays.asList(v1, v2))) {
             return Arrays.asList(v1, v2);

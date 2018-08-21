@@ -242,21 +242,18 @@ public class DelaunayTriangulation extends JPanel {
             
             // List holds the vertices that could possibly be inside the min quads for the b3s
             List<Vertex> ptsToCheck = new ArrayList();
-            Utility.debugPrintln("Finding intersection of neighbour points for " + b.getAdjacentPtsArray()[0] + " and " + b.getAdjacentPtsArray()[1]);
+            //Utility.debugPrintln("Finding intersection of neighbour points for " + b.getAdjacentPtsArray()[0] + " and " + b.getAdjacentPtsArray()[1]);
             ptsToCheck.addAll(intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[0].x, b.getAdjacentPtsArray()[0].y).getNeighbours(), 
                     this.dtGraph.getVertex(b.getAdjacentPtsArray()[1].x, b.getAdjacentPtsArray()[1].y).getNeighbours()));
-            Utility.debugPrintln("Finding intersection of neighbour points for " + b.getAdjacentPtsArray()[1] + " and " + b.getAdjacentPtsArray()[2]);
+            //Utility.debugPrintln("Finding intersection of neighbour points for " + b.getAdjacentPtsArray()[1] + " and " + b.getAdjacentPtsArray()[2]);
             ptsToCheck.addAll(intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[1].x, b.getAdjacentPtsArray()[1].y).getNeighbours(), 
                     this.dtGraph.getVertex(b.getAdjacentPtsArray()[2].x, b.getAdjacentPtsArray()[2].y).getNeighbours()));
-            Utility.debugPrintln("Finding intersection of neighbour points for " + b.getAdjacentPtsArray()[2] + " and " + b.getAdjacentPtsArray()[0]);
+            //Utility.debugPrintln("Finding intersection of neighbour points for " + b.getAdjacentPtsArray()[2] + " and " + b.getAdjacentPtsArray()[0]);
             ptsToCheck.addAll(intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[2].x, b.getAdjacentPtsArray()[2].y).getNeighbours(), 
                     this.dtGraph.getVertex(b.getAdjacentPtsArray()[0].x, b.getAdjacentPtsArray()[0].y).getNeighbours()));
             
             //Utility.debugPrintln("Finding minQuad for " + this.chosenB3S.get(i).getEndVertex());
             if ((vInQuad = vertexInsideQuad(calculateMinQuad(this.chosenB3S.get(i)), b.getAdjacentPtsList(), ptsToCheck)) != null) {
-                if (v.equals(vInQuad)) {
-                    System.out.println("!!!! v = vInQuad");
-                }
                 Vertex v1 = null, v2 = null;
                 // Get the two vertices in the triangle that aren't v
                 for (Vertex adjV : b.getAdjacentPtsArray()) {
@@ -319,7 +316,7 @@ public class DelaunayTriangulation extends JPanel {
         for (Vertex v1 : vSet1) {
             for (Vertex v2 : vSet2) {
                 if (v1.equals(v2)) {
-                    Utility.debugPrintln("Common vertex: " + v1);
+                    //Utility.debugPrintln("Common vertex: " + v1);
                     intersection.add(v1);
                 }
             }
