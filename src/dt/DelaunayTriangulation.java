@@ -42,13 +42,14 @@ public class DelaunayTriangulation extends JPanel {
     private final int vertexRadius = 3;
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = false, showB2S = false;
-    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = true;
+    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
     private final boolean doAnimation = false;
     private boolean showCoordinates = true, highlightShortestPath = true, clearSelectedPath = false, showBoundaryTriangle = true;
     
-    private boolean startMovingVertex = false;
     private Vertex movingVertex = null, movingVertexOldLoc = null, movingVertexOriginalLoc = null;
     private int movingVertIndex = -1;
+    private final boolean doReflection = false;
+    //private List<Edge> movingVertEdges = new ArrayList();
     private int mouseX, mouseY;
     
     //private final ArrayList<Vertex> h1, h2, g1, g2;
@@ -398,9 +399,10 @@ public class DelaunayTriangulation extends JPanel {
     public Vertex[] calculateMinQuad(Bisector chosenB3S) {
         Double scale;
         if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(chosenB3S)) != null) {
-            //Utility.debugPrintln("Set scale = " + scale + "\n");
+            Utility.debugPrintln("Set scale = " + scale + "\n");
             chosenB3S.setMinQuadScale(scale);
-            return this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), scale);
+            return this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), scale, this.doReflection, 
+                    Utility.calculateAngle(chosenB3S.getAdjacentPtsArray()[0], chosenB3S.getAdjacentPtsArray()[1]));
         } else {
             System.out.println("[calculateMinQuad] DID NOT SET SCALE! - this is a problem");
         }
@@ -412,7 +414,8 @@ public class DelaunayTriangulation extends JPanel {
      * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S vertices
      */
     private Double findMinimumQuadScaling(Bisector chosenB3S) {
-        Vertex[] qVerts = this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), this.curScale);
+        Vertex[] qVerts = this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), this.curScale, this.doReflection, 
+                    Utility.calculateAngle(chosenB3S.getAdjacentPtsArray()[0], chosenB3S.getAdjacentPtsArray()[1]));
         /*Utility.debugPrintln("qVerts for " + chosenB3S.getEndVertex());
         for (Vertex p : qVerts) {
             Utility.debugPrint(p + " ");
@@ -693,8 +696,9 @@ public class DelaunayTriangulation extends JPanel {
         this.movingVertex = null;
         this.movingVertexOldLoc = null;
 
-        this.dtGraph.removeVertex(this.dtGraph.getVertex(v.x, v.y));
+        /*this.movingVertEdges = */this.dtGraph.removeVertex(this.dtGraph.getVertex(v.x, v.y));
         addVertex(vNew);
+        
         this.repaint();
     }
     
@@ -705,7 +709,6 @@ public class DelaunayTriangulation extends JPanel {
     public void setMovingVertexLoc(Vertex v) {
         this.movingVertIndex = this.dtGraph.getVertices().indexOf(this.dtGraph.getVertex(v.x, v.y));
         this.movingVertexOriginalLoc = v.deepCopy();
-        this.startMovingVertex = true;
     }
     
     /**
@@ -937,6 +940,7 @@ public class DelaunayTriangulation extends JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        
         Graphics2D g2d = (Graphics2D) g;
         int voronoiVertexRadius = 1;
         int yMax = this.getBounds().getSize().height;
@@ -961,11 +965,11 @@ public class DelaunayTriangulation extends JPanel {
         }
         
         if (this.showB3S && this.chosenB3S != null) {
-            painter.drawChosenB3SAndMinQuads(g2d, this.quad, this.chosenB3S, yMax);
+            painter.drawChosenB3SAndMinQuads(g2d, this.quad, this.chosenB3S, yMax, this.doReflection);
         }
         
-        if (this.showB3S_fgRegion /*|| this.showB2S_hgRegion*/) {
-            painter.drawFGRegion(g2d, this.displayEdges, yMax/*, this.showB2S_hgRegion, this.showB3S_fgRegion*/);
+        if (this.showB3S_fgRegion) {
+            painter.drawFGRegion(g2d, this.displayEdges, yMax);
         }
         
         if (this.showB2S_hgVertices) {
@@ -979,10 +983,10 @@ public class DelaunayTriangulation extends JPanel {
         painter.drawMouseCoordinates(g2d, mouseX, mouseY, yMax);
         
         if (this.showBoundaryTriangle) {
-            painter.drawDelaunayEdges(g2d, this.dtGraph.getEdges(), yMax);
+            painter.drawDelaunayEdges(g2d, this.dtGraph.getEdges(), /*this.movingVertEdges, */yMax);
         } else {
             // Take away boundary vertices from vertex set
-            painter.drawDelaunayEdges(g2d, this.dtGraph.getDisplayEdges(), yMax);
+            painter.drawDelaunayEdges(g2d, this.dtGraph.getDisplayEdges(), /*this.movingVertEdges, */yMax);
         }
         
         painter.drawStretchFactor(g2d, this.sfVertices, this.stretchFactor);
@@ -1001,11 +1005,11 @@ public class DelaunayTriangulation extends JPanel {
             painter.drawMovingVertex(g2d, this.movingVertex, this.quad, this.movingVertIndex-this.dtGraph.getBoundaryTriangle().size(), this.vertexRadius, yMax, Color.black);
         }
         
-        if (this.startMovingVertex) {
+        /*if (this.startMovingVertex) {
             Utility.debugPrintln("moving vert edge #: " + this.dtGraph.getVertex(movingVertexOriginalLoc.x, movingVertexOriginalLoc.y).getNeighborCount());
             painter.eraseEdgesAndCoords(g2d, this.dtGraph.getVertex(this.movingVertexOriginalLoc.x, this.movingVertexOriginalLoc.y), yMax, this.getBackground());
             this.startMovingVertex = false;
-        }
+        }*/
         
     }
 
@@ -1066,8 +1070,8 @@ public class DelaunayTriangulation extends JPanel {
      * @param p2 Second vertex
      */
     public void findQuadIntersections(Quadrilateral q, Vertex p1, Vertex p2) {
-        Vertex[] quad1 = q.getPixelVertsForVertex(p1, this.curScale);
-        Vertex[] quad2 = q.getPixelVertsForVertex(p2, this.curScale);
+        Vertex[] quad1 = q.getPixelVertsForVertex(p1, this.curScale, false, 0);
+        Vertex[] quad2 = q.getPixelVertsForVertex(p2, this.curScale, false, 0);
 
         int k, l;
         for (int i = 0; i < 4; i++) {

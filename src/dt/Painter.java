@@ -40,7 +40,7 @@ public class Painter {
             //Utility.debugPrintln("Drawing vertex at " + (p.x - vertexRadius) + ", " + (yMax - (p.y + vertexRadius)));
             // Subtract vertexRadius because vertices are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(v.x - vertexRadius, yMax - (v.y + vertexRadius), vertexRadius * 2, vertexRadius * 2)); // x, y, width, height
-            quad.drawQuad(g2d, v, 1.0, yMax); // Original quad
+            quad.drawQuad(g2d, v, 1.0, yMax, false, 0); // Original quad
             //quad.drawQuad(g2d, v, curScale, yMax); // Scaled quad for animation
         }
     }
@@ -59,7 +59,7 @@ public class Painter {
         g2d.setStroke(new BasicStroke(1));
         g2d.setColor(c);
         g2d.fill(new Ellipse2D.Double(v.x - vertexRadius, yMax - (v.y + vertexRadius), vertexRadius * 2, vertexRadius * 2)); // x, y, width, height
-        quad.drawQuad(g2d, v, 1.0, yMax); // Original quad
+        quad.drawQuad(g2d, v, 1.0, yMax, false, 0); // Original quad
         
         // Draw vertex # and coordinates
         int fontSize = 14;
@@ -163,15 +163,17 @@ public class Painter {
      * @param quad Quadrilateral to draw through 3 vertices
      * @param chosenB3S Array of VoronoiBisector objects to draw to screen
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
+     * @param doReflection Boolean whether to reflect quad or not
      */
-    public void drawChosenB3SAndMinQuads(Graphics2D g2d, Quadrilateral quad, List<Bisector> chosenB3S, int yMax) {
+    public void drawChosenB3SAndMinQuads(Graphics2D g2d, Quadrilateral quad, List<Bisector> chosenB3S, int yMax, boolean doReflection) {
         g2d.setColor(Color.blue);
         for (Bisector bisector : chosenB3S) {
             g2d.setStroke(new BasicStroke(7));
             g2d.drawLine((int)Math.round(bisector.getStartVertex().x), yMax - (int)Math.round(bisector.getStartVertex().y),
                     (int)Math.round(bisector.getEndVertex().x), yMax - (int)Math.round(bisector.getEndVertex().y));
             g2d.setStroke(new BasicStroke(2));
-            quad.drawQuad(g2d, bisector.getStartVertex(), bisector.getMinQuadScale(), yMax);
+            quad.drawQuad(g2d, bisector.getStartVertex(), bisector.getMinQuadScale(), yMax, doReflection, 
+                    Utility.calculateAngle(bisector.getAdjacentPtsArray()[0], bisector.getAdjacentPtsArray()[1]));
         }
     }
     
@@ -257,12 +259,15 @@ public class Painter {
      * @param delaunayEdges List of vertex tuples representing edges of the Delaunay triangulation
      * @param yMax Max y pixel on screen used to draw from bottom to top of screen as y increases
      */
-    public void drawDelaunayEdges(Graphics2D g2d, List<Edge> delaunayEdges, int yMax) {
+    public void drawDelaunayEdges(Graphics2D g2d, List<Edge> delaunayEdges/*, List<Edge> skipEdges*/, int yMax) {
         g2d.setStroke(new BasicStroke(1));
         g2d.setColor(Color.black);
         for (Edge edge : delaunayEdges) {
-            g2d.drawLine((int)Math.round(edge.getVertices()[0].x), yMax - (int)Math.round(edge.getVertices()[0].y), 
+            // Skip edges that should not be drawn due to a vertex being moved
+            //if (!skipEdges.contains(edge)) {
+                g2d.drawLine((int)Math.round(edge.getVertices()[0].x), yMax - (int)Math.round(edge.getVertices()[0].y), 
                     (int)Math.round(edge.getVertices()[1].x), yMax - (int)Math.round(edge.getVertices()[1].y));
+            //}
         }
     }
     

@@ -344,18 +344,20 @@ public class Graph {
     /**
      * 
      * @param v The vertex to remove
+     * @return List of edges removed from the graph
      */
-    public void removeVertex(Vertex v){
+    public void/*List<Edge>*/ removeVertex(Vertex v){
+        //List<Edge> removedEdges = new ArrayList();
         Utility.debugPrintln("Removing vertex " + v);
         this.vertices.remove(v);
         
         for (int i = v.getNeighborCount()-1; i >= 0; i --) {
             Utility.debugPrintln("Removing neighbor ");
+            //removedEdges.add(v.getNeighbor(i));
             this.removeEdge(v.getNeighbor(i));
         }
         
-        
-        
+        //return removedEdges;
     }
     
     /**

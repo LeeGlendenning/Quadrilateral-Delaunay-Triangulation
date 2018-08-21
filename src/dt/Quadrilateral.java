@@ -22,7 +22,6 @@ public class Quadrilateral {
         this.center = new Vertex(0,0);
         computeCenter();
         printInfo();
-        //minimizeQuad();
     }
     
     /**
@@ -36,7 +35,6 @@ public class Quadrilateral {
         this.center = new Vertex(0,0);
         this.center = center;
         printInfo();
-        //minimizeQuad();
     }
     
     /**
@@ -115,13 +113,19 @@ public class Quadrilateral {
      * 
      * @param p Reference point
      * @param scale Amount to scale quad by
+     * @param isReflected Boolean true if quad should be reflected
+     * @param angle Double angle relative to x axis to reflect quad
      * @return Pixel coordinates
      */
-    public Vertex[] getPixelVertsForVertex(Vertex p, double scale) {
+    public Vertex[] getPixelVertsForVertex(Vertex p, double scale, boolean isReflected, double angle) {
         Vertex[] distToCenter = computeVertDistToVertex(scaleQuad(scale), this.center);
         Vertex[] verts = new Vertex[this.vertices.length];
         for (int i = 0; i < this.vertices.length; i ++) {
-            verts[i] = new Vertex( (p.x + distToCenter[i].x), (p.y + distToCenter[i].y));
+            if (isReflected) {
+                verts[i] = Utility.rotateVertex(new Vertex( (p.x + distToCenter[i].x), (p.y - distToCenter[i].y)), p, angle);
+            } else {
+                verts[i] = new Vertex( (p.x + distToCenter[i].x), (p.y + distToCenter[i].y));
+            }
         }
         return verts;
     }
@@ -175,15 +179,24 @@ public class Quadrilateral {
      * @param p Vertex to draw quad around
      * @param scale Amount to scale quad by
      * @param yMax Height of screen. Used to draw from bottom left corner
+     * @param isReflected Boolean true if quad should be reflected
+     * @param angle Double angle relative to x axis to reflect quad
      */
-    public void drawQuad(Graphics2D g2d, Vertex p, double scale, int yMax) {
+    public void drawQuad(Graphics2D g2d, Vertex p, double scale, int yMax, boolean isReflected, double angle) {
+        Vertex[] verts = getPixelVertsForVertex(p, scale, true, angle);
+        
         Vertex[] distToCenter = computeVertDistToVertex(scaleQuad(scale), this.center);
         
         int j = 1;
         for (int i = 0; i < 4; i ++) {
             j = (j==3) ? 0 : i+1; // Wrap around to draw edge from vertices[3] to vertices[0]
-            g2d.drawLine(((int)Math.round(p.x + distToCenter[i].x)), yMax - ((int)Math.round(p.y + distToCenter[i].y)), 
+            if (isReflected) {
+                g2d.drawLine(((int)Math.round(verts[i].x)), yMax - ((int)Math.round(verts[i].y)), 
+                    ((int)Math.round(verts[j].x)), yMax - ((int)Math.round(verts[j].y))); // x1, y1, x2, y2
+            } else {
+                g2d.drawLine(((int)Math.round(p.x + distToCenter[i].x)), yMax - ((int)Math.round(p.y + distToCenter[i].y)), 
                     ((int)Math.round(p.x + distToCenter[j].x)), yMax - ((int)Math.round(p.y + distToCenter[j].y))); // x1, y1, x2, y2
+            }
         }
         
     }

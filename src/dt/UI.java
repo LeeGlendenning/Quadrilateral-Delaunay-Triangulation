@@ -54,11 +54,11 @@ public class UI implements ActionListener{
     public UI(Quadrilateral q, ArrayList<Vertex> vertexSet) {
         this.delaunayTriangulation = new DelaunayTriangulation(q, vertexSet);
         createFrame();
-        /*try {
-            loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\flipped edge bug"));
+        try {
+            loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\test1"));
         } catch (FileNotFoundException ex) {
             Utility.debugPrintln("File not found");
-        }*/
+        }
     }
     
     /**
