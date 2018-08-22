@@ -40,7 +40,7 @@ public class Painter {
             //Utility.debugPrintln("Drawing vertex at " + (p.x - vertexRadius) + ", " + (yMax - (p.y + vertexRadius)));
             // Subtract vertexRadius because vertices are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(v.x - vertexRadius, yMax - (v.y + vertexRadius), vertexRadius * 2, vertexRadius * 2)); // x, y, width, height
-            quad.drawQuad(g2d, v, 1.0, yMax, false, 0); // Original quad
+            quad.drawQuad(g2d, v, 1.0, yMax, false); // Original quad
             //quad.drawQuad(g2d, v, curScale, yMax); // Scaled quad for animation
         }
     }
@@ -59,7 +59,7 @@ public class Painter {
         g2d.setStroke(new BasicStroke(1));
         g2d.setColor(c);
         g2d.fill(new Ellipse2D.Double(v.x - vertexRadius, yMax - (v.y + vertexRadius), vertexRadius * 2, vertexRadius * 2)); // x, y, width, height
-        quad.drawQuad(g2d, v, 1.0, yMax, false, 0); // Original quad
+        quad.drawQuad(g2d, v, 1.0, yMax, false); // Original quad
         
         // Draw vertex # and coordinates
         int fontSize = 14;
@@ -172,8 +172,7 @@ public class Painter {
             g2d.drawLine((int)Math.round(bisector.getStartVertex().x), yMax - (int)Math.round(bisector.getStartVertex().y),
                     (int)Math.round(bisector.getEndVertex().x), yMax - (int)Math.round(bisector.getEndVertex().y));
             g2d.setStroke(new BasicStroke(2));
-            quad.drawQuad(g2d, bisector.getStartVertex(), bisector.getMinQuadScale(), yMax, doReflection, 
-                    Utility.calculateAngle(bisector.getAdjacentPtsArray()[0], bisector.getAdjacentPtsArray()[1]));
+            quad.drawQuad(g2d, bisector.getStartVertex(), bisector.getMinQuadScale(), yMax, doReflection);
         }
     }
     

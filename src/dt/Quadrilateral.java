@@ -114,15 +114,14 @@ public class Quadrilateral {
      * @param p Reference point
      * @param scale Amount to scale quad by
      * @param isReflected Boolean true if quad should be reflected
-     * @param angle Double angle relative to x axis to reflect quad
      * @return Pixel coordinates
      */
-    public Vertex[] getPixelVertsForVertex(Vertex p, double scale, boolean isReflected, double angle) {
+    public Vertex[] getPixelVertsForVertex(Vertex p, double scale, boolean isReflected) {
         Vertex[] distToCenter = computeVertDistToVertex(scaleQuad(scale), this.center);
         Vertex[] verts = new Vertex[this.vertices.length];
         for (int i = 0; i < this.vertices.length; i ++) {
             if (isReflected) {
-                verts[i] = Utility.rotateVertex(new Vertex( (p.x + distToCenter[i].x), (p.y - distToCenter[i].y)), p, angle);
+                verts[i] = new Vertex( (p.x - distToCenter[i].x), (p.y - distToCenter[i].y));
             } else {
                 verts[i] = new Vertex( (p.x + distToCenter[i].x), (p.y + distToCenter[i].y));
             }
@@ -180,10 +179,9 @@ public class Quadrilateral {
      * @param scale Amount to scale quad by
      * @param yMax Height of screen. Used to draw from bottom left corner
      * @param isReflected Boolean true if quad should be reflected
-     * @param angle Double angle relative to x axis to reflect quad
      */
-    public void drawQuad(Graphics2D g2d, Vertex p, double scale, int yMax, boolean isReflected, double angle) {
-        Vertex[] verts = getPixelVertsForVertex(p, scale, true, angle);
+    public void drawQuad(Graphics2D g2d, Vertex p, double scale, int yMax, boolean isReflected) {
+        Vertex[] verts = getPixelVertsForVertex(p, scale, true);
         
         Vertex[] distToCenter = computeVertDistToVertex(scaleQuad(scale), this.center);
         

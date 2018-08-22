@@ -48,7 +48,7 @@ public class DelaunayTriangulation extends JPanel {
     
     private Vertex movingVertex = null, movingVertexOldLoc = null, movingVertexOriginalLoc = null;
     private int movingVertIndex = -1;
-    private final boolean doReflection = false;
+    private final boolean doReflection = true;
     //private List<Edge> movingVertEdges = new ArrayList();
     private int mouseX, mouseY;
     
@@ -401,8 +401,7 @@ public class DelaunayTriangulation extends JPanel {
         if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(chosenB3S)) != null) {
             Utility.debugPrintln("Set scale = " + scale + "\n");
             chosenB3S.setMinQuadScale(scale);
-            return this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), scale, this.doReflection, 
-                    Utility.calculateAngle(chosenB3S.getAdjacentPtsArray()[0], chosenB3S.getAdjacentPtsArray()[1]));
+            return this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), scale, this.doReflection);
         } else {
             System.out.println("[calculateMinQuad] DID NOT SET SCALE! - this is a problem");
         }
@@ -414,8 +413,7 @@ public class DelaunayTriangulation extends JPanel {
      * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S vertices
      */
     private Double findMinimumQuadScaling(Bisector chosenB3S) {
-        Vertex[] qVerts = this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), this.curScale, this.doReflection, 
-                    Utility.calculateAngle(chosenB3S.getAdjacentPtsArray()[0], chosenB3S.getAdjacentPtsArray()[1]));
+        Vertex[] qVerts = this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), this.curScale, this.doReflection);
         /*Utility.debugPrintln("qVerts for " + chosenB3S.getEndVertex());
         for (Vertex p : qVerts) {
             Utility.debugPrint(p + " ");
@@ -1070,8 +1068,8 @@ public class DelaunayTriangulation extends JPanel {
      * @param p2 Second vertex
      */
     public void findQuadIntersections(Quadrilateral q, Vertex p1, Vertex p2) {
-        Vertex[] quad1 = q.getPixelVertsForVertex(p1, this.curScale, false, 0);
-        Vertex[] quad2 = q.getPixelVertsForVertex(p2, this.curScale, false, 0);
+        Vertex[] quad1 = q.getPixelVertsForVertex(p1, this.curScale, false);
+        Vertex[] quad2 = q.getPixelVertsForVertex(p2, this.curScale, false);
 
         int k, l;
         for (int i = 0; i < 4; i++) {
