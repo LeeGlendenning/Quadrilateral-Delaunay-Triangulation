@@ -48,8 +48,6 @@ public class DelaunayTriangulation extends JPanel {
     
     private Vertex movingVertex = null, movingVertexOldLoc = null, movingVertexOriginalLoc = null;
     private int movingVertIndex = -1;
-    private final boolean doReflection = true;
-    //private List<Edge> movingVertEdges = new ArrayList();
     private int mouseX, mouseY;
     
     //private final ArrayList<Vertex> h1, h2, g1, g2;
@@ -401,7 +399,7 @@ public class DelaunayTriangulation extends JPanel {
         if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(chosenB3S)) != null) {
             Utility.debugPrintln("Set scale = " + scale + "\n");
             chosenB3S.setMinQuadScale(scale);
-            return this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), scale, this.doReflection);
+            return this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), scale, true);
         } else {
             System.out.println("[calculateMinQuad] DID NOT SET SCALE! - this is a problem");
         }
@@ -413,7 +411,7 @@ public class DelaunayTriangulation extends JPanel {
      * @return Amount the quad needs to be scaled such that it goes through the adjacent B3S vertices
      */
     private Double findMinimumQuadScaling(Bisector chosenB3S) {
-        Vertex[] qVerts = this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), this.curScale, this.doReflection);
+        Vertex[] qVerts = this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), this.curScale, true);
         /*Utility.debugPrintln("qVerts for " + chosenB3S.getEndVertex());
         for (Vertex p : qVerts) {
             Utility.debugPrint(p + " ");
@@ -963,7 +961,7 @@ public class DelaunayTriangulation extends JPanel {
         }
         
         if (this.showB3S && this.chosenB3S != null) {
-            painter.drawChosenB3SAndMinQuads(g2d, this.quad, this.chosenB3S, yMax, this.doReflection);
+            painter.drawChosenB3SAndMinQuads(g2d, this.quad, this.chosenB3S, yMax, true);
         }
         
         if (this.showB3S_fgRegion) {
