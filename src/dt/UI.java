@@ -4,7 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.GridLayout;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -111,26 +113,20 @@ public class UI implements ActionListener{
         });
         
         addMenuBar();
-        
-        
-        //this.frame.setSize(800, 700);
-        this.frame.setResizable(false);
-        //this.frame.setLocation(375, 25);
+       
         this.frame.getContentPane().setBackground(Color.BLACK);
         this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         Container contentPane = this.frame.getContentPane();
         contentPane.setLayout(new BorderLayout());
         contentPane.add(this.delaunayTriangulation, BorderLayout.CENTER);
-        //this.frame.setPreferredSize(new Dimension(800, 700));
-        //frame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
-        //frame.setExtendedState(frame.getExtendedState() | JFrame.MAXIMIZED_BOTH);
-        //frame.setUndecorated(true);
+        
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        frame.setSize(screenSize.width, screenSize.height);
-        this.frame.setLocationRelativeTo(null);
-        //this.frame.pack();
-        this.frame.setVisible(true);
+        frame.setSize(screenSize.width, screenSize.height-30);
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
+        frame.setVisible(true);
+        this.frame.setResizable(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
     
     @Override

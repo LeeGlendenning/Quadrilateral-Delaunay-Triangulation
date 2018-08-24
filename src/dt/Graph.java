@@ -13,7 +13,7 @@ public class Graph {
     private List<Vertex> vertices;
     private List<Edge> edges;
     private int xmax, ymax;
-    private final int BOUNDARY_SIZE = 800;
+    private final int BOUNDARY_SIZE = 500;
     
     /**
      * Empty constructor initializes instance variables
