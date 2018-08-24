@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -44,7 +45,7 @@ public class UI implements ActionListener{
     private JMenuItem clearScreenMenuItem, loadVertexMenuItem, saveVertexMenuItem, loadQuadMenuItem, saveQuadMenuItem;
     private JMenuItem newQuadMenuItem, deleteVertexMenuItem, shortestPathMenuItem, showChartMenuItem;
     private JCheckBoxMenuItem highlightPathMenuItem, showBoundaryTriangleMenuItem;
-    private JCheckBoxMenuItem /*showDTMenuItem, showVDMenuItem,*/ showCoordsMenuItem;
+    private JCheckBoxMenuItem showCoordsMenuItem;
     private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
     
     private boolean isMousePressed = false, mouseWasDragged = false;
@@ -52,13 +53,13 @@ public class UI implements ActionListener{
     private final DelaunayTriangulation delaunayTriangulation;
     
     public UI(Quadrilateral q, ArrayList<Vertex> vertexSet) {
-        this.delaunayTriangulation = new DelaunayTriangulation(q, vertexSet);
+        this.delaunayTriangulation = new DelaunayTriangulation(q, vertexSet, Toolkit.getDefaultToolkit().getScreenSize());
         createFrame();
-        try {
+        /*try {
             loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\test1"));
         } catch (FileNotFoundException ex) {
             Utility.debugPrintln("File not found");
-        }
+        }*/
     }
     
     /**
@@ -111,18 +112,24 @@ public class UI implements ActionListener{
         
         addMenuBar();
         
-        this.frame.setSize(800, 700);
+        
+        //this.frame.setSize(800, 700);
         this.frame.setResizable(false);
-        this.frame.setLocation(375, 25);
+        //this.frame.setLocation(375, 25);
         this.frame.getContentPane().setBackground(Color.BLACK);
         this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         Container contentPane = this.frame.getContentPane();
         contentPane.setLayout(new BorderLayout());
         contentPane.add(this.delaunayTriangulation, BorderLayout.CENTER);
-        this.frame.setPreferredSize(new Dimension(800, 700));
+        //this.frame.setPreferredSize(new Dimension(800, 700));
+        //frame.setExtendedState(JFrame.MAXIMIZED_BOTH); 
+        //frame.setExtendedState(frame.getExtendedState() | JFrame.MAXIMIZED_BOTH);
+        //frame.setUndecorated(true);
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        frame.setSize(screenSize.width, screenSize.height);
         this.frame.setLocationRelativeTo(null);
-        this.frame.pack();
+        //this.frame.pack();
         this.frame.setVisible(true);
     }
     

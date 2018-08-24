@@ -104,7 +104,7 @@ public class FindBisectorsThreeSites {
      * @return Integer representing the case
      */
     private int caseBisectorBetween3Vertices(Quadrilateral q, Vertex a1, Vertex a2, Vertex a3) {
-        //Utility.debugPrint("caseBisectorBetween3Vertices: " + a1 + ", " + a2 + ", " + a3);
+        Utility.debugPrintln("caseBisectorBetween3Vertices: " + a1 + ", " + a2 + ", " + a3);
         //a3 = new Vertex(a1.x,a1.y);
         double caseTolerance = 0.01;
         
@@ -328,11 +328,16 @@ public class FindBisectorsThreeSites {
         */
         
         // Draw FG region
+        Utility.debugPrintln("FG edges:");
         this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
         this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
         this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
         this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-                
+        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
+        
         return new Vertex[]{u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle)};
     }
     
@@ -396,7 +401,7 @@ public class FindBisectorsThreeSites {
      * @return VoronoiBisector representing the intersection vertex between bisector of a1a3 and a2a3. case 2
      */
     private Bisector findIntersectionB3S(HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex a1, Vertex a2, Vertex a3, List<Vertex> key1, List<Vertex> key2) {
-        Utility.debugPrintln("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + bisectors2S.size());
+        //Utility.debugPrintln("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + bisectors2S.size());
         //printEdges(bisectors2S);
         List<Bisector> bisector1 = bisectors2S.get(key1);
         List<Bisector> bisector2 = bisectors2S.get(key2);

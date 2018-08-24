@@ -13,7 +13,7 @@ public class Graph {
     private List<Vertex> vertices;
     private List<Edge> edges;
     private int xmax, ymax;
-    private final int BOUNDARY_SIZE = 3000;
+    private final int BOUNDARY_SIZE = 800;
     
     /**
      * Empty constructor initializes instance variables
@@ -47,8 +47,15 @@ public class Graph {
         this.ymax = ymax;
         this.vertices = Collections.synchronizedList(new ArrayList());
         this.edges = Collections.synchronizedList(new ArrayList());
-        this.boundaryTriangle = new Vertex[]{new Vertex(this.xmax/2, this.ymax/2+BOUNDARY_SIZE),
-            new Vertex(this.xmax/2-BOUNDARY_SIZE, this.ymax/2-BOUNDARY_SIZE), new Vertex(this.xmax/2+BOUNDARY_SIZE, this.ymax/2-BOUNDARY_SIZE)};
+        constructBoundaryTriangle();
+    }
+    
+    /**
+     * Define boundary triangle vertices and edges and add them to the graph
+     */
+    private void constructBoundaryTriangle() {
+        this.boundaryTriangle = new Vertex[]{new Vertex(this.xmax/2, this.ymax/2+2*BOUNDARY_SIZE),
+            new Vertex(this.xmax/2-3*BOUNDARY_SIZE, this.ymax/2-BOUNDARY_SIZE), new Vertex(this.xmax/2+3*BOUNDARY_SIZE, this.ymax/2-BOUNDARY_SIZE)};
         
         for (Vertex v : this.boundaryTriangle) {
             addVertex(v);
@@ -346,18 +353,14 @@ public class Graph {
      * @param v The vertex to remove
      * @return List of edges removed from the graph
      */
-    public void/*List<Edge>*/ removeVertex(Vertex v){
-        //List<Edge> removedEdges = new ArrayList();
+    public void removeVertex(Vertex v){
         Utility.debugPrintln("Removing vertex " + v);
         this.vertices.remove(v);
         
         for (int i = v.getNeighborCount()-1; i >= 0; i --) {
             Utility.debugPrintln("Removing neighbor ");
-            //removedEdges.add(v.getNeighbor(i));
             this.removeEdge(v.getNeighbor(i));
         }
-        
-        //return removedEdges;
     }
     
     /**

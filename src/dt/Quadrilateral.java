@@ -199,4 +199,13 @@ public class Quadrilateral {
         
     }
     
+    @Override
+    public String toString() {
+        String s = "[ ";
+        for (Vertex v : this.vertices) {
+            s += v + " ";
+        }
+        return s + "]";
+    }
+    
 }

@@ -1,6 +1,7 @@
 package dt;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
@@ -49,16 +50,15 @@ public class DelaunayTriangulation extends JPanel {
     private Vertex movingVertex = null, movingVertexOldLoc = null, movingVertexOriginalLoc = null;
     private int movingVertIndex = -1;
     private int mouseX, mouseY;
-    
-    //private final ArrayList<Vertex> h1, h2, g1, g2;
 
     /**
      * Construct Voronoi diagram for vertex set using a Quadrilateral
      *
      * @param q Quadrilateral
      * @param vertices Vertex set
+     * @param screenSize Dimension of JFrame window size
      */
-    public DelaunayTriangulation(Quadrilateral q, ArrayList<Vertex> vertices) {
+    public DelaunayTriangulation(Quadrilateral q, ArrayList<Vertex> vertices, Dimension screenSize) {
         //this.dtGraph.getVertices() = new ArrayList();
         this.quad = q;
         this.painter = new Painter();
@@ -74,7 +74,7 @@ public class DelaunayTriangulation extends JPanel {
         this.oldSelectedPath = new ArrayList();
         this.chosenB3S = new ArrayList();
         this.performanceData = new ArrayList();
-        this.dtGraph = new Graph(800, 700);
+        this.dtGraph = new Graph(screenSize.width, screenSize.height);
         
         this.b2s = new FindBisectorsTwoSites();
         this.b3s = new FindBisectorsThreeSites(this.getBounds().getSize().height, this.getBounds().getSize().width);
@@ -207,20 +207,21 @@ public class DelaunayTriangulation extends JPanel {
     private List<Bisector> calculateB3S(Vertex v, List<Vertex> vertices, HashMap<List<Vertex>, List<Bisector>> bisectors2S) {
         List<Bisector> tempB3S = new ArrayList();
         // Find B3S between p and all other pairs of vertices
-        long startTime = System.nanoTime();
+        //long startTime = System.nanoTime();
         for (int i = 0; i < vertices.size(); i ++) {
             for (int j = i + 1; j < vertices.size(); j++) {
-                Utility.debugPrintln("Finding B3S between: " + vertices.get(i).deepCopy() + ", " + vertices.get(j).deepCopy() + ", and v = " + v);
-                Bisector b = this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, vertices.get(i).deepCopy(), vertices.get(j).deepCopy(), v);
-                if (b != null) {
-                    tempB3S.add(b);
+                if (!vertices.get(i).equals(v)){
+                    Bisector b = this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, vertices.get(i).deepCopy(), vertices.get(j).deepCopy(), v);
+                    if (b != null) {
+                        tempB3S.add(b);
+                    }
                 }
             }
         }
-        long endTime = System.nanoTime();
+        /*long endTime = System.nanoTime();
         long duration = (endTime - startTime) / 1000000;
         this.performanceData.get(this.performanceData.size()-1)[1] = Math.round(duration);
-        Utility.debugPrintln("");
+        Utility.debugPrintln("");*/
         
         if (showB3S_fgRegion) {
             this.displayEdges.addAll(cleanFGEdges(this.b3s.getDisplayEdges()));
@@ -378,10 +379,10 @@ public class DelaunayTriangulation extends JPanel {
         for (Vertex v : pts) {
             Utility.debugPrintln("Checking if " + v + " inside quad");
             if (!vIgnore.contains(v) &&
-                    Utility.isLeftOfSegment(quad[0], quad[1], v, 0.1) == -1 &&
-                    Utility.isLeftOfSegment(quad[1], quad[2], v, 0.1) == -1 &&
-                    Utility.isLeftOfSegment(quad[2], quad[3], v, 0.1) == -1 &&
-                    Utility.isLeftOfSegment(quad[3], quad[0], v, 0.1) == -1) {
+                    Utility.isLeftOfSegment(quad[0], quad[1], v, 0.1) <= 0 &&
+                    Utility.isLeftOfSegment(quad[1], quad[2], v, 0.1) <= 0 &&
+                    Utility.isLeftOfSegment(quad[2], quad[3], v, 0.1) <= 0 &&
+                    Utility.isLeftOfSegment(quad[3], quad[0], v, 0.1) <= 0) {
                 Utility.debugPrintln("Vertex " + v + " inside");
                 return v;
             }
@@ -397,11 +398,11 @@ public class DelaunayTriangulation extends JPanel {
     public Vertex[] calculateMinQuad(Bisector chosenB3S) {
         Double scale;
         if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(chosenB3S)) != null) {
-            Utility.debugPrintln("Set scale = " + scale + "\n");
+            //Utility.debugPrintln("Set scale = " + scale + "\n");
             chosenB3S.setMinQuadScale(scale);
             return this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), scale, true);
         } else {
-            System.out.println("[calculateMinQuad] DID NOT SET SCALE! - this is a problem");
+            Utility.debugPrintln("[calculateMinQuad] DID NOT SET SCALE! - this is a problem");
         }
         return null;
     }
