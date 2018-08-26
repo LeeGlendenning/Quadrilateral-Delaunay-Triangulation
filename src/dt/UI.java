@@ -19,6 +19,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 import javax.swing.Box;
 import javax.swing.JCheckBoxMenuItem;
@@ -62,6 +63,8 @@ public class UI implements ActionListener{
         } catch (FileNotFoundException ex) {
             Utility.debugPrintln("File not found");
         }*/
+        
+        generatePoints(1000);
     }
     
     /**
@@ -213,6 +216,37 @@ public class UI implements ActionListener{
                 });
                 break;
         }
+    }
+    
+    /**
+     * 
+     * @param numPoints Number of points to randomly generate
+     */
+    private void generatePoints(int numPoints) {
+        long startTime = System.nanoTime();
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int maxX = screenSize.width-100;
+        int maxY = screenSize.height-130;
+        int min = 100;
+        
+        for (int i = 0; i < numPoints; i ++) {
+            addVertex(randomInt(min, maxX), randomInt(min, maxY));
+        }
+        
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime) / 1000000;
+        System.out.println(duration);
+    }
+    
+    /**
+     * 
+     * @param min Minimum integer that can be randomly generated
+     * @param max Maximum integer that can be randomly generated
+     * @return 
+     */
+    private int randomInt(int min, int max) {
+        Random r = new Random();
+        return r.nextInt((max - min) + 1) + min;
     }
     
     /**
