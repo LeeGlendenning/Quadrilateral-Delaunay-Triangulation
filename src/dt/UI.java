@@ -56,14 +56,13 @@ public class UI implements ActionListener{
     public UI(Quadrilateral q, ArrayList<Vertex> vertexSet) {
         this.delaunayTriangulation = new DelaunayTriangulation(q, vertexSet, Toolkit.getDefaultToolkit().getScreenSize());
         createFrame();
-        try {
+        /*try {
             loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\ioob bug"));
         } catch (FileNotFoundException ex) {
             Utility.debugPrintln("File not found");
-        }
-        System.out.println("Width = " + Toolkit.getDefaultToolkit().getScreenSize().width);
-        System.out.println("Height = " + Toolkit.getDefaultToolkit().getScreenSize().height);
-        //generatePoints(1000);
+        }*/
+        
+        generatePoints(1000);
     }
     
     /**
@@ -228,7 +227,9 @@ public class UI implements ActionListener{
         int maxY = screenSize.height-130;
         int min = 100;
         
-        for (int i = 0; i < numPoints; i ++) {
+        // If a random vertex is on a line it will not be added so a for loop
+        // is not good enough
+        while (this.delaunayTriangulation.getVertices().size() < numPoints) {
             addVertex(randomInt(min, maxX), randomInt(min, maxY));
         }
         
