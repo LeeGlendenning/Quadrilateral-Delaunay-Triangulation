@@ -156,8 +156,14 @@ public class Graph {
                     (Utility.isLeftOfSegment(slabSegs.get(j).valEdge.getVertices()[0], slabSegs.get(j).valEdge.getVertices()[1], v, 0.1) == 1));
             Utility.debugPrintln("is v right of " + slabSegs.get(j+1).valEdge.getVertices()[0] + ", " + slabSegs.get(j+1).valEdge.getVertices()[1] + ": " +
                     (Utility.isLeftOfSegment(slabSegs.get(j).valEdge.getVertices()[0], slabSegs.get(j).valEdge.getVertices()[1], v, 0.1) == -1));*/
+            
+            if (Utility.isLeftOfSegment(slabSegs.get(j).valEdge.getVertices()[0], slabSegs.get(j).valEdge.getVertices()[1], v, 0.1) == 0 ||
+                    Utility.isLeftOfSegment(slabSegs.get(j+1).valEdge.getVertices()[0], slabSegs.get(j+1).valEdge.getVertices()[1], v, 0.1) == 0) {
+                // New vertex is on a line. Cannot triangulate.
+                return null;
+            }
             if (Utility.isLeftOfSegment(slabSegs.get(j).valEdge.getVertices()[0], slabSegs.get(j).valEdge.getVertices()[1], v, 0.1) == 1 &&
-                    Utility.isLeftOfSegment(slabSegs.get(j+1).valEdge.getVertices()[0], slabSegs.get(j+1).valEdge.getVertices()[1], v, 0.1) <= 0) {
+                    Utility.isLeftOfSegment(slabSegs.get(j+1).valEdge.getVertices()[0], slabSegs.get(j+1).valEdge.getVertices()[1], v, 0.1) == -1) {
                 // v between slabSeg j and slabSeg j+1
                 //Utility.debugPrintln("v left of " + slabSegs.get(j).valEdge + " and right of " + slabSegs.get(j+1).valEdge);
                 break;

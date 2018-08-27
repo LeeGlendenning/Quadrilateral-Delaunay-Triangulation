@@ -141,6 +141,10 @@ public class DelaunayTriangulation extends JPanel {
         this.performanceData.add(new int[4]); // Init new performance data array for runtime tracking
         
         Vertex[] triangle = this.dtGraph.locateTriangle(v);
+        if (triangle == null) {
+            Utility.debugPrintln("Skipping adding vertex because it is on a line.");
+            return;
+        }
         Utility.debugPrintln("V contained by vertices: " + Arrays.toString(triangle));
         
         // Connect new vertex with all vertices in the located triangle
