@@ -4,9 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.GridLayout;
-import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -58,13 +56,14 @@ public class UI implements ActionListener{
     public UI(Quadrilateral q, ArrayList<Vertex> vertexSet) {
         this.delaunayTriangulation = new DelaunayTriangulation(q, vertexSet, Toolkit.getDefaultToolkit().getScreenSize());
         createFrame();
-        /*try {
-            loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\test1"));
+        try {
+            loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\ioob bug"));
         } catch (FileNotFoundException ex) {
             Utility.debugPrintln("File not found");
-        }*/
-        
-        generatePoints(1000);
+        }
+        System.out.println("Width = " + Toolkit.getDefaultToolkit().getScreenSize().width);
+        System.out.println("Height = " + Toolkit.getDefaultToolkit().getScreenSize().height);
+        //generatePoints(1000);
     }
     
     /**

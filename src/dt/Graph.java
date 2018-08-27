@@ -149,10 +149,15 @@ public class Graph {
         } 
 
         // Determine which vertical region v is in
+        // If v on a line, it is considered to be in the region having the line as its top boundary
         int j;
         for (j = 0; j < slabSegs.size()-1; j ++) {
+            /*Utility.debugPrintln("is v left of " + slabSegs.get(j).valEdge.getVertices()[0] + ", " + slabSegs.get(j).valEdge.getVertices()[1] + ": " +
+                    (Utility.isLeftOfSegment(slabSegs.get(j).valEdge.getVertices()[0], slabSegs.get(j).valEdge.getVertices()[1], v, 0.1) == 1));
+            Utility.debugPrintln("is v right of " + slabSegs.get(j+1).valEdge.getVertices()[0] + ", " + slabSegs.get(j+1).valEdge.getVertices()[1] + ": " +
+                    (Utility.isLeftOfSegment(slabSegs.get(j).valEdge.getVertices()[0], slabSegs.get(j).valEdge.getVertices()[1], v, 0.1) == -1));*/
             if (Utility.isLeftOfSegment(slabSegs.get(j).valEdge.getVertices()[0], slabSegs.get(j).valEdge.getVertices()[1], v, 0.1) == 1 &&
-                    Utility.isLeftOfSegment(slabSegs.get(j+1).valEdge.getVertices()[0], slabSegs.get(j+1).valEdge.getVertices()[1], v, 0.1) == -1) {
+                    Utility.isLeftOfSegment(slabSegs.get(j+1).valEdge.getVertices()[0], slabSegs.get(j+1).valEdge.getVertices()[1], v, 0.1) <= 0) {
                 // v between slabSeg j and slabSeg j+1
                 //Utility.debugPrintln("v left of " + slabSegs.get(j).valEdge + " and right of " + slabSegs.get(j+1).valEdge);
                 break;
