@@ -13,7 +13,7 @@ public class Graph {
     private List<Vertex> vertices;
     private List<Edge> edges;
     private int xmax, ymax;
-    private final int BOUNDARY_SIZE = 800;
+    private double BOUNDARY_SIZE;
     
     /**
      * Empty constructor initializes instance variables
@@ -43,6 +43,7 @@ public class Graph {
      * Initialize all instance variables and the boundary triangle
      */
     private void initInstances(int xmax, int ymax) {
+        this.BOUNDARY_SIZE = Math.max(xmax, ymax);
         this.xmax = xmax;
         this.ymax = ymax;
         this.vertices = Collections.synchronizedList(new ArrayList());
@@ -54,8 +55,9 @@ public class Graph {
      * Define boundary triangle vertices and edges and add them to the graph
      */
     private void constructBoundaryTriangle() {
-        this.boundaryTriangle = new Vertex[]{new Vertex(this.xmax/2, this.ymax/2+2*BOUNDARY_SIZE),
-            new Vertex(this.xmax/2-3*BOUNDARY_SIZE, this.ymax/2-BOUNDARY_SIZE), new Vertex(this.xmax/2+3*BOUNDARY_SIZE, this.ymax/2-BOUNDARY_SIZE)};
+        this.boundaryTriangle = new Vertex[]{new Vertex(this.xmax/2, this.ymax/2+BOUNDARY_SIZE*2.16506350946),
+            new Vertex(this.xmax/2-BOUNDARY_SIZE*2.5, this.ymax/2-BOUNDARY_SIZE*2.16506350946), 
+            new Vertex(this.xmax/2+BOUNDARY_SIZE*2.5, this.ymax/2-BOUNDARY_SIZE*2.16506350946)};
         
         for (Vertex v : this.boundaryTriangle) {
             addVertex(v);
