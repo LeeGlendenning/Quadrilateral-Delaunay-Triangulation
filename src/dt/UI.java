@@ -57,12 +57,13 @@ public class UI implements ActionListener{
         this.delaunayTriangulation = new DelaunayTriangulation(q, vertexSet, Toolkit.getDefaultToolkit().getScreenSize());
         createFrame();
         /*try {
-            loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\ioob bug"));
+            loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\test1"));
         } catch (FileNotFoundException ex) {
             Utility.debugPrintln("File not found");
         }*/
-        
-        generatePoints(1000);
+        Utility.debugPrintln("Width = " + Toolkit.getDefaultToolkit().getScreenSize().width);
+        Utility.debugPrintln("Height = " + Toolkit.getDefaultToolkit().getScreenSize().height);
+        //generatePoints(100);
     }
     
     /**

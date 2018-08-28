@@ -35,7 +35,7 @@ public class FindBisectorsThreeSites {
      * @param v3 A vertex to find bisector of
      * @return The chosen B3S
      */
-    public Bisector findBisectorOfThreeSites(Quadrilateral q, HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex v1, Vertex v2, Vertex v3) {
+    public Bisector findBisectorOfThreeSites(Quadrilateral q, HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex v1, Vertex v2, Vertex v3) throws NullPointerException {
         Utility.debugPrintln("\nFinding Bisector Between 3 sites:");
         Vertex pLeft = new Vertex(), pRight = new Vertex();
         Utility.setLeftAndRightVertex(v1, v2, pLeft, pRight, Utility.calculateAngle(v1, v2));
@@ -227,10 +227,10 @@ public class FindBisectorsThreeSites {
      * @return A key to the HashMap holding the bisector of v1 and v2
      */
     private List<Vertex> getB2SKey(HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex v1, Vertex v2) {
-        /*Utility.debugPrintln("Looking for key " + v1 + ", " + v2 + " or reversed");
+        Utility.debugPrintln("Looking for key " + v1 + ", " + v2 + " or reversed");
         for (Map.Entry<List<Vertex>, List<Bisector>> entry : bisectors2S.entrySet()) {
             Utility.debugPrintln(" *" + entry.getKey().toString());
-        }*/
+        }
         // Get the Bisector from the HashMap and add this ray to it
         if (bisectors2S.containsKey(Arrays.asList(v1, v2))) {
             return Arrays.asList(v1, v2);
@@ -430,7 +430,8 @@ public class FindBisectorsThreeSites {
      * @param key3 A key to the bisectors2S HashMap for bisector between a1a3
      * @return The chosen bisector point of the overlapping B3S
      */
-    private Bisector findOverlapsB3S(HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex a1, Vertex a2, Vertex a3, List<Vertex> key1, List<Vertex> key2, List<Vertex> key3) {
+    private Bisector findOverlapsB3S(HashMap<List<Vertex>, List<Bisector>> bisectors2S,
+            Vertex a1, Vertex a2, Vertex a3, List<Vertex> key1, List<Vertex> key2, List<Vertex> key3) throws NullPointerException {
         //ArrayList<Bisector> overlaps = new ArrayList();
         
         List<Bisector> bisector1 = bisectors2S.get(key1);
@@ -704,13 +705,14 @@ public class FindBisectorsThreeSites {
      * @return Vertex on line segment at boundary of screen
      */
     private Vertex findBoundaryVertexOnRay(Vertex v1, Vertex v2) {
-        double boundaryBuff = 1000;
+        double boundaryBuff = 10000;
         Vertex[] leftScreen = {new Vertex(-boundaryBuff, -boundaryBuff), new Vertex(-boundaryBuff, this.height+boundaryBuff)};
         Vertex[] rightScreen = {new Vertex(this.width+boundaryBuff, -boundaryBuff), new Vertex(this.width+boundaryBuff, this.height+boundaryBuff)};
         Vertex[] topScreen = {new Vertex(-boundaryBuff, this.height+boundaryBuff), new Vertex(this.width+boundaryBuff, this.height+boundaryBuff)};
         Vertex[] bottomScreen = {new Vertex(-boundaryBuff, -boundaryBuff), new Vertex(this.width+boundaryBuff, -boundaryBuff)};
         
         Vertex boundary;
+        //Utility.debugPrintln("Checking intersection with boundary between " + v1 + ", " + v2);
         // Left side of screen will intersect ray
         if ((boundary = Utility.doLineSegmentsIntersect(v1, v2, leftScreen[0], leftScreen[1])) != null) {
             //Utility.debugPrint("boundary vertex: " + boundary);
@@ -725,7 +727,7 @@ public class FindBisectorsThreeSites {
             //Utility.debugPrint("boundary vertex: " + boundary);
             return boundary;        
         } else {
-            Utility.debugPrint("!!! Could not find intersection of ray with screen boundary !!!");
+            Utility.debugPrintln("!!! Could not find intersection of ray with screen boundary !!!");
             return null;
         }
     }        
