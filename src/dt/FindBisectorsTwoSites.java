@@ -155,7 +155,6 @@ public class FindBisectorsTwoSites {
         }
         
         if (nonInnerVertices.size() == 3 && Math.abs(rNonInner.get(1).y - rNonInner.get(2).y) < tolerance) {
-            Utility.debugPrintln("here");
             ray = findBisectorRay(h, a1, nonInnerVertices.get(0), quad);
             tempB2S.get(key).add(new Bisector(key.toArray(new Vertex[2]), ray[0], ray[1], "b2s_chosen"));
             //this.voronoiEdgesB2S.add(new Bisector(new Vertex[]{p1, p2}, ray[0], ray[1], "b2s_chosen"));
