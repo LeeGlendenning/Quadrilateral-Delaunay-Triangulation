@@ -131,12 +131,9 @@ public class FindBisectorsThreeSites {
             }
         }
         Vertex[] uv;
-        try {
+        
         uv = finduv(q, a1, a2); // Vertex[2] = {u, ray1+, ray2-, v, ray1+, ray2-}
-        } catch (NullPointerException e) {
-            System.out.println("Found null ptr exc");
-            return 1;
-        }
+        
         if (segsParallelToa1a2(q, a1, a2) == 1) { // FG12 is a triangle
             Utility.debugPrintln("B3P Special case - one quad edge parallel to a1a2");
             Vertex[] ray1 = findB3SUVRays(q, a2, a1, a1); // Ray from a1 to left
