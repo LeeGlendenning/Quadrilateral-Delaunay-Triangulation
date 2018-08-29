@@ -130,8 +130,13 @@ public class FindBisectorsThreeSites {
                 return 2;
             }
         }
-                
-        Vertex[] uv = finduv(q, a1, a2); // Vertex[2] = {u, ray1+, ray2-, v, ray1+, ray2-}
+        Vertex[] uv;
+        try {
+        uv = finduv(q, a1, a2); // Vertex[2] = {u, ray1+, ray2-, v, ray1+, ray2-}
+        } catch (NullPointerException e) {
+            System.out.println("Found null ptr exc");
+            return 1;
+        }
         if (segsParallelToa1a2(q, a1, a2) == 1) { // FG12 is a triangle
             Utility.debugPrintln("B3P Special case - one quad edge parallel to a1a2");
             Vertex[] ray1 = findB3SUVRays(q, a2, a1, a1); // Ray from a1 to left
@@ -249,7 +254,7 @@ public class FindBisectorsThreeSites {
      * @param a2 A center vertex
      * @return Vertex array holding u and vertices representing its 2 rays and v and vertices representing its 2 rays respectively
      */
-    private Vertex[] finduv(Quadrilateral q, Vertex a1, Vertex a2) {
+    private Vertex[] finduv(Quadrilateral q, Vertex a1, Vertex a2) throws NullPointerException{
         double angle = Utility.calculateAngle(a1, a2);
         //Utility.debugPrint("finduv(): ");
         Vertex[] td = new Vertex[2];
@@ -316,15 +321,49 @@ public class FindBisectorsThreeSites {
         Vertex[] v2 = findB3SUVRays(q, Utility.rotateVertex(td[1], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a2, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle));
         //Utility.debugPrint("v2: " + td[1] + ", " + q.prevVertex(td[1]));
         
-        Vertex u = Utility.doLineSegmentsIntersect(Utility.rotateVertex(u1[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u1[1], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u2[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u2[1], Utility.midpoint(a1, a2), -angle));
-        Vertex v = Utility.doLineSegmentsIntersect(Utility.rotateVertex(v1[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v1[1], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v2[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v2[1], Utility.midpoint(a1, a2), -angle));
-        //Utility.debugPrint("u = " + u + ", v = " + v);
+        /*Utility.debugPrintln("u is intersection of: " + Utility.rotateVertex(u1[0], Utility.midpoint(a1, a2), -angle) + ", " + 
+                Utility.rotateVertex(u1[1], Utility.midpoint(a1, a2), -angle) + " and " +
+                Utility.rotateVertex(u2[0], Utility.midpoint(a1, a2), -angle) + ", " + 
+                Utility.rotateVertex(u2[1], Utility.midpoint(a1, a2), -angle));*/
+        
+        Vertex u = Utility.doLineSegmentsIntersect(Utility.rotateVertex(u1[0], Utility.midpoint(a1, a2), -angle), 
+                Utility.rotateVertex(u1[1], Utility.midpoint(a1, a2), -angle), 
+                Utility.rotateVertex(u2[0], Utility.midpoint(a1, a2), -angle), 
+                Utility.rotateVertex(u2[1], Utility.midpoint(a1, a2), -angle));
+        
+        Vertex v = Utility.doLineSegmentsIntersect(Utility.rotateVertex(v1[0], Utility.midpoint(a1, a2), -angle), 
+                Utility.rotateVertex(v1[1], Utility.midpoint(a1, a2), -angle), 
+                Utility.rotateVertex(v2[0], Utility.midpoint(a1, a2), -angle), 
+                Utility.rotateVertex(v2[1], Utility.midpoint(a1, a2), -angle));
+        
+        // If u or v are null, it is possible that an FG line segment passes through
+        // vertex a1 or a2. This is an extra check for that case since it is not
+        // caught in the first check for some reason
+        if (u == null) {
+            if (Utility.isLeftOfSegment(Utility.rotateVertex(u2[0], Utility.midpoint(a1, a2), -angle),
+                    Utility.rotateVertex(u2[1], Utility.midpoint(a1, a2), -angle), a1, 0.1) == 0) {
+                u = a1.deepCopy();
+            } else if (Utility.isLeftOfSegment(Utility.rotateVertex(u1[0], Utility.midpoint(a1, a2), -angle),
+                    Utility.rotateVertex(u1[1], Utility.midpoint(a1, a2), -angle), a2, 0.1) == 0) {
+                u = a2.deepCopy();
+            }
+        }
+        if (v == null) {
+            if (Utility.isLeftOfSegment(Utility.rotateVertex(v2[0], Utility.midpoint(a1, a2), -angle),
+                    Utility.rotateVertex(v2[1], Utility.midpoint(a1, a2), -angle), a1, 0.1) == 0) {
+                v = a1.deepCopy();
+            } else if (Utility.isLeftOfSegment(Utility.rotateVertex(v1[0], Utility.midpoint(a1, a2), -angle),
+                    Utility.rotateVertex(v1[1], Utility.midpoint(a1, a2), -angle), a2, 0.1) == 0) {
+                v = a2.deepCopy();
+            }
+        }
+        //Utility.debugPrintln("u = " + u + ", v = " + v);
         
         //below lines only for debugging when u or v is null (shouldn't happen)
-        /*this.displayEdges.add(new VoronoiBisector(new Vertex[]{}, Utility.rotateVertex(u1[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u1[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Vertex[]{}, Utility.rotateVertex(u2[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u2[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Vertex[]{}, Utility.rotateVertex(v1[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v1[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        this.displayEdges.add(new VoronoiBisector(new Vertex[]{}, Utility.rotateVertex(v2[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v2[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        /*this.displayEdges.add(new Bisector(new Vertex[]{}, Utility.rotateVertex(u1[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u1[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Vertex[]{}, Utility.rotateVertex(u2[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u2[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Vertex[]{}, Utility.rotateVertex(v1[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v1[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Vertex[]{}, Utility.rotateVertex(v2[0], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v2[1], Utility.midpoint(a1, a2), -angle), "b3s_step"));
         */
         
         // Draw FG region

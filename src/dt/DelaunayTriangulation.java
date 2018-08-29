@@ -15,7 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 /**
- * Constructs a Voronoi diagram from a vertex set using a Quadrilateral
+ * Constructs a Delaunay Triangulation from a vertex set using a Quadrilateral
  *
  * @author Lee Glendenning
  */

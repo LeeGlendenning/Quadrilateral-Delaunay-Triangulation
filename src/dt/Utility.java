@@ -11,7 +11,7 @@ import java.util.Comparator;
 public class Utility {
     
     public static final double RAY_SIZE = 10000000;
-    public static boolean debugMode = false;
+    public static boolean debugMode = true;
     
     
     /**
@@ -259,8 +259,8 @@ public class Utility {
         double denominator = Utility.crossProduct(r, s);
         
         // Lines are collinear
-        if (numerator == 0 && denominator == 0) {
-            double tolerance = 0.01;
+        double tolerance = 0.01;
+        if (Math.abs(numerator) < tolerance && Math.abs(denominator) < tolerance) {
             // If line segments share an endpoint, line segments intersect
             if (Utility.equalVertexs(v1, q1, tolerance) || Utility.equalVertexs(v1, q2, tolerance) || Utility.equalVertexs(v2, q1, tolerance) || Utility.equalVertexs(v2, q2, tolerance)) {
                 Vertex intersection;
@@ -286,7 +286,7 @@ public class Utility {
         }
 
         // Lines are parallel and do not intersect
-        if (denominator == 0) {
+        if (Math.abs(denominator) < tolerance) {
             return null;
         }
 
