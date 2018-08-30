@@ -40,7 +40,7 @@ public class FindBisectorsThreeSites {
         Vertex pLeft = new Vertex(), pRight = new Vertex();
         Utility.setLeftAndRightVertex(v1, v2, pLeft, pRight, Utility.calculateAngle(v1, v2));
                     
-        Utility.debugPrintln("a1 = " + pLeft + " a2 = " + pRight + " a3 = " + v3);
+        System.out.println("\na1 = " + pLeft + " a2 = " + pRight + " a3 = " + v3);
         int bisectorCase = caseBisectorBetween3Vertices(q, pLeft, pRight, v3);
         if (bisectorCase == 1) {
             return null;
@@ -147,7 +147,7 @@ public class FindBisectorsThreeSites {
                 uv[0] = Utility.midpoint(a1, a2);
                 uv[1] = ray2[1];
                 uv[2] = ray1[1];
-            } else if (uv[3] == null) {
+            } if (uv[3] == null) {
                 uv[3] = Utility.midpoint(a1, a2);
                 uv[4] = ray2[1];
                 uv[5] = ray1[1];
@@ -163,19 +163,19 @@ public class FindBisectorsThreeSites {
                 Utility.isLeftOfSegment(uv[3], a2, a3, caseTolerance) == 1 &&
                 Utility.isLeftOfSegment(uv[3],a1, a3, caseTolerance) == -1) 
         {
-            Utility.debugPrintln("Vertex inside F - case 1 (do nothing)");
+            System.out.println("Vertex inside F - case 1 (do nothing)");
             return 1;
             
         } else if (Utility.isLeftOfSegment(uv[1], a1, a3, caseTolerance) == 1 &&
                 Utility.isLeftOfSegment(a1,uv[4], a3, caseTolerance) == 1) 
         {
-            Utility.debugPrintln("Vertex inside G12 - case 1 (do nothing)");
+            System.out.println("Vertex inside G12 - case 1 (do nothing)");
             return 1;
             
         } else if (Utility.isLeftOfSegment(uv[2], a2, a3, caseTolerance) == -1 &&
                 Utility.isLeftOfSegment(a2,uv[5], a3, caseTolerance) == -1) 
         {
-            Utility.debugPrintln("Vertex inside G21 - case 1 (do nothing)");
+            System.out.println("Vertex inside G21 - case 1 (do nothing)");
             return 1;
             
         } else if (Utility.isLeftOfSegment(a2, uv[0], a3, caseTolerance) == 0 ||
@@ -186,11 +186,11 @@ public class FindBisectorsThreeSites {
                 Utility.isLeftOfSegment(uv[2], a2, a3, caseTolerance) == 0 ||
                 Utility.isLeftOfSegment(a2, uv[5], a3, caseTolerance) == 0) 
         {
-            Utility.debugPrintln("Vertex on boundary - case 3");
+            System.out.println("Vertex on boundary - case 3");
             return 3;
         }
         
-        Utility.debugPrintln("Vertex outside FG - case 2");
+        System.out.println("Vertex outside FG - case 2");
         return 2;
     }
     
@@ -253,9 +253,10 @@ public class FindBisectorsThreeSites {
      */
     private Vertex[] finduv(Quadrilateral q, Vertex a1, Vertex a2) throws NullPointerException{
         double angle = Utility.calculateAngle(a1, a2);
-        //Utility.debugPrint("finduv(): ");
         Vertex[] td = new Vertex[2];
         ArrayList<Vertex> niVerts = Utility.findNonInnerVertices(q, a1, a2, angle);
+        
+        //Utility.debugPrintln("nonInner Verts: " + niVerts.toString());
         
         switch (niVerts.size()) {
             case 2:
@@ -294,44 +295,50 @@ public class FindBisectorsThreeSites {
                 break;
         }
         
-        /*Utility.debugPrint("td vertices ");
-        for (Vertex p : td) {
-            Utility.debugPrint(p + " ");
+        if (a1.equals(new Vertex(201.0, 201.0)) && a2.equals(new Vertex(960.0, 4696.9219381632))) {
+            System.out.println("*************************************");
         }
-        Utility.debugPrint();*/
+        System.out.println("td vertices: " + Arrays.toString(td));
         
-        Vertex[] u1 = findB3SUVRays(q, Utility.rotateVertex(td[0], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a1, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.prevVertex(td[0]), Utility.midpoint(a1, a2), angle));
-        //Utility.debugPrint("u1: " + td[0] + ", " + q.prevVertex(td[0]));
-        Vertex[] u2 = findB3SUVRays(q, Utility.rotateVertex(td[0], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a2, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.nextVertex(td[0]), Utility.midpoint(a1, a2), angle));
-        //Utility.debugPrint("u2: " + td[0] + ", " + q.nextVertex(td[0]));
+        //Vertex[] u1 = findB3SUVRays(q, Utility.rotateVertex(td[0], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a1, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.prevVertex(td[0]), Utility.midpoint(a1, a2), angle));
+        Vertex[] u1 = findB3SUVRays(q, td[0], a1, q.prevVertex(td[0]));
+        System.out.println("u1: " + u1[0] + ", " + u1[1]);
+        //Vertex[] u2 = findB3SUVRays(q, Utility.rotateVertex(td[0], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a2, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.nextVertex(td[0]), Utility.midpoint(a1, a2), angle));
+        Vertex[] u2 = findB3SUVRays(q, td[0], a2, q.nextVertex(td[0]));
+        System.out.println("u2: " + u2[0] + ", " + u2[1]);
         
         double tolerance = 0.00001;
         Vertex[] v1;
         // Edge parallel to a1a2
         if (Math.abs(td[1].y - Utility.rotateVertex(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle).y) < tolerance) {
             Utility.debugPrint("Handling B3S triangle FG region");
-            v1 = findB3SUVRays(q, Utility.rotateVertex(td[1], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a1, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle));
+            //v1 = findB3SUVRays(q, Utility.rotateVertex(td[1], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a1, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle));
+            v1 = findB3SUVRays(q, td[1], a1, q.prevVertex(td[1]));
         } else {
-            v1 = findB3SUVRays(q, Utility.rotateVertex(td[1], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a1, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.nextVertex(td[1]), Utility.midpoint(a1, a2), angle));
+            //v1 = findB3SUVRays(q, Utility.rotateVertex(td[1], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a1, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.nextVertex(td[1]), Utility.midpoint(a1, a2), angle));
+            v1 = findB3SUVRays(q, td[1], a1, q.nextVertex(td[1]));
         }
-        //Utility.debugPrint("v1: " + v1[0] + ", " + v1[1]);
-        Vertex[] v2 = findB3SUVRays(q, Utility.rotateVertex(td[1], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a2, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle));
-        //Utility.debugPrint("v2: " + td[1] + ", " + q.prevVertex(td[1]));
+        System.out.println("v1: " + v1[0] + ", " + v1[1]);
+        //Vertex[] v2 = findB3SUVRays(q, Utility.rotateVertex(td[1], Utility.midpoint(a1, a2), angle), Utility.rotateVertex(a2, Utility.midpoint(a1, a2), angle), Utility.rotateVertex(q.prevVertex(td[1]), Utility.midpoint(a1, a2), angle));
+        Vertex[] v2 = findB3SUVRays(q, td[1], a2, q.prevVertex(td[1]));
+        System.out.println("v2: " + v2[0] + ", " + v2[1]);
         
         /*Utility.debugPrintln("u is intersection of: " + Utility.rotateVertex(u1[0], Utility.midpoint(a1, a2), -angle) + ", " + 
                 Utility.rotateVertex(u1[1], Utility.midpoint(a1, a2), -angle) + " and " +
                 Utility.rotateVertex(u2[0], Utility.midpoint(a1, a2), -angle) + ", " + 
                 Utility.rotateVertex(u2[1], Utility.midpoint(a1, a2), -angle));*/
         
-        Vertex u = Utility.doLineSegmentsIntersect(Utility.rotateVertex(u1[0], Utility.midpoint(a1, a2), -angle), 
+        /*Vertex u = Utility.doLineSegmentsIntersect(Utility.rotateVertex(u1[0], Utility.midpoint(a1, a2), -angle), 
                 Utility.rotateVertex(u1[1], Utility.midpoint(a1, a2), -angle), 
                 Utility.rotateVertex(u2[0], Utility.midpoint(a1, a2), -angle), 
-                Utility.rotateVertex(u2[1], Utility.midpoint(a1, a2), -angle));
+                Utility.rotateVertex(u2[1], Utility.midpoint(a1, a2), -angle));*/
+        Vertex u = Utility.doLineSegmentsIntersect(u1[0], u1[1], u2[0], u2[1]);
         
-        Vertex v = Utility.doLineSegmentsIntersect(Utility.rotateVertex(v1[0], Utility.midpoint(a1, a2), -angle), 
+        /*Vertex v = Utility.doLineSegmentsIntersect(Utility.rotateVertex(v1[0], Utility.midpoint(a1, a2), -angle), 
                 Utility.rotateVertex(v1[1], Utility.midpoint(a1, a2), -angle), 
                 Utility.rotateVertex(v2[0], Utility.midpoint(a1, a2), -angle), 
-                Utility.rotateVertex(v2[1], Utility.midpoint(a1, a2), -angle));
+                Utility.rotateVertex(v2[1], Utility.midpoint(a1, a2), -angle));*/
+        Vertex v = Utility.doLineSegmentsIntersect(v1[0], v1[1], v2[0], v2[1]);
         
         // If u or v are null, it is possible that an FG line segment passes through
         // vertex a1 or a2. This is an extra check for that case since it is not
@@ -364,16 +371,18 @@ public class FindBisectorsThreeSites {
         */
         
         // Draw FG region
-        Utility.debugPrintln("FG edges:");
-        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
-        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
-        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
-        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
-        
+        if (a1.equals(new Vertex(201.0, 201.0)) &&
+                a2.equals(new Vertex(960.0, 4696.9219381632))) {
+            System.out.println("FG edges:");
+            this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+            System.out.println(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
+            this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+            System.out.println(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
+            this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+            System.out.println(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
+            this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+            System.out.println(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
+        }
         return new Vertex[]{u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle)};
     }
     
@@ -394,35 +403,36 @@ public class FindBisectorsThreeSites {
         v2.x = nextPt.x + a.x - quad.getCenter().x;
         v2.y = nextPt.y + a.y - quad.getCenter().y;
         
-        //Utility.debugPrint("endPt = " + v1 + ", a = " + a + ", nextPt = " + v2);
+        // v1,v2 is now an edge of the quad around a
+        
+        System.out.println("findB3SUVRays: a = " + a + ", after translation: endPt = " + v1 + ", nextPt = " + v2);
         
         // Define the direction of the ray starting at a
         double rayEndx = Utility.RAY_SIZE;
-        //Utility.debugPrint(a + " : " + nonInnerVertex);
-        if (v1.x > v2.x || (v1.x == v2.x && v1.y > v2.y)) {
+        //Utility.debugPrintln(a + " : " + nonInnerVertex);
+        double tolerance = 0.0001;
+        if (v1.x > v2.x+tolerance || (Math.abs(Math.abs(v1.x) - Math.abs(v2.x)) < tolerance && v1.y+tolerance < v2.y)) {
             rayEndx = -Utility.RAY_SIZE;
         }
+        
+        //Utility.debugPrintln("rayEndx = " + rayEndx);
+        
         Vertex rayEnd = new Vertex(rayEndx, a.y); // End vertex of ray which is basically + or - infinity
         Vertex rayEnd2 = new Vertex(-rayEndx, a.y);
         
         double angle = Utility.calculateAngle(v1, v2);
+        // Make angle negative due to the rayEndx direction
+        // Maybe could be cleaner but this works
+        if (angle > 0) {
+            angle *= -1;
+        }
+        //Utility.debugPrintln("angle(v1, v2) = " + Math.toDegrees(angle) + ", radians: " + angle);
         
         // Define ray by rotating rayEnd such that it has slope(a, nonInnerVertex)
-        Vertex[] ray = {new Vertex(v1.x, v1.y), Utility.rotateVertex(rayEnd, new Vertex(0,0), -angle)};
-        Vertex[] ray2 = {new Vertex(v1.x, v1.y), Utility.rotateVertex(rayEnd2, new Vertex(0,0), -angle)};
+        Vertex[] ray = {a, Utility.rotateVertex(rayEnd, a, angle)};
+        Vertex[] ray2 = {a, Utility.rotateVertex(rayEnd2, a, angle)};
         
-        //Translate ray so that it starts at a
-        ray[0].x += a.x - v1.x;
-        ray[0].y += a.y - v1.y;
-        ray[1].x += a.x - v1.x;
-        ray[1].y += a.y - v1.x;
-        
-        ray2[0].x += a.x - v1.x;
-        ray2[0].y += a.y - v1.y;
-        ray2[1].x += a.x - v1.x;
-        ray2[1].y += a.y - v1.x;
-        
-        //Utility.debugPrint("ray = " + ray[0] + ", " + ray[1]);
+        //Utility.debugPrintln("  ray = " + ray[0] + ", " + ray[1]);
         
         return new Vertex[]{ray[0], ray[1], ray2[0], ray2[1]};
     }

@@ -44,7 +44,7 @@ public class DelaunayTriangulation extends JPanel {
     private Dimension screenSize;
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = true, showB2S = false;
-    private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
+    private boolean showB3S_fgRegion = true, showB3S_hidden = false, showB3S = true;
     private final boolean doAnimation = false;
     private boolean showCoordinates = true, highlightShortestPath = true, /*clearSelectedPath = false,*/ showBoundaryTriangle = true;
     

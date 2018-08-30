@@ -11,7 +11,7 @@ import java.util.Comparator;
 public class Utility {
     
     public static final double RAY_SIZE = 10000000;
-    public static boolean debugMode = true;
+    public static boolean debugMode = false;
     
     
     /**
@@ -360,12 +360,11 @@ public class Utility {
      * @param a1 Vertex used as reference for rotation
      * @param a2 Vertex used as reference for rotation
      * @param angle Angle to rotate quad by such that a1a2 is parallel to x axis
-     * @return Array of nonInner vertices of size 2
+     * @return Array of nonInner vertices
      */
     public static ArrayList<Vertex> findNonInnerVertices(Quadrilateral q, Vertex a1, Vertex a2, double angle) {
         ArrayList<Vertex> nonInnerVerts = new ArrayList();
         Vertex[] rVerts = new Vertex[4];
-        
         // Rotate all quad vertices
         //Utility.debugPrint("Non-Inner Vertices rVerts: ");
         for (int i = 0; i < q.getVertices().length; i ++) {
@@ -388,7 +387,7 @@ public class Utility {
             }
         });
         
-        //Utility.debugPrintln("rVerts: " + rVerts[0] + ", " + rVerts[1] + ", " + rVerts[2] + ", " + rVerts[3]);
+        //Utility.debugPrintln("rVerts: " + Arrays.toString(rVerts));
         double tolerance = 0.00001;
         // Check for SL hitting an edge
         if (Math.abs(rVerts[0].y - rVerts[1].y) < tolerance /*&& rVerts[0].x < rVerts[1].x*/) {
@@ -405,13 +404,8 @@ public class Utility {
             nonInnerVerts.add(Utility.rotateVertex(rVerts[3], Utility.midpoint(a1, a2), -angle));
         }
         
-        Utility.debugPrint("Non-inner vertices ");
-        for (Vertex p : nonInnerVerts) {
-            Utility.debugPrint(p + " ");
-        }
-        Utility.debugPrintln("");
+        //Utility.debugPrintln("Non-inner vertices: " + nonInnerVerts.toString());
         
-        //Utility.debugPrintln("nonInner verts: " + nonInnerVerts[0] + " " + nonInnerVerts[1]);
         return nonInnerVerts;
     }
     
