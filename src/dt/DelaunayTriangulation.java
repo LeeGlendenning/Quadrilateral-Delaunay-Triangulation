@@ -41,7 +41,7 @@ public class DelaunayTriangulation extends JPanel {
     private ArrayList<Vertex> curSelectedPath, oldSelectedPath; // Last path user has queried
     private ArrayList<int[]> performanceData;
     private final int vertexRadius = 3;
-    private Dimension screenSize;
+    private final Dimension screenSize;
     
     private boolean showB2S_hgRegion = false, showB2S_hgVertices = false, showB2S_hiddenCones = true, showB2S = false;
     private boolean showB3S_fgRegion = false, showB3S_hidden = false, showB3S = false;
@@ -155,10 +155,17 @@ public class DelaunayTriangulation extends JPanel {
             this.dtGraph.addEdge(v, tVert);
         }
         
-        HashMap<List<Vertex>, List<Bisector>> bisectors2S = calculateB2S(v, Arrays.asList(triangle));
+        // Faces to calculate B3S for and check minQuad
+        Vertex[][] faces = findQuestionableFaces(v, triangle);
+        System.out.println("Questionable faces:");
+        for (Vertex[] face : faces) {
+            System.out.println("  " + Arrays.toString(face));
+        }
+        
+        HashMap<List<Vertex>, List<Bisector>> bisectors2S = calculateB2S(faces);
         this.chosenB2S = bisectors2S;
         List<Bisector> bisectors3S;
-        bisectors3S = calculateB3S(v, Arrays.asList(triangle), bisectors2S); // Calculate b3s' for v and containing triangle
+        bisectors3S = calculateB3S(faces, bisectors2S);
         
         this.chosenB3S = new ArrayList();
         for (Bisector b : bisectors3S) {
@@ -178,28 +185,92 @@ public class DelaunayTriangulation extends JPanel {
     
     /**
      * 
-     * @param v Vertex to find all B2S for
-     * @param vertices List of vertices to calculate B2S with v
+     * @param v Newly triangulated vertex
+     * @param vContainerFace Vertices containing v
+     * @return Array of faces that should be checked with empty quad
      */
-    private HashMap<List<Vertex>, List<Bisector>> calculateB2S(Vertex v, List<Vertex> vertices) {
-        HashMap<List<Vertex>, List<Bisector>> tempB2S = new HashMap();
-        // Find B2S between p and other vertices
-        long startTime = System.nanoTime();
-        int ii;
-        for (int i = 0; i < vertices.size(); i++) {
-            if (i == vertices.size()-1) {
-                ii = 0;
-            } else {
-                ii = i+1;
-            }
-            // Calculate b2s between each of the vertices in the list
-            tempB2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, vertices.get(i).deepCopy(), vertices.get(ii).deepCopy()));
-            // Calculate b2s between v and each of the vertices in the list
-            tempB2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, vertices.get(i).deepCopy(), v));
+    private Vertex[][] findQuestionableFaces(Vertex v, Vertex[] vContainerFace) {
+        Vertex[][] faces = new Vertex[6][3];
+        
+        // 3 Faces adjacent to v
+        faces[0] = new Vertex[]{v, vContainerFace[0], vContainerFace[1]};
+        faces[1] = new Vertex[]{v, vContainerFace[1], vContainerFace[2]};
+        faces[2] = new Vertex[]{v, vContainerFace[2], vContainerFace[0]};
+        
+        // 3 Faces commonly adjacent to vContainerFace
+        List<Vertex> commonVerts = intersectVertexSets(vContainerFace[0].getNeighbours(), vContainerFace[1].getNeighbours());
+        Vertex closest = closestVertex(vContainerFace[0], vContainerFace[1], commonVerts, new Vertex[]{v, vContainerFace[2]});
+        if (closest == null) {
+            faces[3] = null;
+        } else {
+            faces[3] = new Vertex[]{vContainerFace[0], vContainerFace[1], closest};
         }
-        long endTime = System.nanoTime();
-        long duration = (endTime - startTime) / 1000000;
-        this.performanceData.get(this.performanceData.size()-1)[0] = Math.round(duration);
+        
+        commonVerts = intersectVertexSets(vContainerFace[1].getNeighbours(), vContainerFace[2].getNeighbours());
+        closest = closestVertex(vContainerFace[1], vContainerFace[2], commonVerts, new Vertex[]{v, vContainerFace[0]});
+        if (closest == null) {
+            faces[4] = null;
+        } else {
+            faces[4] = new Vertex[]{vContainerFace[1], vContainerFace[2], closest};
+        }
+        
+        commonVerts = intersectVertexSets(vContainerFace[2].getNeighbours(), vContainerFace[0].getNeighbours());
+        closest = closestVertex(vContainerFace[2], vContainerFace[0], commonVerts, new Vertex[]{v, vContainerFace[1]});
+        if (closest == null) {
+            faces[5] = null;
+        } else {
+            faces[5] = new Vertex[]{vContainerFace[2], vContainerFace[0], closest};
+        }
+        
+        return faces;
+    }
+    
+    /**
+     * 
+     * @param v1 A vertex of edge v1v2
+     * @param v2 A vertex of edge v1v2
+     * @param comparators List of vertices to compare distance to v1v2
+     * @param ignore Vertex to ignore
+     * @return Vertex having min distance to v1 and v2
+     */
+    public Vertex closestVertex(Vertex v1, Vertex v2, List<Vertex> comparators, Vertex[] ignore) {
+        Vertex closest = null;
+        for (Vertex c : comparators) {
+            if (!c.equals(ignore[0]) && !c.equals(ignore[1]) &&
+                    (closest == null || (Utility.euclideanDistance(v1, c) + Utility.euclideanDistance(v1, c)) <
+                    (Utility.euclideanDistance(v1, closest) + Utility.euclideanDistance(v1, closest)))) {
+                closest = c;
+            }
+        }
+        return closest;
+    }
+    
+    /**
+     * 
+     * @param faces Array of faces to calculate B2S for all pairs of vertices
+     * @return HashMap of B2S
+     */
+    private HashMap<List<Vertex>, List<Bisector>> calculateB2S(Vertex[][] faces) {
+        HashMap<List<Vertex>, List<Bisector>> tempB2S = new HashMap();
+        // Find B2S between each pair of vertices in each face
+        for (Vertex[] face : faces) {
+            System.out.println("*****" + Arrays.toString(face));
+            if (face == null) {
+                continue;
+            }
+            int ii;
+            for (int i = 0; i < face.length; i++) {
+                if (i == face.length-1) {
+                    ii = 0;
+                } else {
+                    ii = i+1;
+                }
+                // Calculate b2s between each of the vertices in the list
+                tempB2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, face[i].deepCopy(), face[ii].deepCopy()));
+                // Calculate b2s between v and each of the vertices in the list
+                //tempB2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, vertices.get(i).deepCopy(), v));
+            }
+        }
         
         Utility.debugPrintln("");
         //this.displayEdges.addAll(this.b2s.getDisplayEdges());
@@ -209,20 +280,21 @@ public class DelaunayTriangulation extends JPanel {
     
     /**
      * 
-     * @param v Vertex to find all B3S for
-     * @param vertices List of vertices to calculate B3S with v
+     * @param faces Array of faces to calculate B3S for
+     * @param bisectors2S HashMap of B2S
+     * @return List of Bisector representing B3S for each given face
      */
-    private List<Bisector> calculateB3S(Vertex v, List<Vertex> vertices, HashMap<List<Vertex>, List<Bisector>> bisectors2S) {
+    private List<Bisector> calculateB3S(Vertex[][] faces, HashMap<List<Vertex>, List<Bisector>> bisectors2S) {
         List<Bisector> tempB3S = new ArrayList();
-        // Find B3S between p and all other pairs of vertices
-        for (int i = 0; i < vertices.size(); i ++) {
-            for (int j = i + 1; j < vertices.size(); j++) {
-                if (!vertices.get(i).equals(v)){
-                    Bisector b = this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, vertices.get(i).deepCopy(), vertices.get(j).deepCopy(), v);
-                    if (b != null) {
-                        tempB3S.add(b);
-                    }
-                }
+        
+        // Find B3S for each face
+        for (Vertex[] face : faces) {
+            if (face == null) {
+                continue;
+            }
+            Bisector b = this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, face[0].deepCopy(), face[1].deepCopy(), face[2].deepCopy());
+            if (b != null) {
+                tempB3S.add(b);
             }
         }
         
