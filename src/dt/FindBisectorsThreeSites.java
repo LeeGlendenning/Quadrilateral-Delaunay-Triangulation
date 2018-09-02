@@ -229,10 +229,10 @@ public class FindBisectorsThreeSites {
      * @return A key to the HashMap holding the bisector of v1 and v2
      */
     private List<Vertex> getB2SKey(HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex v1, Vertex v2) {
-        Utility.debugPrintln("Looking for key " + v1 + ", " + v2 + " or reversed");
+        /*Utility.debugPrintln("Looking for key " + v1 + ", " + v2 + " or reversed");
         for (Map.Entry<List<Vertex>, List<Bisector>> entry : bisectors2S.entrySet()) {
             Utility.debugPrintln(" *" + entry.getKey().toString());
-        }
+        }*/
         // Get the Bisector from the HashMap and add this ray to it
         if (bisectors2S.containsKey(Arrays.asList(v1, v2))) {
             return Arrays.asList(v1, v2);
@@ -349,15 +349,15 @@ public class FindBisectorsThreeSites {
         */
         
         // Draw FG region
-        Utility.debugPrintln("FG edges:");
+        //Utility.debugPrintln("FG edges:");
         this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
+        //Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
         this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
+        //Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
         this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
+        //Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
         this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
-        Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
+        //Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
         
         return new Vertex[]{u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle)};
     }

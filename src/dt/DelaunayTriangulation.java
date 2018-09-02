@@ -216,6 +216,7 @@ public class DelaunayTriangulation extends JPanel {
         
         commonVerts = intersectVertexSets(vContainerFace[2].getNeighbours(), vContainerFace[0].getNeighbours());
         closest = closestVertex(vContainerFace[2], vContainerFace[0], commonVerts, new Vertex[]{v, vContainerFace[1]});
+        System.out.println("last face container verts: " + vContainerFace[2] + ", " + vContainerFace[0]);
         if (closest == null) {
             faces[5] = null;
         } else {
@@ -238,7 +239,8 @@ public class DelaunayTriangulation extends JPanel {
         for (Vertex c : comparators) {
             if (!c.equals(ignore[0]) && !c.equals(ignore[1]) &&
                     (closest == null || (Utility.euclideanDistance(v1, c) + Utility.euclideanDistance(v1, c)) <
-                    (Utility.euclideanDistance(v1, closest) + Utility.euclideanDistance(v1, closest)))) {
+                    (Utility.euclideanDistance(v1, closest) + Utility.euclideanDistance(v2, closest))) &&
+                    Utility.doLineSegmentsIntersect(v1, v2, ignore[0], c) != null) {
                 closest = c;
             }
         }
@@ -254,7 +256,6 @@ public class DelaunayTriangulation extends JPanel {
         HashMap<List<Vertex>, List<Bisector>> tempB2S = new HashMap();
         // Find B2S between each pair of vertices in each face
         for (Vertex[] face : faces) {
-            System.out.println("*****" + Arrays.toString(face));
             if (face == null) {
                 continue;
             }
@@ -292,6 +293,7 @@ public class DelaunayTriangulation extends JPanel {
             if (face == null) {
                 continue;
             }
+            
             Bisector b = this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, face[0].deepCopy(), face[1].deepCopy(), face[2].deepCopy());
             if (b != null) {
                 tempB3S.add(b);
@@ -316,7 +318,8 @@ public class DelaunayTriangulation extends JPanel {
             Vertex vInQuad;
             
             // List holds the vertices that could possibly be inside the min quads for the b3s
-            List<Vertex> ptsToCheck = new ArrayList();
+            List<Vertex> ptsToCheck = this.dtGraph.getVertices();
+            /*List<Vertex> ptsToCheck = new ArrayList();
             //Utility.debugPrintln("Finding intersection of neighbour points for " + b.getAdjacentPtsArray()[0] + " and " + b.getAdjacentPtsArray()[1]);
             ptsToCheck.addAll(intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[0].x, b.getAdjacentPtsArray()[0].y).getNeighbours(), 
                     this.dtGraph.getVertex(b.getAdjacentPtsArray()[1].x, b.getAdjacentPtsArray()[1].y).getNeighbours()));
@@ -326,8 +329,14 @@ public class DelaunayTriangulation extends JPanel {
             //Utility.debugPrintln("Finding intersection of neighbour points for " + b.getAdjacentPtsArray()[2] + " and " + b.getAdjacentPtsArray()[0]);
             ptsToCheck.addAll(intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[2].x, b.getAdjacentPtsArray()[2].y).getNeighbours(), 
                     this.dtGraph.getVertex(b.getAdjacentPtsArray()[0].x, b.getAdjacentPtsArray()[0].y).getNeighbours()));
+            */
+            //(1258.0, 580.0) a2 = (1643.0, 745.0) a3 = (5760.0, -3616.9219381632)
+            if (this.chosenB3S.get(i).getAdjacentPtsList().contains(new Vertex(1258.0, 580.0)) &&
+                    this.chosenB3S.get(i).getAdjacentPtsList().contains(new Vertex(1643.0, 745.0)) &&
+                    this.chosenB3S.get(i).getAdjacentPtsList().contains(new Vertex(5760.0, -3616.9219381632))) {
+                Utility.debugPrintln("Finding minQuad for " + this.chosenB3S.get(i).getEndVertex());
+            }
             
-            //Utility.debugPrintln("Finding minQuad for " + this.chosenB3S.get(i).getEndVertex());
             if ((vInQuad = vertexInsideQuad(calculateMinQuad(this.chosenB3S.get(i)), this.chosenB3S.get(i), b.getAdjacentPtsList(), ptsToCheck)) != null &&
                     !b3sList.get(i).getAdjacentPtsList().contains(vInQuad)) {
                 Vertex v1 = null, v2 = null;
@@ -368,7 +377,6 @@ public class DelaunayTriangulation extends JPanel {
                     Utility.debugPrintln("[checkForBadEdges] new Edge vertex is null - This shouldn't happen!!");
                 }
                 
-                //Vertex newEdgeVert = closestVertex(v1, v2, commonVerts, new Vertex[]{v, v});
                 Utility.debugPrintln("Trying to flip edge " + new Edge(v1, v2));
                 Utility.debugPrintln("New edge would be " + new Edge(v, newEdgeVert));
                 
@@ -377,7 +385,7 @@ public class DelaunayTriangulation extends JPanel {
                     // Calc the 4 corresponding B3S and add to b3sList
                     
                     // For B3S between v, v1, newEdgeVert
-                    HashMap<List<Vertex>, List<Bisector>> bisectors2S = new HashMap();
+                    /*HashMap<List<Vertex>, List<Bisector>> bisectors2S = new HashMap();
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v.deepCopy(), v1.deepCopy()));
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v1.deepCopy(), newEdgeVert.deepCopy()));
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, newEdgeVert.deepCopy(), v.deepCopy()));
@@ -409,7 +417,7 @@ public class DelaunayTriangulation extends JPanel {
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v2.deepCopy(), newEdgeVert.deepCopy()));
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, newEdgeVert.deepCopy(), bVert.deepCopy()));
                     b3sList.add(this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, bVert.deepCopy(), v2.deepCopy(), newEdgeVert.deepCopy()));
-                    
+                    */
                     return;
                 }
             }

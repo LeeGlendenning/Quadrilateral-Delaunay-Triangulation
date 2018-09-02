@@ -38,13 +38,13 @@ public class FindBisectorsTwoSites {
      * @return HashMap of B2S
      */
     public HashMap<List<Vertex>, List<Bisector>> findBisectorOfTwoSites(Quadrilateral quad, Vertex p1, Vertex p2) {
-        Utility.debugPrintln("\nFinding Bisector Between 2 Sites:");
+        //Utility.debugPrintln("\nFinding Bisector Between 2 Sites:");
         double angle = Utility.calculateAngle(p1, p2); // Angle that slope(p1p2) makes with x axis
         
-        Utility.debugPrintln("Angle = " + Math.toDegrees(angle));
+        //Utility.debugPrintln("Angle = " + Math.toDegrees(angle));
         Vertex a1 = new Vertex(), a2 = new Vertex();
         Utility.setLeftAndRightVertex(p1, p2, a1, a2, angle);
-        Utility.debugPrintln("left vertex : " + a1 + ", right vertex: " + a2);
+        //Utility.debugPrintln("left vertex : " + a1 + ", right vertex: " + a2);
         
         // Two "middle" vertices of quad wrt y value and angle
         Vertex[] innerVertices = findInnerVertices(quad, angle);
@@ -54,8 +54,8 @@ public class FindBisectorsTwoSites {
         g1.add(new Vertex());
         g2.add(new Vertex());
         findh12g12(h1.get(h1.size()-1), h2.get(h1.size()-1), g1.get(h1.size()-1), g2.get(h1.size()-1), a1, a2, quad, innerVertices, angle);
-        Utility.debugPrintln("h1 = " + h1 + ", h2 = " + h2);
-        Utility.debugPrintln("g1 = " + g1 + ", g2 = " + g2);
+        //Utility.debugPrintln("h1 = " + h1 + ", h2 = " + h2);
+        //Utility.debugPrintln("g1 = " + g1 + ", g2 = " + g2);
         
         // Endvertices of main bisector between p1 and p2
         Vertex h = doRaysIntersect(a1, h1.get(h1.size()-1), a2, h2.get(h2.size()-1));
@@ -63,24 +63,15 @@ public class FindBisectorsTwoSites {
         
         HashMap<List<Vertex>, List<Bisector>> tempB2S = new HashMap();
         
-        //Utility.debugPrintln("Endvertices of main bisector segment: " + h + ", " + g);
-        /*if (!this.bisectors2S.containsKey(Arrays.asList(p1, p2)) &&
-                !this.bisectors2S.containsKey(Arrays.asList(p2, p1))) 
-        {*/
-            ArrayList<Bisector> tempB = new ArrayList();
-            tempB.add(new Bisector(new Vertex[]{p1, p2}, h, g, "b2s_chosen"));
-            Utility.debugPrintln("Main bisector at " + p1 + " " + p2);
-            tempB2S.put(Arrays.asList(p1, p2), new ArrayList(tempB));
-            //Utility.debugPrintln("Created key for " + p1 + ", " + p2 + " : " + Arrays.toString(new Vertex[]{p1, p2}));
-            
-            // Find intersections between non-inner vertices
-            ArrayList<Vertex> nonInnerVertices = Utility.findNonInnerVertices(quad, a1, a2, angle);
-            calculateAllBisectorRays(nonInnerVertices, quad, h, g, a1, p1, p2, angle, tempB2S); // Adds them to tempB2S
-            //this.bisectors2S.putAll(tempB2S);
-        /*} else {
-            Utility.debugPrintln("[findBisectorOfTwoSites] B2S key already exists. This shouldn't happen!");
-        }*/
-        
+        ArrayList<Bisector> tempB = new ArrayList();
+        tempB.add(new Bisector(new Vertex[]{p1, p2}, h, g, "b2s_chosen"));
+        //Utility.debugPrintln("Main bisector at " + p1 + " " + p2);
+        tempB2S.put(Arrays.asList(p1, p2), new ArrayList(tempB));
+        //Utility.debugPrintln("Created key for " + p1 + ", " + p2 + " : " + Arrays.toString(new Vertex[]{p1, p2}));
+
+        // Find intersections between non-inner vertices
+        ArrayList<Vertex> nonInnerVertices = Utility.findNonInnerVertices(quad, a1, a2, angle);
+        calculateAllBisectorRays(nonInnerVertices, quad, h, g, a1, p1, p2, angle, tempB2S); // Adds them to tempB2S
         
         return tempB2S;
     }
@@ -226,13 +217,13 @@ public class FindBisectorsTwoSites {
      */
     private Vertex[] findInnerVertices(Quadrilateral q, double angle) {
         Vertex[] innerVerts = new Vertex[2], rVerts = new Vertex[4];
-        Utility.debugPrint("Rotated quad: ");
+        //Utility.debugPrint("Rotated quad: ");
         // Rotate all quad vertices
         for (int i = 0; i < q.getVertices().length; i ++) {
             rVerts[i] = Utility.rotateVertex(q.getVertices()[i], q.getCenter(), angle);
-            Utility.debugPrint(rVerts[i] + " ");
+            //Utility.debugPrint(rVerts[i] + " ");
         }
-        Utility.debugPrintln("");
+        //Utility.debugPrintln("");
         
         // Sort rotated quad vertices by ascending y value (more or less sweep line)
         Arrays.sort(rVerts, new Comparator<Vertex>() {
@@ -434,7 +425,7 @@ public class FindBisectorsTwoSites {
         //Utility.debugPrintln(slope(a1, h1) + " : " + slope(a2, h2));
         double tolerance = 0.00001;
         if (Math.abs(Utility.slope(a1, h1) - Utility.slope(a2, h2)) < tolerance || (Utility.slope(a1, h1) == Double.POSITIVE_INFINITY && Utility.slope(a2, h2) == Double.NEGATIVE_INFINITY) || (Utility.slope(a1, h1) == Double.NEGATIVE_INFINITY && Utility.slope(a2, h2) == Double.POSITIVE_INFINITY)) {
-            Utility.debugPrintln("Handling degenerate case for main bisector segment !!!");
+            //Utility.debugPrintln("Handling degenerate case for main bisector segment !!!");
             ra1 = Utility.rotateVertex(a1, Utility.midpoint(a1, a2), angle);
             ra2 = Utility.rotateVertex(a2, Utility.midpoint(a1, a2), angle);
             rh1 = Utility.rotateVertex(h1, Utility.midpoint(a1, a2), angle);
