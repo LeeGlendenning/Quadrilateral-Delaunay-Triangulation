@@ -726,7 +726,7 @@ public class FindBisectorsThreeSites {
      * @param v2 Endvertex of ray represented as line segment
      * @return Vertex on line segment at boundary of screen
      */
-    private Vertex findBoundaryVertexOnRay(Vertex v1, Vertex v2) {
+    public Vertex findBoundaryVertexOnRay(Vertex v1, Vertex v2) {
         double boundaryBuff = 10000;
         Vertex[] leftScreen = {new Vertex(-boundaryBuff, -boundaryBuff), new Vertex(-boundaryBuff, this.height+boundaryBuff)};
         Vertex[] rightScreen = {new Vertex(this.width+boundaryBuff, -boundaryBuff), new Vertex(this.width+boundaryBuff, this.height+boundaryBuff)};

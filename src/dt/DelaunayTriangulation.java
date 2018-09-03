@@ -199,7 +199,7 @@ public class DelaunayTriangulation extends JPanel {
         
         // 3 Faces commonly adjacent to vContainerFace
         List<Vertex> commonVerts = intersectVertexSets(vContainerFace[0].getNeighbours(), vContainerFace[1].getNeighbours());
-        Vertex closest = closestVertex(vContainerFace[0], vContainerFace[1], commonVerts, new Vertex[]{v, vContainerFace[2]}, true);
+        Vertex closest = closestVertex(vContainerFace[0], vContainerFace[1], commonVerts, new Vertex[]{v, vContainerFace[2]});
         if (closest == null) {
             faces[3] = null;
         } else {
@@ -207,7 +207,7 @@ public class DelaunayTriangulation extends JPanel {
         }
         
         commonVerts = intersectVertexSets(vContainerFace[1].getNeighbours(), vContainerFace[2].getNeighbours());
-        closest = closestVertex(vContainerFace[1], vContainerFace[2], commonVerts, new Vertex[]{v, vContainerFace[0]}, true);
+        closest = closestVertex(vContainerFace[1], vContainerFace[2], commonVerts, new Vertex[]{v, vContainerFace[0]});
         if (closest == null) {
             faces[4] = null;
         } else {
@@ -215,7 +215,7 @@ public class DelaunayTriangulation extends JPanel {
         }
         
         commonVerts = intersectVertexSets(vContainerFace[2].getNeighbours(), vContainerFace[0].getNeighbours());
-        closest = closestVertex(vContainerFace[2], vContainerFace[0], commonVerts, new Vertex[]{v, vContainerFace[1]}, true);
+        closest = closestVertex(vContainerFace[2], vContainerFace[0], commonVerts, new Vertex[]{v, vContainerFace[1]});
         if (closest == null) {
             faces[5] = null;
         } else {
@@ -233,19 +233,43 @@ public class DelaunayTriangulation extends JPanel {
      * @param ignore Vertex to ignore
      * @return Vertex having min distance to v1 and v2
      */
-    private Vertex closestVertex(Vertex v1, Vertex v2, List<Vertex> comparators, Vertex[] ignore, boolean checkIntersection) {
+    private Vertex closestVertex(Vertex v1, Vertex v2, List<Vertex> comparators, Vertex[] ignore) {
         Vertex closest = null;
         for (Vertex c : comparators) {
             if (!c.equals(ignore[0]) && !c.equals(ignore[1]) &&
                     (closest == null || (Utility.euclideanDistance(v1, c) + Utility.euclideanDistance(v1, c)) <
                     (Utility.euclideanDistance(v1, closest) + Utility.euclideanDistance(v2, closest)))) {
-                if (checkIntersection && Utility.doLineSegmentsIntersect(v1, v2, ignore[0], c) == null) {
-                    continue;
+                // Line through v1,v2 used to find the closest vertex on the side of the line opposite to v, the newly added vertex (ignore[0])
+                Vertex[] lineCheck = constructLine(v1, v2);
+                if (Utility.doLineSegmentsIntersect(lineCheck[0], lineCheck[1], ignore[0], c) != null) {
+                    closest = c;
                 }
-                closest = c;
             }
         }
         return closest;
+    }
+    
+    /**
+     * 
+     * @param v1 A vertex of a line segment
+     * @param v2 A vertex of a line segment
+     * @return Line through the line segment v1,v2
+     */
+    private Vertex[] constructLine(Vertex v1, Vertex v2) {
+        double rayEndx = Utility.RAY_SIZE;
+        if (v1.x > v2.x || (v1.x == v2.x && v1.y > v2.y)) {
+            rayEndx = -Utility.RAY_SIZE;
+        }
+        Vertex rayEnd1 = new Vertex(rayEndx, Utility.midpoint(v1, v2).y); // End vertex of ray which is basically + or - infinity
+        Vertex rayEnd2 = new Vertex(-rayEndx, Utility.midpoint(v1, v2).y);
+        
+        double angle = Utility.calculateAngle(v1, v2); // Angle that slope(v1, v2) makes with x axis
+        
+        // Define line by rotating rayEnd such that it has slope(v1, v2)
+        Vertex[] line = new Vertex[]{this.b3s.findBoundaryVertexOnRay(Utility.rotateVertex(rayEnd1, new Vertex(0,0), -angle), Utility.midpoint(v1, v2)), 
+                this.b3s.findBoundaryVertexOnRay(Utility.rotateVertex(rayEnd2, new Vertex(0,0), -angle), Utility.midpoint(v1, v2))};
+        System.out.println("constructLine through " + v1 + ", " + v2 + ": " + Arrays.toString(line) + ", midpoint = " + Utility.midpoint(v1, v2));
+        return line;
     }
     
     /**
@@ -382,7 +406,7 @@ public class DelaunayTriangulation extends JPanel {
                     bisectors2S = new HashMap();
                     List<Vertex> commonVerts = intersectVertexSets(this.dtGraph.getVertex(v1.x, v1.y).getNeighbours(), 
                             this.dtGraph.getVertex(newEdgeVert.x, newEdgeVert.y).getNeighbours());
-                    Vertex aVert = closestVertex(v1, newEdgeVert, commonVerts, new Vertex[]{v, v}, false);
+                    Vertex aVert = closestVertex(v1, newEdgeVert, commonVerts, new Vertex[]{v, v});
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, aVert.deepCopy(), v1.deepCopy()));
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v1.deepCopy(), newEdgeVert.deepCopy()));
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, newEdgeVert.deepCopy(), aVert.deepCopy()));
@@ -392,7 +416,7 @@ public class DelaunayTriangulation extends JPanel {
                     bisectors2S = new HashMap();
                     commonVerts = intersectVertexSets(this.dtGraph.getVertex(v2.x, v2.y).getNeighbours(), 
                             this.dtGraph.getVertex(newEdgeVert.x, newEdgeVert.y).getNeighbours());
-                    Vertex bVert = closestVertex(v2, newEdgeVert, commonVerts, new Vertex[]{v, v}, false);
+                    Vertex bVert = closestVertex(v2, newEdgeVert, commonVerts, new Vertex[]{v, v});
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, bVert.deepCopy(), v2.deepCopy()));
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v2.deepCopy(), newEdgeVert.deepCopy()));
                     bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, newEdgeVert.deepCopy(), bVert.deepCopy()));
@@ -474,7 +498,7 @@ public class DelaunayTriangulation extends JPanel {
      * @return True if a vertex in the vertex set lies inside quad. False otherwise
      */
     private Vertex vertexInsideQuad(Vertex[] quad, Bisector b3s, List<Vertex> vIgnore, List<Vertex> pts) {
-        System.out.println("vertexInsideQuad: " + Arrays.toString(b3s.getAdjacentPtsArray()));
+        Utility.debugPrintln("minQuad through: " + Arrays.toString(b3s.getAdjacentPtsArray()));
         for (Vertex v : pts) {
             Utility.debugPrintln("Checking if " + v + " inside quad");
             if (!vIgnore.contains(v) &&
