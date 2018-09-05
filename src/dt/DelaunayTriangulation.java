@@ -393,7 +393,7 @@ public class DelaunayTriangulation extends JPanel {
                     // Check queue and remove B3S if it corresponds to a face altered by edge flip
                     // Old faces were (v, v1, v2) and (v1, v2, newEdgeVert)
                     System.out.println("Checking queue for irrelevant B3S");
-                    for (Bisector oldB3S : b3sList) {
+                    for (Bisector oldB3S : b3sList.toArray(new Bisector[b3sList.size()])) {
                         if ((oldB3S.getAdjacentPtsList().contains(v) &&
                                 oldB3S.getAdjacentPtsList().contains(v1) &&
                                 oldB3S.getAdjacentPtsList().contains(v2)) 
