@@ -311,7 +311,7 @@ public class DelaunayTriangulation extends JPanel {
      * @return List of Bisector representing B3S for each given face
      */
     private List<Bisector> calculateB3S(Vertex[][] faces, HashMap<List<Vertex>, List<Bisector>> bisectors2S) {
-        List<Bisector> tempB3S = new ArrayList();
+        List<Bisector> tempB3S = Collections.synchronizedList(new ArrayList());
         
         // Find B3S for each face
         for (Vertex[] face : faces) {
@@ -390,6 +390,24 @@ public class DelaunayTriangulation extends JPanel {
                 
                 // Flip edge and check affacted faces
                 if (flipEdge(new Edge(v1, v2), v, newEdgeVert)) {
+                    // Check queue and remove B3S if it corresponds to a face altered by edge flip
+                    // Old faces were (v, v1, v2) and (v1, v2, newEdgeVert)
+                    System.out.println("Checking queue for irrelevant B3S");
+                    for (Bisector oldB3S : b3sList) {
+                        if ((oldB3S.getAdjacentPtsList().contains(v) &&
+                                oldB3S.getAdjacentPtsList().contains(v1) &&
+                                oldB3S.getAdjacentPtsList().contains(v2)) 
+                                ||
+                                (oldB3S.getAdjacentPtsList().contains(v1) &&
+                                oldB3S.getAdjacentPtsList().contains(v2) &&
+                                oldB3S.getAdjacentPtsList().contains(newEdgeVert))) {
+                            System.out.println("Removing B3S from queue: " + oldB3S.getAdjacentPtsList().toString());
+                            b3sList.remove(oldB3S);
+                        } else {
+                            System.out.println(oldB3S.getAdjacentPtsList().toString() + " is okay");
+                        }
+                    }
+                    
                     // Calc the 4 corresponding B3S and add to b3sList
                     Bisector tempB;
                     
