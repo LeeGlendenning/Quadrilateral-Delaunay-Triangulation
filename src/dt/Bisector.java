@@ -85,7 +85,11 @@ public class Bisector {
      * @return start Vertex
      */
     public Vertex getStartVertex() {
-        return this.startVertex.deepCopy();
+        if (this.startVertex == null) {
+            return null;
+        } else {
+            return this.startVertex.deepCopy();
+        }
     }
     
     /**
@@ -93,7 +97,11 @@ public class Bisector {
      * @return end Vertex
      */
     public Vertex getEndVertex() {
-        return this.endVertex.deepCopy();
+        if (this.endVertex == null) {
+            return null;
+        } else {
+            return this.endVertex.deepCopy();
+        }
     }
     
     /**
@@ -101,8 +109,19 @@ public class Bisector {
      * @return Deep copy of this VoronoiBisector
      */
     public Bisector deepCopy() {
+        Vertex tempStart, tempEnd;
+        if (this.startVertex == null) {
+            tempStart = null;
+        } else {
+            tempStart = this.startVertex.deepCopy();
+        }
+        if (this.endVertex == null) {
+            tempEnd = null;
+        } else {
+            tempEnd = this.endVertex.deepCopy();
+        }
         Bisector copy = new Bisector(Utility.deepCopyVertexArray(this.getAdjacentPtsArray()), 
-                this.startVertex.deepCopy(), endVertex.deepCopy(), this.tag);
+                tempStart, tempEnd, this.tag);
         copy.setMinQuadScale(this.minQuadScale);
         
         return copy;

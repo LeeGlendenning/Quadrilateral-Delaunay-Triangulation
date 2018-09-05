@@ -169,9 +169,11 @@ public class DelaunayTriangulation extends JPanel {
         
         this.chosenB3S = new ArrayList();
         for (Bisector b : bisectors3S) {
-            this.chosenB3S.add(b.deepCopy());
-            // Set scaling for minQuad
-            calculateMinQuad(this.chosenB3S.get(this.chosenB3S.size()-1));
+            if (b.getEndVertex() != null) {
+                this.chosenB3S.add(b.deepCopy());
+                // Set scaling for minQuad
+                calculateMinQuad(this.chosenB3S.get(this.chosenB3S.size()-1));
+            }
         }
         
         checkForBadEdges(v, bisectors3S); // If necessary, flip bad edges
@@ -322,6 +324,8 @@ public class DelaunayTriangulation extends JPanel {
             Bisector b = this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, face[0].deepCopy(), face[1].deepCopy(), face[2].deepCopy());
             if (b != null) {
                 tempB3S.add(b);
+            } else {
+                tempB3S.add(new Bisector(new Vertex[]{face[0].deepCopy(), face[1].deepCopy(), face[2].deepCopy()}, null, null, ""));
             }
         }
         
@@ -346,7 +350,8 @@ public class DelaunayTriangulation extends JPanel {
             System.out.println("# b3s after removing: " + b3sList.size());
             System.out.println("Handling B3S: " + b.getAdjacentPtsList().toString());
             Vertex vInQuad;
-            if ((vInQuad = vertexInsideQuad(calculateMinQuad(b), b, b.getAdjacentPtsList(), this.dtGraph.getVertices())) != null &&
+            if (b.getEndVertex() != null && 
+                    (vInQuad = vertexInsideQuad(calculateMinQuad(b), b, b.getAdjacentPtsList(), this.dtGraph.getVertices())) != null &&
                     !b.getAdjacentPtsList().contains(vInQuad)) {
                 Vertex v1 = null, v2 = null;
                 // Get the two vertices in the bad edge
@@ -392,7 +397,6 @@ public class DelaunayTriangulation extends JPanel {
                 if (flipEdge(new Edge(v1, v2), v, newEdgeVert)) {
                     // Check queue and remove B3S if it corresponds to a face altered by edge flip
                     // Old faces were (v, v1, v2) and (v1, v2, newEdgeVert)
-                    System.out.println("Checking queue for irrelevant B3S");
                     for (Bisector oldB3S : b3sList.toArray(new Bisector[b3sList.size()])) {
                         if ((oldB3S.getAdjacentPtsList().contains(v) &&
                                 oldB3S.getAdjacentPtsList().contains(v1) &&
@@ -403,8 +407,6 @@ public class DelaunayTriangulation extends JPanel {
                                 oldB3S.getAdjacentPtsList().contains(newEdgeVert))) {
                             System.out.println("Removing B3S from queue: " + oldB3S.getAdjacentPtsList().toString());
                             b3sList.remove(oldB3S);
-                        } else {
-                            System.out.println(oldB3S.getAdjacentPtsList().toString() + " is okay");
                         }
                     }
                     
@@ -435,6 +437,8 @@ public class DelaunayTriangulation extends JPanel {
                         //b3sList.add(0, tempB);
                     }
                 }
+            } else if (b.getEndVertex() == null) {
+                System.out.println("Checking if an edge should be removed for " + b.getAdjacentPtsList().toString());
             }
         }
         System.out.println("\n");
@@ -456,7 +460,7 @@ public class DelaunayTriangulation extends JPanel {
         bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v1.deepCopy(), v2.deepCopy()));
         bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v2.deepCopy(), v3.deepCopy()));
         bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v3.deepCopy(), v1.deepCopy()));
-        System.out.println("Checking B3S between " + v1 + ", " + v2 + ", " + v3);
+        //Utility.debugPrintln("Checking B3S between " + v1 + ", " + v2 + ", " + v3);
         return this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v1.deepCopy(), v2.deepCopy(), v3.deepCopy());
     }
     
