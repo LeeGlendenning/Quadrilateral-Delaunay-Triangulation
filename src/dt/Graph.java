@@ -14,6 +14,7 @@ public class Graph {
     private List<Edge> edges;
     private int xmax, ymax;
     private double BOUNDARY_SIZE;
+    private List<Edge> removedEdges; // Does now include flipped edges
     
     /**
      * Empty constructor initializes instance variables
@@ -48,6 +49,7 @@ public class Graph {
         this.ymax = ymax;
         this.vertices = Collections.synchronizedList(new ArrayList());
         this.edges = Collections.synchronizedList(new ArrayList());
+        this.removedEdges = Collections.synchronizedList(new ArrayList());
         constructBoundaryTriangle();
     }
     
@@ -218,10 +220,7 @@ public class Graph {
         
         // Take copy of edge list
         List<Edge> allEdges = new ArrayList(this.edges);
-        // Consider edges of containing triangle as well
-        addEdge(this.boundaryTriangle[0], this.boundaryTriangle[1]);
-        addEdge(this.boundaryTriangle[1], this.boundaryTriangle[2]);
-        addEdge(this.boundaryTriangle[2], this.boundaryTriangle[0]);
+        allEdges.addAll(this.removedEdges);
         
         // Find the edges that cross slab i,i+1
         for (Edge e : allEdges) {
@@ -322,10 +321,14 @@ public class Graph {
      * including each vertex's incidence neighborhood
      * 
      * @param e The Edge to remove from the Graph
+     * @param isDueToEdgeFlip Boolean true if edge is being removed due to an edge flip, false otherwise
      */
-    public void removeEdge(Edge e){
+    public void removeEdge(Edge e, boolean isDueToEdgeFlip){
        e.getVertices()[0].removeNeighbor(e);
        e.getVertices()[1].removeNeighbor(e);
+       if (!isDueToEdgeFlip) {
+           this.removedEdges.add(e);
+       }
        Utility.debugPrintln("Removing edge: " + e);
        this.edges.remove(e);
     }
@@ -364,7 +367,6 @@ public class Graph {
     /**
      * 
      * @param v The vertex to remove
-     * @return List of edges removed from the graph
      */
     public void removeVertex(Vertex v){
         Utility.debugPrintln("Removing vertex " + v);
@@ -372,7 +374,7 @@ public class Graph {
         
         for (int i = v.getNeighborCount()-1; i >= 0; i --) {
             Utility.debugPrintln("Removing neighbor ");
-            this.removeEdge(v.getNeighbor(i));
+            this.removeEdge(v.getNeighbor(i), true);
         }
     }
     
