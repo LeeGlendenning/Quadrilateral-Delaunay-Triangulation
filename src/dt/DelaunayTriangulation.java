@@ -387,8 +387,8 @@ public class DelaunayTriangulation extends JPanel {
                     Utility.debugPrintln("[checkForBadEdges] new Edge vertex is null - This shouldn't happen!!");
                 }
                 
-                Utility.debugPrintln("Trying to flip edge " + new Edge(v1, v2));
-                Utility.debugPrintln("New edge would be " + new Edge(v, newEdgeVert));
+                //Utility.debugPrintln("Trying to flip edge " + new Edge(v1, v2));
+                //Utility.debugPrintln("New edge would be " + new Edge(v, newEdgeVert));
                 
                 // Flip edge and check affacted faces
                 if (flipEdge(new Edge(v1, v2), v, newEdgeVert)) {

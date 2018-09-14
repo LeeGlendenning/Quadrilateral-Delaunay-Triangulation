@@ -350,16 +350,16 @@ public class FindBisectorsThreeSites {
         
         // Draw FG region
         //Utility.debugPrintln("FG edges:");
-        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, u1[3], "b3s_step"));
         //Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
-        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, u, u2[3], "b3s_step"));
         //Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
-        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, v1[3], "b3s_step"));
         //Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
-        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle), "b3s_step"));
+        this.displayEdges.add(new Bisector(new Vertex[]{a1, a2}, v, v2[3], "b3s_step"));
         //Utility.debugPrintln(this.displayEdges.get(displayEdges.size()-1).getStartVertex() + " " + this.displayEdges.get(displayEdges.size()-1).getEndVertex());
         
-        return new Vertex[]{u, Utility.rotateVertex(u1[3], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(u2[3], Utility.midpoint(a1, a2), -angle), v, Utility.rotateVertex(v1[3], Utility.midpoint(a1, a2), -angle), Utility.rotateVertex(v2[3], Utility.midpoint(a1, a2), -angle)};
+        return new Vertex[]{u, u1[3], u2[3], v, v1[3], v2[3]};
     }
     
     /**
@@ -409,6 +409,7 @@ public class FindBisectorsThreeSites {
         Vertex[] ray2 = {a, Utility.rotateVertex(rayEnd2, a, angle)};
         
         //Utility.debugPrintln("  ray = " + ray[0] + ", " + ray[1]);
+        //Utility.debugPrintln("  ray2 = " + ray2[0] + ", " + ray2[1]);
         
         return new Vertex[]{ray[0], ray[1], ray2[0], ray2[1]};
     }
