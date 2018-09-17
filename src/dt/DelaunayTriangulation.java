@@ -475,12 +475,15 @@ public class DelaunayTriangulation extends JPanel {
         List<Vertex> commonVerts = intersectVertexSets(this.dtGraph.getVertex(v1.x, v1.y).getNeighbours(), 
                 this.dtGraph.getVertex(v2.x, v2.y).getNeighbours());
         Vertex v3 = closestVertex(v1, v2, commonVerts, new Vertex[]{ptInQuad, ptInQuad});
+        if (v3 == null) {
+            return null;
+        }
         
         HashMap<List<Vertex>, List<Bisector>> bisectors2S = new HashMap();
         bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v1.deepCopy(), v2.deepCopy()));
         bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v2.deepCopy(), v3.deepCopy()));
         bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v3.deepCopy(), v1.deepCopy()));
-        //Utility.debugPrintln("Checking B3S between " + v1 + ", " + v2 + ", " + v3);
+        Utility.debugPrintln("Checking B3S between " + v1 + ", " + v2 + ", " + v3);
         return this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v1.deepCopy(), v2.deepCopy(), v3.deepCopy());
     }
     
@@ -555,7 +558,7 @@ public class DelaunayTriangulation extends JPanel {
      * @return True if a vertex in the vertex set lies inside quad. False otherwise
      */
     private Vertex vertexInsideQuad(Vertex[] quad, Bisector b3s, List<Vertex> vIgnore, List<Vertex> pts) {
-        //Utility.debugPrintln("minQuad through: " + Arrays.toString(b3s.getAdjacentPtsArray()));
+        Utility.debugPrintln("Checking if vertex inside: " + Arrays.toString(b3s.getAdjacentPtsArray()));
         for (Vertex v : pts) {
             //Utility.debugPrintln("Checking if " + v + " inside quad");
             if (!vIgnore.contains(v) &&
