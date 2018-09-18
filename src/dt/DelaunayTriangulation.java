@@ -140,8 +140,6 @@ public class DelaunayTriangulation extends JPanel {
         }
         Utility.debugPrintln("Adding vertex " + v + "\n");
         
-        this.performanceData.add(new int[4]); // Init new performance data array for runtime tracking
-        
         Vertex[] triangle = this.dtGraph.locateTriangle(v);
         if (triangle == null) {
             Utility.debugPrintln("Skipping adding vertex because it is on a line.");
@@ -341,15 +339,18 @@ public class DelaunayTriangulation extends JPanel {
      * @param b3sList List of B3S to check
      */
     private void checkForBadEdges(Vertex v, List<Bisector> b3sList) {
+        //Utility.debugPrintln("Checking " + b3sList.size() + " b3s for vertex inside");
         List<Bisector> originalB3SList = Arrays.asList(Utility.deepCopyVBArray(b3sList.toArray(new Bisector[b3sList.size()])));
+        List<Bisector> nullB3S = new ArrayList();
+        
         while (!b3sList.isEmpty()) {
             Bisector b = b3sList.get(0).deepCopy();
+            Utility.debugPrintln("Checking validity of b3s: " + b.getAdjacentPtsList().toString() + ": " + b.getEndVertex());
             b3sList.remove(0);
             Vertex vInQuad;
             if (b.getEndVertex() != null && 
                     (vInQuad = vertexInsideQuad(calculateMinQuad(b), b, b.getAdjacentPtsList(), this.dtGraph.getVertices())) != null &&
                     !b.getAdjacentPtsList().contains(vInQuad)) {
-                Utility.debugPrintln("Handling B3S: " + b.getAdjacentPtsList().toString());
                 Vertex v1 = null, v2 = null;
                 // Get the two vertices in the bad edge
                 for (Vertex adjV : b.getAdjacentPtsArray()) {
@@ -406,62 +407,124 @@ public class DelaunayTriangulation extends JPanel {
                             b3sList.remove(oldB3S);
                         }
                     }
+                    // Check nullB3S queue and remove B3S if it corresponds to a face altered by edge flip
+                    for (Bisector nB3S : nullB3S.toArray(new Bisector[nullB3S.size()])) {
+                        if ((nB3S.getAdjacentPtsList().contains(v) &&
+                                nB3S.getAdjacentPtsList().contains(v1) &&
+                                nB3S.getAdjacentPtsList().contains(v2)) 
+                                ||
+                                (nB3S.getAdjacentPtsList().contains(v1) &&
+                                nB3S.getAdjacentPtsList().contains(v2) &&
+                                nB3S.getAdjacentPtsList().contains(newEdgeVert))) {
+                            Utility.debugPrintln("Removing B3S from nullB3S queue: " + nB3S.getAdjacentPtsList().toString());
+                            nullB3S.remove(nB3S);
+                        }
+                    }
                     
                     // Calc the 4 corresponding B3S and add to b3sList
                     Bisector tempB;
                     
                     // For B3S between v, v1, closest
                     if ((tempB = checkFaceAfterFlip(v, v1, Utility.midpoint(v1, v2))) != null) {
-                        Utility.debugPrintln("Adding B3S: " + tempB.getAdjacentPtsList().toString());
+                        Utility.debugPrintln("1Adding B3S: " + tempB.getAdjacentPtsList().toString());
                         //b3sList.add(0, tempB);
                     }
                     
                     // For B3S between v, v2, closest
                     if ((tempB = checkFaceAfterFlip(v, v2, Utility.midpoint(v1, v2))) != null) {
-                        Utility.debugPrintln("Adding B3S: " + tempB.getAdjacentPtsList().toString());
+                        Utility.debugPrintln("2Adding B3S: " + tempB.getAdjacentPtsList().toString());
                         //b3sList.add(0, tempB);
                     }
                     
                     // For B3S between v1, newEdgeVert, closest
                     if ((tempB = checkFaceAfterFlip(v1, newEdgeVert, Utility.midpoint(v1, v2))) != null) {
-                        Utility.debugPrintln("Adding B3S: " + tempB.getAdjacentPtsList().toString());
+                        Utility.debugPrintln("3Adding B3S: " + tempB.getAdjacentPtsList().toString());
                         //b3sList.add(0, tempB);
                     }
                     
                     // For B3S between v2, newEdgeVert, closest
                     if ((tempB = checkFaceAfterFlip(v2, newEdgeVert, Utility.midpoint(v1, v2))) != null) {
-                        Utility.debugPrintln("Adding B3S: " + tempB.getAdjacentPtsList().toString());
+                        Utility.debugPrintln("4Adding B3S: " + tempB.getAdjacentPtsList().toString());
                         //b3sList.add(0, tempB);
+                    }
+                    
+                    // Test two triangles in the flip quadrilateral for boundary edge to be removed
+                    
+                    // Test (v1, v, newEdgeVert)
+                    Utility.debugPrintln("Testing flip quad triang: " + v + ", " + v1 + ", " + newEdgeVert);
+                    if (checkInnerQuadFaceAfterFlip(v, v1, newEdgeVert) == null) {
+                        removeEdgeIfNecessary(new Bisector(new Vertex[]{v, v1, newEdgeVert}, null, null, ""));
+                    }
+                    
+                    // Test (v2, v, newEdgeVert)
+                    Utility.debugPrintln("Testing flip quad triang: " + v + ", " + v2 + ", " + newEdgeVert);
+                    if (checkInnerQuadFaceAfterFlip(v, v2, newEdgeVert) == null) {
+                        removeEdgeIfNecessary(new Bisector(new Vertex[]{v, v2, newEdgeVert}, null, null, ""));
                     }
                 }
             } else if (b.getEndVertex() == null) {
-                int ii, iii; // i, ii, iii are indices of each of the face vertices
-                for (int i = 0; i < b.getAdjacentPtsArray().length; i ++) {
-                    if (i == b.getAdjacentPtsArray().length-1) {
-                        ii = 0;
-                    } else {
-                        ii = i+1;
-                    }
-                    if (ii == b.getAdjacentPtsArray().length-1) {
-                        iii = 0;
-                    } else {
-                        iii = ii+1;
-                    }
-                    List<Vertex> commonVerts = intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[i].x, b.getAdjacentPtsArray()[i].y).getNeighbours(), 
-                    this.dtGraph.getVertex(b.getAdjacentPtsArray()[ii].x, b.getAdjacentPtsArray()[ii].y).getNeighbours());
-                    // If edge exists in graph and it is an exterior then remove it
-                    if (this.dtGraph.getEdges().contains(new Edge(b.getAdjacentPtsArray()[i], b.getAdjacentPtsArray()[ii])) &&
-                            closestVertex(b.getAdjacentPtsArray()[i], b.getAdjacentPtsArray()[ii], commonVerts, 
-                            new Vertex[]{b.getAdjacentPtsArray()[iii], b.getAdjacentPtsArray()[iii]}) == null) {
-                        Utility.debugPrintln("Found and removed bad exterior edge: " + b.getAdjacentPtsArray()[i] + ", " + b.getAdjacentPtsArray()[ii]);
-                        this.dtGraph.removeEdge(new Edge(b.getAdjacentPtsArray()[i], b.getAdjacentPtsArray()[ii]), false);
-                    }
-                }
-                
-                
+                Utility.debugPrintln("Adding B3S to nullB3S list");
+                nullB3S.add(b);
+                //removeEdgeIfNecessary(b);
             }
         }
+        
+        Utility.debugPrintln("Removing edges if necessary:");
+        while (!nullB3S.isEmpty()) {
+            removeEdgeIfNecessary(nullB3S.get(0));
+            nullB3S.remove(0);
+        }
+        
         Utility.debugPrintln("\n");
+    }
+    
+    /**
+     * 
+     * @param b B3S to check whether an edge should be removed
+     */
+    private void removeEdgeIfNecessary(Bisector b) {
+        int ii, iii; // i, ii, iii are indices of each of the face vertices
+        for (int i = 0; i < b.getAdjacentPtsArray().length; i ++) {
+            if (i == b.getAdjacentPtsArray().length-1) {
+                ii = 0;
+            } else {
+                ii = i+1;
+            }
+            if (ii == b.getAdjacentPtsArray().length-1) {
+                iii = 0;
+            } else {
+                iii = ii+1;
+            }
+            List<Vertex> commonVerts = intersectVertexSets(this.dtGraph.getVertex(b.getAdjacentPtsArray()[i].x, 
+                    b.getAdjacentPtsArray()[i].y).getNeighbours(), this.dtGraph.getVertex(b.getAdjacentPtsArray()[ii].x, 
+                    b.getAdjacentPtsArray()[ii].y).getNeighbours());
+            //Utility.debugPrintln(" Checking edge: " + b.getAdjacentPtsArray()[i] + ", " + b.getAdjacentPtsArray()[ii]);
+            //Utility.debugPrintln(" Closest vert: " + closestVertex(b.getAdjacentPtsArray()[i], b.getAdjacentPtsArray()[ii], commonVerts, 
+              //      new Vertex[]{b.getAdjacentPtsArray()[iii], b.getAdjacentPtsArray()[iii]}));
+            // If edge exists in graph and it is an exterior then remove it
+            if (this.dtGraph.getEdges().contains(new Edge(b.getAdjacentPtsArray()[i], b.getAdjacentPtsArray()[ii])) &&
+                    closestVertex(b.getAdjacentPtsArray()[i], b.getAdjacentPtsArray()[ii], commonVerts, 
+                    new Vertex[]{b.getAdjacentPtsArray()[iii], b.getAdjacentPtsArray()[iii]}) == null) {
+                Utility.debugPrintln("Found and removed bad exterior edge: " + b.getAdjacentPtsArray()[i] + ", " + b.getAdjacentPtsArray()[ii]);
+                this.dtGraph.removeEdge(new Edge(b.getAdjacentPtsArray()[i], b.getAdjacentPtsArray()[ii]), false);
+            }
+        }
+    }
+    
+    /**
+     * 
+     * @param v1 A vertex in the face to be checked
+     * @param v2 A vertex in the face to be checked
+     * @param v3 A vertex in the face to be checked
+     * @return a B3S if it exists
+     */
+    private Bisector checkInnerQuadFaceAfterFlip(Vertex v1, Vertex v2, Vertex v3) {
+        HashMap<List<Vertex>, List<Bisector>> bisectors2S = new HashMap();
+        bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v1.deepCopy(), v2.deepCopy()));
+        bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v2.deepCopy(), v3.deepCopy()));
+        bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v3.deepCopy(), v1.deepCopy()));
+        Utility.debugPrintln("Checking B3S between " + v1 + ", " + v2 + ", " + v3);
+        return this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v1.deepCopy(), v2.deepCopy(), v3.deepCopy());
     }
     
     /**
@@ -542,13 +605,9 @@ public class DelaunayTriangulation extends JPanel {
     private void updateShortestPaths() {
         this.oldSelectedPath = this.curSelectedPath;
         this.curSelectedPath = new ArrayList();
-        long startTime = System.nanoTime();
         this.shortestPaths = findAllPairsShortestPath();
         
         updateStretchFactor();
-        long endTime = System.nanoTime();
-        long duration = (endTime - startTime) / 1000000;
-        this.performanceData.get(this.performanceData.size()-1)[3] = Math.round(duration);
     }
     
     /**
@@ -558,7 +617,7 @@ public class DelaunayTriangulation extends JPanel {
      * @return True if a vertex in the vertex set lies inside quad. False otherwise
      */
     private Vertex vertexInsideQuad(Vertex[] quad, Bisector b3s, List<Vertex> vIgnore, List<Vertex> pts) {
-        Utility.debugPrintln("Checking if vertex inside: " + Arrays.toString(b3s.getAdjacentPtsArray()));
+        //Utility.debugPrintln("Checking if vertex inside: " + Arrays.toString(b3s.getAdjacentPtsArray()));
         for (Vertex v : pts) {
             //Utility.debugPrintln("Checking if " + v + " inside quad");
             if (!vIgnore.contains(v) &&
@@ -566,11 +625,11 @@ public class DelaunayTriangulation extends JPanel {
                     Utility.isLeftOfSegment(quad[1], quad[2], v, 0.1) <= 0 &&
                     Utility.isLeftOfSegment(quad[2], quad[3], v, 0.1) <= 0 &&
                     Utility.isLeftOfSegment(quad[3], quad[0], v, 0.1) <= 0) {
-                System.out.println("Vertex " + v + " inside");
+                System.out.println("Vertex " + v + " inside " + Arrays.toString(b3s.getAdjacentPtsArray()));
                 return v;
             }
         }
-        Utility.debugPrintln("No vertex inside quad");
+        //Utility.debugPrintln("No vertex inside quad");
         return null;
     }
     

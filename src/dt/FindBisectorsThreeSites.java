@@ -40,7 +40,7 @@ public class FindBisectorsThreeSites {
         Vertex pLeft = new Vertex(), pRight = new Vertex();
         Utility.setLeftAndRightVertex(v1, v2, pLeft, pRight, Utility.calculateAngle(v1, v2));
                     
-        Utility.debugPrintln("\na1 = " + pLeft + " a2 = " + pRight + " a3 = " + v3);
+        Utility.debugPrintln("a1 = " + pLeft + " a2 = " + pRight + " a3 = " + v3);
         int bisectorCase = caseBisectorBetween3Vertices(q, pLeft, pRight, v3);
         if (bisectorCase == 1) {
             return null;
@@ -105,7 +105,6 @@ public class FindBisectorsThreeSites {
      */
     private int caseBisectorBetween3Vertices(Quadrilateral q, Vertex a1, Vertex a2, Vertex a3) {
         //Utility.debugPrintln("caseBisectorBetween3Vertices: " + a1 + ", " + a2 + ", " + a3);
-        //a3 = new Vertex(a1.x,a1.y);
         double caseTolerance = 0.01;
         
         // Check for degenerate case. FG consists of a line through a1a2
@@ -133,6 +132,7 @@ public class FindBisectorsThreeSites {
         Vertex[] uv;
         
         uv = finduv(q, a1, a2); // Vertex[2] = {u, ray1+, ray2-, v, ray1+, ray2-}
+        //Utility.debugPrintln("uv: " + Arrays.toString(uv));
         
         if (segsParallelToa1a2(q, a1, a2) == 1) { // FG12 is a triangle
             Utility.debugPrintln("B3P Special case - one quad edge parallel to a1a2");
@@ -153,9 +153,8 @@ public class FindBisectorsThreeSites {
                 uv[5] = ray1[1];
             }
         }
-        // Non-degenerate case
         
-        //Utility.debugPrint(Arrays.toString(uv));
+        // Non-degenerate case
         
         // Case 1 split into 3 parts for debugging
         if (Utility.isLeftOfSegment(a1, uv[0], a3, caseTolerance) == -1 &&
@@ -166,14 +165,14 @@ public class FindBisectorsThreeSites {
             Utility.debugPrintln("Vertex inside F - case 1 (do nothing)");
             return 1;
             
-        } else if (Utility.isLeftOfSegment(uv[1], a1, a3, caseTolerance) == 1 &&
-                Utility.isLeftOfSegment(a1,uv[4], a3, caseTolerance) == 1) 
+        } else if (Utility.isLeftOfSegment(a1, uv[1], a3, caseTolerance) == -1 &&
+                Utility.isLeftOfSegment(a1, uv[4], a3, caseTolerance) == 1) 
         {
             Utility.debugPrintln("Vertex inside G12 - case 1 (do nothing)");
             return 1;
             
-        } else if (Utility.isLeftOfSegment(uv[2], a2, a3, caseTolerance) == -1 &&
-                Utility.isLeftOfSegment(a2,uv[5], a3, caseTolerance) == -1) 
+        } else if (Utility.isLeftOfSegment(a2, uv[2], a3, caseTolerance) == 1 &&
+                Utility.isLeftOfSegment(a2, uv[5], a3, caseTolerance) == -1) 
         {
             Utility.debugPrintln("Vertex inside G21 - case 1 (do nothing)");
             return 1;
@@ -298,9 +297,9 @@ public class FindBisectorsThreeSites {
         //Utility.debugPrintln("td vertices: " + Arrays.toString(td));
         
         Vertex[] u1 = findB3SUVRays(q, td[0], a1, q.prevVertex(td[0]));
-        //Utility.debugPrintln("u1: " + u1[0] + ", " + u1[1]);
+        //Utility.debugPrintln("u1: " + u1[0] + ", " + u1[1] + ", " + u1[2] + ", " + u1[3]);
         Vertex[] u2 = findB3SUVRays(q, td[0], a2, q.nextVertex(td[0]));
-        //Utility.debugPrintln("u2: " + u2[0] + ", " + u2[1]);
+        //Utility.debugPrintln("u2: " + u2[0] + ", " + u2[1] + ", " + u2[2] + ", " + u2[3]);
         
         double tolerance = 0.00001;
         Vertex[] v1;
@@ -311,9 +310,9 @@ public class FindBisectorsThreeSites {
         } else {
             v1 = findB3SUVRays(q, td[1], a1, q.nextVertex(td[1]));
         }
-        //Utility.debugPrintln("v1: " + v1[0] + ", " + v1[1]);
+        //Utility.debugPrintln("v1: " + v1[0] + ", " + v1[1] + ", " + v1[2] + ", " + v1[3]);
         Vertex[] v2 = findB3SUVRays(q, td[1], a2, q.prevVertex(td[1]));
-        //Utility.debugPrintln("v2: " + v2[0] + ", " + v2[1]);
+        //Utility.debugPrintln("v2: " + v2[0] + ", " + v2[1] + ", " + v2[2] + ", " + v2[3]);
         
         Vertex u = Utility.doLineSegmentsIntersect(u1[0], u1[1], u2[0], u2[1]);
         Vertex v = Utility.doLineSegmentsIntersect(v1[0], v1[1], v2[0], v2[1]);

@@ -116,7 +116,7 @@ public class Graph {
                 break;
             }
         }
-        Utility.debugPrintln("v in slab " + i + " between " + slabs.get(i) + " and " + slabs.get(i+1));
+        //Utility.debugPrintln("v in slab " + i + " between " + slabs.get(i) + " and " + slabs.get(i+1));
 
         // Holds line segments represnting the intersection of edges with slab i,i+1, keyed by the edge in the DT
         List<EdgeSegment> slabSegs = findSlabSegments(slabs.get(i).x, slabs.get(i+1).x);
@@ -173,7 +173,7 @@ public class Graph {
                 break;
             }
         }
-        Utility.debugPrintln("v in region " + j + " between " + slabSegs.get(j).valEdge + " and " + slabSegs.get(j+1).valEdge);
+        //Utility.debugPrintln("v in region " + j + " between " + slabSegs.get(j).valEdge + " and " + slabSegs.get(j+1).valEdge);
         
         List<Vertex> triangle = new ArrayList();
         
@@ -324,13 +324,17 @@ public class Graph {
      * @param isDueToEdgeFlip Boolean true if edge is being removed due to an edge flip, false otherwise
      */
     public void removeEdge(Edge e, boolean isDueToEdgeFlip){
-       e.getVertices()[0].removeNeighbor(e);
-       e.getVertices()[1].removeNeighbor(e);
+       Utility.debugPrintln("Removing edge: " + e);
+       
+       getVertex(e.getVertices()[0].x, e.getVertices()[0].y).removeNeighbor(e);
+       getVertex(e.getVertices()[1].x, e.getVertices()[1].y).removeNeighbor(e);
        if (!isDueToEdgeFlip) {
            this.removedEdges.add(e);
        }
-       Utility.debugPrintln("Removing edge: " + e);
+       
        this.edges.remove(e);
+       //Utility.debugPrintln(e.getVertices()[0] + " neighbours: " + getVertex(e.getVertices()[0].x, e.getVertices()[0].y).getNeighbours().toString());
+       //Utility.debugPrintln(e.getVertices()[1] + " neighbours: " + getVertex(e.getVertices()[1].x, e.getVertices()[1].y).getNeighbours().toString());
     }
     
     /**
