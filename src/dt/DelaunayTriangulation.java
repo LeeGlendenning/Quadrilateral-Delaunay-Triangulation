@@ -340,7 +340,7 @@ public class DelaunayTriangulation extends JPanel {
      */
     private void checkForBadEdges(Vertex v, List<Bisector> b3sList) {
         //Utility.debugPrintln("Checking " + b3sList.size() + " b3s for vertex inside");
-        List<Bisector> originalB3SList = Arrays.asList(Utility.deepCopyVBArray(b3sList.toArray(new Bisector[b3sList.size()])));
+        List<Bisector> originalB3SList = new ArrayList(Arrays.asList(Utility.deepCopyVBArray(b3sList.toArray(new Bisector[b3sList.size()]))));
         List<Bisector> nullB3S = new ArrayList();
         
         while (!b3sList.isEmpty()) {
@@ -371,19 +371,17 @@ public class DelaunayTriangulation extends JPanel {
                     continue;
                 }
                 
-                // Find the vertex opposite v in the convex quad
-                Vertex newEdgeVert = null;
-                for (Bisector bisector : originalB3SList) {
-                    if (bisector.getAdjacentPtsList().contains(v1) && bisector.getAdjacentPtsList().contains(v2) &&
-                            !bisector.getAdjacentPtsList().contains(v)) {
-                        for (Vertex vertex : bisector.getAdjacentPtsArray()) {
-                            if (!vertex.equals(v1) && !vertex.equals(v2)) {
-                                newEdgeVert = vertex;
-                            }
-                        }
-                    }
+                System.out.println("Bad edge vertices: " + v1 + ", " + v2);
+                
+                // Find the vertex opposite v in the convex quad using original b3sList
+                Vertex newEdgeVert = findOppoVertInConvexQuad(v1, v2, v, originalB3SList);
+                
+                // if it's still null, search the nullB3SList
+                if (newEdgeVert == null) {
+                    newEdgeVert = findOppoVertInConvexQuad(v1, v2, v, nullB3S);
                 }
                 
+                // if it's still null then we have a problem
                 if (newEdgeVert == null) {
                     Utility.debugPrintln("[checkForBadEdges] new Edge vertex is null - This shouldn't happen!!");
                 }
@@ -405,6 +403,7 @@ public class DelaunayTriangulation extends JPanel {
                                 oldB3S.getAdjacentPtsList().contains(newEdgeVert))) {
                             Utility.debugPrintln("Removing B3S from queue: " + oldB3S.getAdjacentPtsList().toString());
                             b3sList.remove(oldB3S);
+                            originalB3SList.remove(oldB3S);
                         }
                     }
                     // Check nullB3S queue and remove B3S if it corresponds to a face altered by edge flip
@@ -427,25 +426,29 @@ public class DelaunayTriangulation extends JPanel {
                     // For B3S between v, v1, closest
                     if ((tempB = checkFaceAfterFlip(v, v1, Utility.midpoint(v1, v2))) != null) {
                         Utility.debugPrintln("1Adding B3S: " + tempB.getAdjacentPtsList().toString());
-                        //b3sList.add(0, tempB);
+                        b3sList.add(tempB);
+                        originalB3SList.add(tempB);
                     }
                     
                     // For B3S between v, v2, closest
                     if ((tempB = checkFaceAfterFlip(v, v2, Utility.midpoint(v1, v2))) != null) {
                         Utility.debugPrintln("2Adding B3S: " + tempB.getAdjacentPtsList().toString());
-                        //b3sList.add(0, tempB);
+                        b3sList.add(tempB);
+                        originalB3SList.add(tempB);
                     }
                     
                     // For B3S between v1, newEdgeVert, closest
                     if ((tempB = checkFaceAfterFlip(v1, newEdgeVert, Utility.midpoint(v1, v2))) != null) {
                         Utility.debugPrintln("3Adding B3S: " + tempB.getAdjacentPtsList().toString());
-                        //b3sList.add(0, tempB);
+                        b3sList.add(tempB);
+                        originalB3SList.add(tempB);
                     }
                     
                     // For B3S between v2, newEdgeVert, closest
                     if ((tempB = checkFaceAfterFlip(v2, newEdgeVert, Utility.midpoint(v1, v2))) != null) {
                         Utility.debugPrintln("4Adding B3S: " + tempB.getAdjacentPtsList().toString());
-                        //b3sList.add(0, tempB);
+                        b3sList.add(tempB);
+                        originalB3SList.add(tempB);
                     }
                     
                     // Test two triangles in the flip quadrilateral for boundary edge to be removed
@@ -476,6 +479,22 @@ public class DelaunayTriangulation extends JPanel {
         }
         
         Utility.debugPrintln("\n");
+    }
+    
+    private Vertex findOppoVertInConvexQuad(Vertex v1, Vertex v2, Vertex v, List<Bisector> b3sList) {
+        Vertex newEdgeVert = null;
+        for (Bisector bisector : b3sList) {
+            System.out.println("looking for v1 and v2 in " + bisector.getAdjacentPtsList().toString());
+            if (bisector.getAdjacentPtsList().contains(v1) && bisector.getAdjacentPtsList().contains(v2) &&
+                    !bisector.getAdjacentPtsList().contains(v)) {
+                for (Vertex vertex : bisector.getAdjacentPtsArray()) {
+                    if (!vertex.equals(v1) && !vertex.equals(v2)) {
+                        newEdgeVert = vertex;
+                    }
+                }
+            }
+        }
+        return newEdgeVert;
     }
     
     /**
