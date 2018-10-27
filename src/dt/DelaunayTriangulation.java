@@ -320,7 +320,7 @@ public class DelaunayTriangulation extends JPanel {
             }
             
             Bisector b = this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, face[0].deepCopy(), face[1].deepCopy(), face[2].deepCopy());
-            if (b != null) {
+            if (b != null && edgesExist(face)) {
                 tempB3S.add(b);
             } else {
                 tempB3S.add(new Bisector(new Vertex[]{face[0].deepCopy(), face[1].deepCopy(), face[2].deepCopy()}, null, null, ""));
@@ -331,6 +331,21 @@ public class DelaunayTriangulation extends JPanel {
             this.displayEdges.addAll(cleanFGEdges(this.b3s.getDisplayEdges()));
         }
         return tempB3S;
+    }
+    
+    /**
+     * This is called when considering a B3S. If edges don't exist, don't check b3s
+     * @param face Vertex[] representing a triangle face in the graph
+     * @return true if all edges in the face exist in the graph, false otherwise
+     */
+    private boolean edgesExist(Vertex[] face) {
+        List<Edge> edges = this.dtGraph.getEdges();
+        if (edges.contains(new Edge(face[0], face[1])) &&
+                edges.contains(new Edge(face[1], face[2])) &&
+                edges.contains(new Edge(face[2], face[0]))) {
+            return true;
+        }
+        return false;
     }
     
     /**
@@ -356,7 +371,7 @@ public class DelaunayTriangulation extends JPanel {
                 Vertex v1 = null, v2 = null;
                 // Get the two vertices in the bad edge
                 for (Vertex adjV : b.getAdjacentPtsArray()) {
-                    System.out.println("b3s vertex " + adjV + " neighbours: " + this.dtGraph.getVertex(adjV.x, adjV.y).getNeighbours());
+                    //System.out.println("b3s vertex " + adjV + " neighbours: " + this.dtGraph.getVertex(adjV.x, adjV.y).getNeighbours());
                     if (this.dtGraph.getVertex(adjV.x, adjV.y).getNeighbours().contains(v)) {
                         if (v1 == null) {
                             v1 = this.dtGraph.getVertex(adjV.x, adjV.y);
@@ -479,9 +494,8 @@ public class DelaunayTriangulation extends JPanel {
                     }
                 }
             } else if (b.getEndVertex() == null) {
-                Utility.debugPrintln("Adding B3S to nullB3S list");
+                //Utility.debugPrintln("Adding B3S to nullB3S list");
                 nullB3S.add(b);
-                //removeEdgeIfNecessary(b);
             }
         }
         
@@ -500,7 +514,7 @@ public class DelaunayTriangulation extends JPanel {
     private Vertex findOppoVertInConvexQuad(Vertex v1, Vertex v2, Vertex v, List<Bisector> b3sList) {
         Vertex newEdgeVert = null;
         for (Bisector bisector : b3sList) {
-            System.out.println("looking for v1 and v2 in " + bisector.getAdjacentPtsList().toString());
+            //System.out.println("looking for v1 and v2 in " + bisector.getAdjacentPtsList().toString());
             if (bisector.getAdjacentPtsList().contains(v1) && bisector.getAdjacentPtsList().contains(v2) &&
                     !bisector.getAdjacentPtsList().contains(v)) {
                 for (Vertex vertex : bisector.getAdjacentPtsArray()) {
