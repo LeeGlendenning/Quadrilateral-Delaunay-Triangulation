@@ -11,7 +11,7 @@ import java.util.Comparator;
 public class Utility {
     
     public static final double RAY_SIZE = 10000000;
-    public static boolean debugMode = false;
+    public static boolean debugMode = true;
     
     
     /**

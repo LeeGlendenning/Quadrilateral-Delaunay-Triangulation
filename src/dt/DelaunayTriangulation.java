@@ -343,6 +343,8 @@ public class DelaunayTriangulation extends JPanel {
         List<Bisector> originalB3SList = new ArrayList(Arrays.asList(Utility.deepCopyVBArray(b3sList.toArray(new Bisector[b3sList.size()]))));
         List<Bisector> nullB3S = new ArrayList();
         
+        List<Bisector> possibleBadEdges = new ArrayList(); // Queue of b3s to check for edges that need to be removed after b3sList is empty
+        
         while (!b3sList.isEmpty()) {
             Bisector b = b3sList.get(0).deepCopy();
             Utility.debugPrintln("Checking validity of b3s: " + b.getAdjacentPtsList().toString() + ": " + b.getEndVertex());
@@ -354,6 +356,7 @@ public class DelaunayTriangulation extends JPanel {
                 Vertex v1 = null, v2 = null;
                 // Get the two vertices in the bad edge
                 for (Vertex adjV : b.getAdjacentPtsArray()) {
+                    System.out.println("b3s vertex " + adjV + " neighbours: " + this.dtGraph.getVertex(adjV.x, adjV.y).getNeighbours());
                     if (this.dtGraph.getVertex(adjV.x, adjV.y).getNeighbours().contains(v)) {
                         if (v1 == null) {
                             v1 = this.dtGraph.getVertex(adjV.x, adjV.y);
@@ -391,6 +394,14 @@ public class DelaunayTriangulation extends JPanel {
                 
                 // Flip edge and check affacted faces
                 if (flipEdge(new Edge(v1, v2), v, newEdgeVert)) {
+                    
+                    // Check possibleBadEdges and remove b3s related to edge flip
+                    for (Bisector badB : possibleBadEdges.toArray(new Bisector[possibleBadEdges.size()])) {
+                        if (badB.getAdjacentPtsList().contains(v1) && badB.getAdjacentPtsList().contains(v2)) {
+                            possibleBadEdges.remove(badB);
+                        }
+                    }
+                    
                     // Check queue and remove B3S if it corresponds to a face altered by edge flip
                     // Old faces were (v, v1, v2) and (v1, v2, newEdgeVert)
                     for (Bisector oldB3S : b3sList.toArray(new Bisector[b3sList.size()])) {
@@ -456,13 +467,15 @@ public class DelaunayTriangulation extends JPanel {
                     // Test (v1, v, newEdgeVert)
                     Utility.debugPrintln("Testing flip quad triang: " + v + ", " + v1 + ", " + newEdgeVert);
                     if (checkInnerQuadFaceAfterFlip(v, v1, newEdgeVert) == null) {
-                        removeEdgeIfNecessary(new Bisector(new Vertex[]{v, v1, newEdgeVert}, null, null, ""));
+                        possibleBadEdges.add(new Bisector(new Vertex[]{v, v1, newEdgeVert}, null, null, ""));
+                        //removeEdgeIfNecessary(new Bisector(new Vertex[]{v, v1, newEdgeVert}, null, null, ""));
                     }
                     
                     // Test (v2, v, newEdgeVert)
                     Utility.debugPrintln("Testing flip quad triang: " + v + ", " + v2 + ", " + newEdgeVert);
                     if (checkInnerQuadFaceAfterFlip(v, v2, newEdgeVert) == null) {
-                        removeEdgeIfNecessary(new Bisector(new Vertex[]{v, v2, newEdgeVert}, null, null, ""));
+                        possibleBadEdges.add(new Bisector(new Vertex[]{v, v2, newEdgeVert}, null, null, ""));
+                        //removeEdgeIfNecessary(new Bisector(new Vertex[]{v, v2, newEdgeVert}, null, null, ""));
                     }
                 }
             } else if (b.getEndVertex() == null) {
@@ -476,6 +489,9 @@ public class DelaunayTriangulation extends JPanel {
         while (!nullB3S.isEmpty()) {
             removeEdgeIfNecessary(nullB3S.get(0));
             nullB3S.remove(0);
+        }
+        for (Bisector b : possibleBadEdges) {
+            removeEdgeIfNecessary(b);
         }
         
         Utility.debugPrintln("\n");

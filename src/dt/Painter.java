@@ -168,11 +168,15 @@ public class Painter {
     public void drawChosenB3SAndMinQuads(Graphics2D g2d, Quadrilateral quad, List<Bisector> chosenB3S, int yMax, boolean doReflection) {
         g2d.setColor(Color.blue);
         for (Bisector bisector : chosenB3S) {
+            if (bisector.getAdjacentPtsList().contains(new Vertex(1174, 817)) &&
+                    bisector.getAdjacentPtsList().contains(new Vertex(1006, 597)) &&
+                    bisector.getAdjacentPtsList().contains(new Vertex(1800, 345))) {
             g2d.setStroke(new BasicStroke(7));
             g2d.drawLine((int)Math.round(bisector.getStartVertex().x), yMax - (int)Math.round(bisector.getStartVertex().y),
                     (int)Math.round(bisector.getEndVertex().x), yMax - (int)Math.round(bisector.getEndVertex().y));
             g2d.setStroke(new BasicStroke(2));
             quad.drawQuad(g2d, bisector.getStartVertex(), bisector.getMinQuadScale(), yMax, doReflection);
+            }
         }
     }
     
