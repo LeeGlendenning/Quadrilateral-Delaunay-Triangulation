@@ -320,7 +320,8 @@ public class DelaunayTriangulation extends JPanel {
             }
             
             Bisector b = this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, face[0].deepCopy(), face[1].deepCopy(), face[2].deepCopy());
-            if (b != null && edgesExist(face)) {
+            
+            if (b != null /*&& edgesExist(face)*/) {
                 tempB3S.add(b);
             } else {
                 tempB3S.add(new Bisector(new Vertex[]{face[0].deepCopy(), face[1].deepCopy(), face[2].deepCopy()}, null, null, ""));
@@ -389,7 +390,7 @@ public class DelaunayTriangulation extends JPanel {
                     continue;
                 }
                 
-                System.out.println("Bad edge vertices: " + v1 + ", " + v2);
+                //System.out.println("Bad edge vertices: " + v1 + ", " + v2);
                 
                 // Find the vertex opposite v in the convex quad using original b3sList
                 Vertex newEdgeVert = findOppoVertInConvexQuad(v1, v2, v, originalB3SList);
@@ -499,7 +500,6 @@ public class DelaunayTriangulation extends JPanel {
             }
         }
         
-        Utility.debugPrintln("Removing edges if necessary:");
         while (!nullB3S.isEmpty()) {
             removeEdgeIfNecessary(nullB3S.get(0));
             nullB3S.remove(0);

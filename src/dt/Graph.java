@@ -14,7 +14,7 @@ public class Graph {
     private List<Edge> edges;
     private int xmax, ymax;
     private double BOUNDARY_SIZE;
-    private List<Edge> removedEdges; // Does now include flipped edges
+    private List<Edge> removedEdges; // Includes flipped edges
     
     /**
      * Empty constructor initializes instance variables
@@ -330,6 +330,8 @@ public class Graph {
        getVertex(e.getVertices()[1].x, e.getVertices()[1].y).removeNeighbor(e);
        if (!isDueToEdgeFlip) {
            this.removedEdges.add(e);
+       } else if (this.removedEdges.contains(e)) {
+           this.removedEdges.remove(e);
        }
        
        this.edges.remove(e);
