@@ -53,6 +53,7 @@ public class FindBisectorsThreeSites {
         
         // If case is 1, ignore. Means there is no bisector vertex
         if (bisectorCase == 2) { // case 2: single vertex is bisector of 3 
+            System.out.println("Handling case 2 by finding intersectionB3S");
             Bisector bisector = findIntersectionB3S(bisectors2S, pLeft, pRight, v3, key3, key2);
             if (bisector != null) {
                 this.chosenBisectors.add(bisector.deepCopy());
@@ -424,7 +425,7 @@ public class FindBisectorsThreeSites {
      */
     private Bisector findIntersectionB3S(HashMap<List<Vertex>, List<Bisector>> bisectors2S, Vertex a1, Vertex a2, Vertex a3, List<Vertex> key1, List<Vertex> key2) {
         //Utility.debugPrintln("a1 = " + a1 + " a2 = " + a2 + " a3 = " + a3 + ". # b2s = " + bisectors2S.size());
-        //printEdges(bisectors2S);
+        
         List<Bisector> bisector1 = bisectors2S.get(key1);
         List<Bisector> bisector2 = bisectors2S.get(key2);
         for (Bisector b1 : bisector1) {
@@ -432,7 +433,8 @@ public class FindBisectorsThreeSites {
                 // Look for intersection between the 2 edge segments
                 Vertex b3s = Utility.doLineSegmentsIntersect(b1.getStartVertex(), b1.getEndVertex(), 
                         b2.getStartVertex(), b2.getEndVertex());
-                if (b3s != null) {
+                double threshold = 1000000; // Max x and y value for b3s to have
+                if (b3s != null && Math.abs(b3s.x) < threshold && Math.abs(b3s.y) < threshold) {
                     //Utility.debugPrint("Found intersection vertex: " + b3s);
                     return new Bisector(new Vertex[]{a1, a2, a3}, b3s, b3s, "b3s_chosen");
                 }

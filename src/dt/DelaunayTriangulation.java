@@ -164,6 +164,7 @@ public class DelaunayTriangulation extends JPanel {
         this.chosenB2S = bisectors2S;
         List<Bisector> bisectors3S;
         bisectors3S = calculateB3S(faces, bisectors2S);
+        Utility.debugPrintln("");
         
         this.chosenB3S = new ArrayList();
         for (Bisector b : bisectors3S) {
@@ -363,7 +364,7 @@ public class DelaunayTriangulation extends JPanel {
         
         while (!b3sList.isEmpty()) {
             Bisector b = b3sList.get(0).deepCopy();
-            Utility.debugPrintln("Checking validity of b3s: " + b.getAdjacentPtsList().toString() + ": " + b.getEndVertex());
+            //Utility.debugPrintln("Checking validity of b3s: " + b.getAdjacentPtsList().toString() + ": " + b.getEndVertex());
             b3sList.remove(0);
             Vertex vInQuad;
             if (b.getEndVertex() != null && 
@@ -481,14 +482,14 @@ public class DelaunayTriangulation extends JPanel {
                     // Test two triangles in the flip quadrilateral for boundary edge to be removed
                     
                     // Test (v1, v, newEdgeVert)
-                    Utility.debugPrintln("Testing flip quad triang: " + v + ", " + v1 + ", " + newEdgeVert);
+                    //Utility.debugPrintln("Testing flip quad triang: " + v + ", " + v1 + ", " + newEdgeVert);
                     if (checkInnerQuadFaceAfterFlip(v, v1, newEdgeVert) == null) {
                         possibleBadEdges.add(new Bisector(new Vertex[]{v, v1, newEdgeVert}, null, null, ""));
                         //removeEdgeIfNecessary(new Bisector(new Vertex[]{v, v1, newEdgeVert}, null, null, ""));
                     }
                     
                     // Test (v2, v, newEdgeVert)
-                    Utility.debugPrintln("Testing flip quad triang: " + v + ", " + v2 + ", " + newEdgeVert);
+                    //Utility.debugPrintln("Testing flip quad triang: " + v + ", " + v2 + ", " + newEdgeVert);
                     if (checkInnerQuadFaceAfterFlip(v, v2, newEdgeVert) == null) {
                         possibleBadEdges.add(new Bisector(new Vertex[]{v, v2, newEdgeVert}, null, null, ""));
                         //removeEdgeIfNecessary(new Bisector(new Vertex[]{v, v2, newEdgeVert}, null, null, ""));
@@ -572,7 +573,7 @@ public class DelaunayTriangulation extends JPanel {
         bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v1.deepCopy(), v2.deepCopy()));
         bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v2.deepCopy(), v3.deepCopy()));
         bisectors2S.putAll(this.b2s.findBisectorOfTwoSites(this.quad, v3.deepCopy(), v1.deepCopy()));
-        Utility.debugPrintln("Checking B3S between " + v1 + ", " + v2 + ", " + v3);
+        //Utility.debugPrintln("Checking B3S between " + v1 + ", " + v2 + ", " + v3);
         return this.b3s.findBisectorOfThreeSites(this.quad, bisectors2S, v1.deepCopy(), v2.deepCopy(), v3.deepCopy());
     }
     
@@ -675,6 +676,7 @@ public class DelaunayTriangulation extends JPanel {
                     Utility.isLeftOfSegment(quad[2], quad[3], v, 0.1) <= 0 &&
                     Utility.isLeftOfSegment(quad[3], quad[0], v, 0.1) <= 0) {
                 System.out.println("Vertex " + v + " inside " + Arrays.toString(b3s.getAdjacentPtsArray()));
+                //System.out.println(" quad = " + Arrays.toString(quad));
                 return v;
             }
         }
@@ -689,7 +691,7 @@ public class DelaunayTriangulation extends JPanel {
     public Vertex[] calculateMinQuad(Bisector chosenB3S) {
         Double scale;
         if (chosenB3S.getTag().contains("chosen") && (scale = findMinimumQuadScaling(chosenB3S)) != null) {
-            //Utility.debugPrintln("Set scale = " + scale + "\n");
+            //Utility.debugPrintln("Set scale for b3s " + chosenB3S.getAdjacentPtsList() + " = " + scale + "\n");
             chosenB3S.setMinQuadScale(scale);
             return this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), scale, true);
         } else {
@@ -704,11 +706,11 @@ public class DelaunayTriangulation extends JPanel {
      */
     private Double findMinimumQuadScaling(Bisector chosenB3S) {
         Vertex[] qVerts = this.quad.getPixelVertsForVertex(chosenB3S.getEndVertex(), this.curScale, true);
-        /*Utility.debugPrintln("qVerts for " + chosenB3S.getEndVertex());
+        /*Utility.debugPrintln("qVerts for " + chosenB3S.getAdjacentPtsList());
         for (Vertex p : qVerts) {
             Utility.debugPrint(p + " ");
         }
-        Utility.debugPrintln();*/
+        Utility.debugPrintln("");*/
         
         Vertex[][] quadRays = new Vertex[this.quad.getVertices().length][2]; // Rays from quad center through each vertex
         for (int i = 0; i < this.quad.getVertices().length; i ++) {
