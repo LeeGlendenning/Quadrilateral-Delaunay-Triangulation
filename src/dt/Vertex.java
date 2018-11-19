@@ -120,7 +120,6 @@ public class Vertex {
         int hash = 7;
         hash = 97 * hash + (int) (Double.doubleToLongBits(this.x) ^ (Double.doubleToLongBits(this.x) >>> 32));
         hash = 97 * hash + (int) (Double.doubleToLongBits(this.y) ^ (Double.doubleToLongBits(this.y) >>> 32));
-        //Utility.debugPrintln("inside hashCode. returning " + hash);
         return hash;
     }
     
