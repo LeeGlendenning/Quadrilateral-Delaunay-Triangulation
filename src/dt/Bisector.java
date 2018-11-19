@@ -127,4 +127,22 @@ public class Bisector {
         return copy;
     }
     
+    /**
+     * 
+     * @param other The Object to compare against this
+     * @return True iff other is an Edge with the same Vertices as this
+     */
+    @Override
+    public boolean equals(Object other){
+        if(!(other instanceof Bisector)){
+            return false;
+        }
+        
+        Bisector b = (Bisector)other;
+        
+        return this.adjacentVertices.contains(b.getAdjacentPtsArray()[0]) &&
+                this.adjacentVertices.contains(b.getAdjacentPtsArray()[1]) &&
+                this.adjacentVertices.contains(b.getAdjacentPtsArray()[2]);
+    }
+    
 }

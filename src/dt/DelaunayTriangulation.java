@@ -501,12 +501,19 @@ public class DelaunayTriangulation extends JPanel {
             }
         }
         
+        Bisector rmFromQueue;
         while (!nullB3S.isEmpty()) {
-            removeEdgeIfNecessary(nullB3S.get(0));
+            if ((rmFromQueue = removeEdgeIfNecessary(nullB3S.get(0))) != null) {
+                // Remove the b3s because a flip has occurred and it no longer needs to be considered
+                nullB3S.remove(rmFromQueue);
+            }
             nullB3S.remove(0);
         }
         for (Bisector b : possibleBadEdges) {
-            removeEdgeIfNecessary(b);
+            if ((rmFromQueue = removeEdgeIfNecessary(b)) != null) {
+                // Remove the b3s because a flip has occurred and it no longer needs to be considered
+                possibleBadEdges.remove(rmFromQueue);
+            }
         }
         
         Utility.debugPrintln("\n");
@@ -532,7 +539,17 @@ public class DelaunayTriangulation extends JPanel {
      * 
      * @param b B3S to check whether an edge should be removed
      */
-    private void removeEdgeIfNecessary(Bisector b) {
+    private Bisector removeEdgeIfNecessary(Bisector b) {
+        System.out.println("Considering b3s: " + b.getAdjacentPtsList());
+        
+        // Look for an edge of b that has previously been removed
+        // If such an edge is found, determine whether re-adding it then
+        // flipping it is necessary
+        Bisector rmFromQueue;
+        if ((rmFromQueue = flipRemovedEdge(b)) != null) {
+            return rmFromQueue;
+        }
+        
         int ii, iii; // i, ii, iii are indices of each of the face vertices
         for (int i = 0; i < b.getAdjacentPtsArray().length; i ++) {
             if (i == b.getAdjacentPtsArray().length-1) {
@@ -551,6 +568,7 @@ public class DelaunayTriangulation extends JPanel {
             //Utility.debugPrintln(" Checking edge: " + b.getAdjacentPtsArray()[i] + ", " + b.getAdjacentPtsArray()[ii]);
             //Utility.debugPrintln(" Closest vert: " + closestVertex(b.getAdjacentPtsArray()[i], b.getAdjacentPtsArray()[ii], commonVerts, 
               //      new Vertex[]{b.getAdjacentPtsArray()[iii], b.getAdjacentPtsArray()[iii]}));
+              
             // If edge exists in graph and it is an exterior then remove it
             if (this.dtGraph.getEdges().contains(new Edge(b.getAdjacentPtsArray()[i], b.getAdjacentPtsArray()[ii])) &&
                     closestVertex(b.getAdjacentPtsArray()[i], b.getAdjacentPtsArray()[ii], commonVerts, 
@@ -559,6 +577,55 @@ public class DelaunayTriangulation extends JPanel {
                 this.dtGraph.removeEdge(new Edge(b.getAdjacentPtsArray()[i], b.getAdjacentPtsArray()[ii]), false);
             }
         }
+        return null;
+    }
+    
+    /**
+     * @param b B3S to inspect
+     * @return boolean true if a removed edge was flipped, false otherwise
+     */
+    private Bisector flipRemovedEdge(Bisector b) {
+        Edge removedEdge = null;
+        Vertex other = null;
+        
+        // if the ith vertex of the b3s is not a neighbour to the (i+1)th, the edge has already been removed and we need to add it back and flip it
+        if (!this.dtGraph.getVertex(b.getAdjacentPtsArray()[0].x, b.getAdjacentPtsArray()[0].y).getNeighbours().contains(
+                this.dtGraph.getVertex(b.getAdjacentPtsArray()[1].x, b.getAdjacentPtsArray()[1].y))) {
+            
+            removedEdge = new Edge(b.getAdjacentPtsArray()[0], b.getAdjacentPtsArray()[1]);
+            other = b.getAdjacentPtsArray()[2];
+            
+        } else if (!this.dtGraph.getVertex(b.getAdjacentPtsArray()[0].x, b.getAdjacentPtsArray()[0].y).getNeighbours().contains(
+                this.dtGraph.getVertex(b.getAdjacentPtsArray()[2].x, b.getAdjacentPtsArray()[2].y))) {
+            
+            removedEdge = new Edge(b.getAdjacentPtsArray()[0], b.getAdjacentPtsArray()[2]);
+            other = b.getAdjacentPtsArray()[1];
+            
+        } else if (!this.dtGraph.getVertex(b.getAdjacentPtsArray()[1].x, b.getAdjacentPtsArray()[1].y).getNeighbours().contains(
+                this.dtGraph.getVertex(b.getAdjacentPtsArray()[2].x, b.getAdjacentPtsArray()[2].y))) {
+            
+            removedEdge = new Edge(b.getAdjacentPtsArray()[1], b.getAdjacentPtsArray()[2]);
+            other = b.getAdjacentPtsArray()[0];
+            
+        }
+        
+        // We found a removed edge in the last conditional block.
+        // Determine if it should be added back and flipped.
+        if (removedEdge != null) {
+            System.out.println("Found a removed edge: " + removedEdge);
+            List<Vertex> commonVerts = intersectVertexSets(this.dtGraph.getVertex(removedEdge.getVertices()[0].x, 
+                    removedEdge.getVertices()[0].y).getNeighbours(), this.dtGraph.getVertex(removedEdge.getVertices()[1].x, 
+                    removedEdge.getVertices()[1].y).getNeighbours());
+            
+            // if a "closestVertex" is found then that means removedEdge is not an exterior edge and needs to be added and flipped
+            Vertex flipVert;
+            if ((flipVert = closestVertex(removedEdge.getVertices()[0], removedEdge.getVertices()[1], commonVerts, new Vertex[]{other, other})) != null
+                    && flipEdge(removedEdge, flipVert, other)) {
+                Utility.debugPrintln("Adding edge (re-added removed edge and flipped): " + new Edge(flipVert, other));
+                return new Bisector(new Vertex[]{removedEdge.getVertices()[0], removedEdge.getVertices()[1], flipVert}, null, null, null);
+            }
+        }
+        return null;
     }
     
     /**
