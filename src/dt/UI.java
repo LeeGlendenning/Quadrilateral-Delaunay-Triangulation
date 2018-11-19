@@ -49,8 +49,6 @@ public class UI implements ActionListener{
     private JCheckBoxMenuItem showCoordsMenuItem;
     private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem/*, showB3SFGMenuItem*/; // sub-menu items for showVD
     
-    private boolean /*isMousePressed = false,*/ mouseWasDragged = false;
-    private Vertex selectedVertex = null/*, newVertex = null*/;
     private final DelaunayTriangulation delaunayTriangulation;
     
     public UI(Quadrilateral q, ArrayList<Vertex> vertexSet) {
@@ -77,25 +75,8 @@ public class UI implements ActionListener{
         this.delaunayTriangulation.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                mouseWasDragged = false;
-                // User has clicked an existing vertex
-                if ((selectedVertex = delaunayTriangulation.vertexAt(e.getX(), delaunayTriangulation.getBounds().getSize().height - e.getY())) != null) {
-                    Utility.debugPrintln("Existing point");
-                    //isMousePressed = true;
-                    delaunayTriangulation.setMovingVertexLoc(selectedVertex);
-                } else {
-                    // Add new vertex
-                    addVertex(e.getX(), e.getY());
-                }
-            }
-            
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                //isMousePressed = false;
-                if (mouseWasDragged) {
-                    delaunayTriangulation.moveVertex(selectedVertex, e.getX(), delaunayTriangulation.getBounds().getSize().height - e.getY());
-                    mouseWasDragged = false;
-                }
+                // Add new vertex
+                addVertex(e.getX(), e.getY());
             }
         });
         
@@ -105,12 +86,6 @@ public class UI implements ActionListener{
             public void mouseMoved(MouseEvent e)
             {
                 displayCoordinates(e.getX(), e.getY());
-            }
-            
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                mouseWasDragged = true;
-                delaunayTriangulation.setMovingVertex(e.getX(), delaunayTriangulation.getBounds().getSize().height - e.getY());
             }
         });
         
@@ -134,7 +109,6 @@ public class UI implements ActionListener{
     @Override
     public void actionPerformed(ActionEvent ev)
     {
-        //Utility.debugPrintln(ev.getActionCommand());
         switch(ev.getActionCommand()) {
             // File menu
             case "Load Vertex Set":
@@ -157,23 +131,16 @@ public class UI implements ActionListener{
                     Utility.debugPrintln("Something went wrong while saving Quadrilateral");
                 }
                 break;
+                
             // Edit menu
             case "Clear Screen":
                 this.delaunayTriangulation.reset();
                 break;
-            /*case "Remove Vertex":
-                removeVertex();
-                break;*/
             case "Define New Quadrilateral":
                 newQuadrilateral();
                 break;
+                
             // View menu
-            /*case "Delaunay Triangulation":
-                showVDMenuItem.setState(false);
-                break;
-            case "Voronoi Diagram":
-                showDTMenuItem.setState(false);
-                break;*/
             case "Show Vertex Coordinates":
                 this.delaunayTriangulation.setShowCoordinates(showCoordsMenuItem.getState());
                 break;
@@ -194,9 +161,7 @@ public class UI implements ActionListener{
             case "Only Show Chosen Bisectors 3 Sites":
                 this.delaunayTriangulation.setOnlyShowChosenB3S(this.showOnlyChosenB3SMenuItem.getState());
                 break;
-            /*case "Show FG For Bisectors 3 Sites":
-                this.delaunayTriangulation.setShowFG(this.showB3SFGMenuItem.getState());
-                break;*/
+                
             // Delaunay Triangulation Menu
             case "Find Shortest Path":
                 getShortestPath();
@@ -204,16 +169,6 @@ public class UI implements ActionListener{
             case "Highlight Shortest Path":
                 this.delaunayTriangulation.setHighlightShortestPath(this.highlightPathMenuItem.getState());
                 break;
-            /*case "Show Performance Chart":
-                // Create performance time chart
-                SwingUtilities.invokeLater(() -> {
-                    PerformanceChart example = new PerformanceChart("Delaunay Triangulation Runtime Performance", this.delaunayTriangulation.getPerformanceData());
-                    example.setSize(800, 400);
-                    example.setLocationRelativeTo(null);
-                    example.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-                    example.setVisible(true);
-                });
-                break;*/
         }
     }
     
@@ -437,34 +392,6 @@ public class UI implements ActionListener{
     }
     
     /**
-     * Allow user to specify a vertex in the VD to remove and reconstruct VD
-     */
-    /*private void removeVertex() {
-        //JTextField xField = new JTextField(5);
-        //JTextField yField = new JTextField(5);
-        JTextField vField = new JTextField(5);
-
-        JPanel rmPtPanel = new JPanel();
-        rmPtPanel.add(new JLabel("Vertex #:"));
-        rmPtPanel.add(vField);
-        /*rmPtPanel.add(new JLabel("x:"));
-        rmPtPanel.add(xField);
-        rmPtPanel.add(Box.createHorizontalStrut(15));
-        rmPtPanel.add(new JLabel("y:"));
-        rmPtPanel.add(yField);*/
-
-        /*int rmPtResult = JOptionPane.showConfirmDialog(null, rmPtPanel, 
-                 "Enter Vertex Number", JOptionPane.OK_CANCEL_OPTION);
-        if (rmPtResult == JOptionPane.OK_OPTION) {
-            try {
-                this.delaunayTriangulation.removeVertex(Integer.parseInt(vField.getText()));
-            } catch (NumberFormatException e) {
-                Utility.debugPrintln("Invalid vertex format. X and Y coordinates must be numbers.");
-            }
-        }
-    }*/
-    
-    /**
      * 
      * @param x X coordinate of new vertex
      * @param y Y coordinate of new vertex
@@ -577,21 +504,14 @@ public class UI implements ActionListener{
     private void createViewMenu() {
         viewMenu = new JMenu("View");
         
-        /*showDTMenuItem = new JCheckBoxMenuItem("Delaunay Triangulation");
-        showVDMenuItem = new JCheckBoxMenuItem("Voronoi Diagram");
-        showVDMenuItem.setState(true);*/
         showCoordsMenuItem = new JCheckBoxMenuItem("Show Vertex Coordinates");
         showCoordsMenuItem.setState(true);
         showBoundaryTriangleMenuItem = new JCheckBoxMenuItem("Show Boundary Triangle");
         showBoundaryTriangleMenuItem.setState(true);
         
-        /*showDTMenuItem.addActionListener(this);
-        showVDMenuItem.addActionListener(this);*/
         showCoordsMenuItem.addActionListener(this);
         showBoundaryTriangleMenuItem.addActionListener(this);
         
-        /*viewMenu.add(showDTMenuItem);
-        viewMenu.add(showVDMenuItem);*/
         viewMenu.add(showCoordsMenuItem);
         viewMenu.add(showBoundaryTriangleMenuItem);
         
@@ -611,20 +531,16 @@ public class UI implements ActionListener{
         showB3SMenuItem.setState(this.delaunayTriangulation.getShowB3S());
         showOnlyChosenB3SMenuItem = new JCheckBoxMenuItem("Only Show Chosen Bisectors 3 Sites");
         showOnlyChosenB3SMenuItem.setState(!this.delaunayTriangulation.getShowB3SHidden());
-        //showB3SFGMenuItem = new JCheckBoxMenuItem("Show FG For Bisectors 3 Sites");
         
         showB2SMenuItem.addActionListener(this);
         showOnlyChosenB2SMenuItem.addActionListener(this);
         showB3SMenuItem.addActionListener(this);
         showOnlyChosenB3SMenuItem.addActionListener(this);
-        //showB3SFGMenuItem.addActionListener(this);
         
-        //vdMenu.add(showVDMenuItem);
         bisectorMenu.add(showB2SMenuItem);
         bisectorMenu.add(showOnlyChosenB2SMenuItem);
         bisectorMenu.add(showB3SMenuItem);
         bisectorMenu.add(showOnlyChosenB3SMenuItem);
-        //showVDMenu.add(showB3SFGMenuItem);
         
         menuBar.add(bisectorMenu);
     }
