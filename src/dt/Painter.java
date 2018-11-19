@@ -34,14 +34,11 @@ public class Painter {
      */
     public void drawVerticesAndQuads(Graphics2D g2d, List<Vertex> vertices, Quadrilateral quad, int yMax, int vertexRadius, double curScale) {
         g2d.setStroke(new BasicStroke(1));
-        //Utility.debugPrintln("Vertices.size() = " + vertices.size());
         for (Vertex v : vertices) {
             g2d.setColor(v.getColour());
-            //Utility.debugPrintln("Drawing vertex at " + (p.x - vertexRadius) + ", " + (yMax - (p.y + vertexRadius)));
             // Subtract vertexRadius because vertices are drawn at coordinates from top left
             g2d.fill(new Ellipse2D.Double(v.x - vertexRadius, yMax - (v.y + vertexRadius), vertexRadius * 2, vertexRadius * 2)); // x, y, width, height
             quad.drawQuad(g2d, v, 1.0, yMax, false); // Original quad
-            //quad.drawQuad(g2d, v, curScale, yMax); // Scaled quad for animation
         }
     }
     
