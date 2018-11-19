@@ -35,8 +35,6 @@ public class Utility {
      * @return True if v1v2 is parallel (has same slope within 10 decimal places) to p3p4
      */
     public static boolean isParallel(Vertex v1, Vertex v2, Vertex p3, Vertex p4, double floatTolerance) {
-        //Utility.debugPrintln("v1 = " + v1 + "v2 = " + v2 + "p3 = " + p3 + "p4 = " + p4);
-        //Utility.debugPrintln("isparallel: " + calculateAngle(v1, v2) + " : " + calculateAngle(p3, p4) + " == " + (Math.abs(calculateAngle(v1, v2) - calculateAngle(p3, p4)) < this.floatTolerance));
         return Math.abs(calculateAngle(v1, v2) - calculateAngle(p3, p4)) < floatTolerance;
     }
     
@@ -76,7 +74,6 @@ public class Utility {
      * @return Slope of v1v2
      */
     public static double slope(Vertex v1, Vertex v2) {
-        //Utility.debugPrintln("Slope(" + v1 + ", " + v2 + ") = (" + v2.y + " - " + v1.y + ") / (" + v2.x + " - " + v1.x + ") = " + (v2.y - v1.y) / (v2.x - v1.x));
         return (v2.y - v1.y) / (v2.x - v1.x);
     }
     
@@ -101,11 +98,6 @@ public class Utility {
         double angle; // Angle that slope(v1v2) makes with x axis
         if (v1.x == v2.x) {
             angle = Math.toRadians(-90);
-            /*if (v1.y < v2.y) {
-                angle = Math.toRadians(90);
-            } else {
-                angle = Math.toRadians(-90);
-            }*/
         } else {
             angle = Math.atan((v1.y - v2.y) / (v2.x - v1.x));
         }
@@ -125,21 +117,13 @@ public class Utility {
     public static int isLeftOfSegment(Vertex a, Vertex b, Vertex c, double tolerance){
         Vertex left = new Vertex(), right = new Vertex();
         Utility.setLeftAndRightVertex(a, b, left, right, calculateAngle(a, b));
-        //Utility.debugPrintln("a = " + a + ", b = " + b + ", c = " + c);
         double cross = (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
-        //Utility.debugPrintln("isLeftOfSegment: cross = " + cross);
         
         Vertex ra = rotateVertex(left, midpoint(left, right), calculateAngle(left, right));
         Vertex rb = rotateVertex(right, midpoint(left, right), calculateAngle(left, right));
         Vertex rc = rotateVertex(c, midpoint(left, right), calculateAngle(left, right));
-        //Utility.debugPrintln("ra = " + ra + "rb = " + rb + "rc = " + rc);
         
         // Test if point c is on segment ab
-        //Utility.debugPrintln("isLeft: ra.y - rc.y = " + Math.abs(ra.y - rc.y) + ", rb.y - rc.y = " + Math.abs(rb.y - rc.y));
-        //Utility.debugPrintln(((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0));
-        //Utility.debugPrintln("rc.x = " + rc.x + ", min(ra.x, rb.x) = " + Math.min(ra.x, rb.x) + ", max(ra.x, rb.x) = " + Math.max(ra.x, rb.x));
-        //Utility.debugPrintln(Math.abs(rc.x - Math.max(ra.x, rb.x)) + ", " + Math.abs(rc.x - Math.min(ra.x, rb.x)));
-        //Utility.debugPrintln(((rc.x > Math.min(a.x, b.x) && rc.x < Math.max(a.x, b.x)) || Math.abs(rc.x - Math.max(a.x, b.x)) < tolerance || Math.abs(rc.x - Math.min(a.x, b.x)) < tolerance));
         if (((Math.abs(ra.y - rc.y) < tolerance && Math.abs(rb.y - rc.y) < tolerance) || cross == 0) &&
                 (rc.x > Math.min(ra.x, rb.x) && rc.x < Math.max(ra.x, rb.x) || Math.abs(rc.x - Math.max(ra.x, rb.x)) < tolerance || Math.abs(rc.x - Math.min(ra.x, rb.x)) < tolerance)) {
             return 0;
@@ -251,7 +235,6 @@ public class Utility {
      * @return Intersection point if the line segments intersect, null otherwise
      */
     public static Vertex doLineSegmentsIntersect(Vertex v1, Vertex v2, Vertex q1, Vertex q2) {
-        //Utility.debugPrintln("DoLineSegmentsIntersect: " + v1 + ", " + v2 + " : " + q1 + ", " + q2);
         Vertex r = Utility.subtractVertexs(v2, v1);
         Vertex s = Utility.subtractVertexs(q2, q1);
 
@@ -269,7 +252,6 @@ public class Utility {
                 } else {
                     intersection = v2;
                 }
-                //Utility.debugPrintln("1Found intersection at (" + intersection.x + ", " + intersection.y + ")");
                 return intersection;
             }
 
@@ -299,7 +281,6 @@ public class Utility {
             r.x *= t;
             r.y *= t;
             intersection = Utility.addVertexs(v1, r);
-            //Utility.debugPrintln("2Found intersection at (" + intersection.x + ", " + intersection.y + ")");
             return intersection;
         }
 
@@ -330,14 +311,10 @@ public class Utility {
      * @param v2 Second  point to consider
      * @param left Vertex object to assign as left point
      * @param right Vertex object to assign as right point
-     * @param axisRotation Angle of slope v1v2
      */
     public static void setLeftAndRightVertex(Vertex v1, Vertex v2, Vertex left, Vertex right, double angle) {
-        
-        //Utility.debugPrintln("Rotating " + v1 + " and " + v2 + " by " + Math.toDegrees(angle) + " degrees");
         Vertex r1 = Utility.rotateVertex(v1, Utility.midpoint(v1, v2), angle);
         Vertex r2 = Utility.rotateVertex(v2, Utility.midpoint(v1, v2), angle);
-        //Utility.debugPrintln("Rotated points: " + r1 + ", " + r2);
         
         if (Math.min(r1.x, r2.x) == r1.x) {
             left.x = v1.x;
@@ -350,7 +327,6 @@ public class Utility {
             right.x = v1.x;
             right.y = v1.y;
         }
-        
     }
     
     /**
@@ -366,12 +342,9 @@ public class Utility {
         ArrayList<Vertex> nonInnerVerts = new ArrayList();
         Vertex[] rVerts = new Vertex[4];
         // Rotate all quad vertices
-        //Utility.debugPrint("Non-Inner Vertices rVerts: ");
         for (int i = 0; i < q.getVertices().length; i ++) {
             rVerts[i] = Utility.rotateVertex(q.getVertices()[i], Utility.midpoint(a1, a2), angle);
-            //Utility.debugPrint(rVerts[i] + ", ");
         }
-        //Utility.debugPrintln();
         
         // Sort rotated quad vertices by ascending y value (more or less sweep line)
         Arrays.sort(rVerts, new Comparator<Vertex>() {
@@ -387,7 +360,6 @@ public class Utility {
             }
         });
         
-        //Utility.debugPrintln("rVerts: " + Arrays.toString(rVerts));
         double tolerance = 0.00001;
         // Check for SL hitting an edge
         if (Math.abs(rVerts[0].y - rVerts[1].y) < tolerance /*&& rVerts[0].x < rVerts[1].x*/) {
@@ -403,8 +375,6 @@ public class Utility {
         } else {
             nonInnerVerts.add(Utility.rotateVertex(rVerts[3], Utility.midpoint(a1, a2), -angle));
         }
-        
-        //Utility.debugPrintln("Non-inner vertices: " + nonInnerVerts.toString());
         
         return nonInnerVerts;
     }
