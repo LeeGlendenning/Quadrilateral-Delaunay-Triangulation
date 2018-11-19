@@ -102,7 +102,6 @@ public class Graph {
                 }
             }
         });
-        //Utility.debugPrintln(slabs.toString());
         
         // Find which horizontal slab v is in
         int i;
@@ -116,8 +115,7 @@ public class Graph {
                 break;
             }
         }
-        //Utility.debugPrintln("v in slab " + i + " between " + slabs.get(i) + " and " + slabs.get(i+1));
-
+        
         // Holds line segments represnting the intersection of edges with slab i,i+1, keyed by the edge in the DT
         List<EdgeSegment> slabSegs = findSlabSegments(slabs.get(i).x, slabs.get(i+1).x);
 
@@ -156,11 +154,6 @@ public class Graph {
         // If v on a line, it is considered to be in the region having the line as its top boundary
         int j;
         for (j = 0; j < slabSegs.size()-1; j ++) {
-            /*Utility.debugPrintln("is v left of " + slabSegs.get(j).valEdge.getVertices()[0] + ", " + slabSegs.get(j).valEdge.getVertices()[1] + ": " +
-                    (Utility.isLeftOfSegment(slabSegs.get(j).valEdge.getVertices()[0], slabSegs.get(j).valEdge.getVertices()[1], v, 0.1) == 1));
-            Utility.debugPrintln("is v right of " + slabSegs.get(j+1).valEdge.getVertices()[0] + ", " + slabSegs.get(j+1).valEdge.getVertices()[1] + ": " +
-                    (Utility.isLeftOfSegment(slabSegs.get(j).valEdge.getVertices()[0], slabSegs.get(j).valEdge.getVertices()[1], v, 0.1) == -1));*/
-            
             if (Utility.isLeftOfSegment(slabSegs.get(j).valEdge.getVertices()[0], slabSegs.get(j).valEdge.getVertices()[1], v, 0.1) == 0 ||
                     Utility.isLeftOfSegment(slabSegs.get(j+1).valEdge.getVertices()[0], slabSegs.get(j+1).valEdge.getVertices()[1], v, 0.1) == 0) {
                 // New vertex is on a line. Cannot triangulate.
@@ -169,11 +162,9 @@ public class Graph {
             if (Utility.isLeftOfSegment(slabSegs.get(j).valEdge.getVertices()[0], slabSegs.get(j).valEdge.getVertices()[1], v, 0.1) == 1 &&
                     Utility.isLeftOfSegment(slabSegs.get(j+1).valEdge.getVertices()[0], slabSegs.get(j+1).valEdge.getVertices()[1], v, 0.1) == -1) {
                 // v between slabSeg j and slabSeg j+1
-                //Utility.debugPrintln("v left of " + slabSegs.get(j).valEdge + " and right of " + slabSegs.get(j+1).valEdge);
                 break;
             }
         }
-        //Utility.debugPrintln("v in region " + j + " between " + slabSegs.get(j).valEdge + " and " + slabSegs.get(j+1).valEdge);
         
         List<Vertex> triangle = new ArrayList();
         
@@ -227,10 +218,8 @@ public class Graph {
             Vertex left, right;
             // If a vertex is on the left slab line
             if (Math.abs(e.getVertices()[0].x - leftSlabX) < tolerance) {
-                //Utility.debugPrintln("edge vertex on slab line i");
                 left = e.getVertices()[0];
             } else if (Math.abs(e.getVertices()[1].x - leftSlabX) < tolerance) {
-                //Utility.debugPrintln("edge vertex on slab line i");
                 left = e.getVertices()[1];
             } else {
                 // Neither edge vertex is on the slab line so find where it intersects
@@ -240,10 +229,8 @@ public class Graph {
 
             // If a vertex is on the right slab line
             if (Math.abs(e.getVertices()[0].x - rightSlabX) < tolerance) {
-                //Utility.debugPrintln("edge vertex on slab line i+1");
                 right = e.getVertices()[0];
             } else if (Math.abs(e.getVertices()[1].x - rightSlabX) < tolerance) {
-                //Utility.debugPrintln("edge vertex on slab line i+1");
                 right = e.getVertices()[1];
             } else {
                 // Neither edge vertex is on the slab line so find where it intersects
@@ -253,7 +240,6 @@ public class Graph {
 
             if (left != null && right != null) {
                 slabSegs.add(new EdgeSegment(e, new Edge(left, right)));
-                //Utility.debugPrintln("Adding slabSeg at " + left + ", " + right);
             }
         }
         return slabSegs;
@@ -306,7 +292,6 @@ public class Graph {
         // Ensure the Edge is not in the Graph
         Edge e = new Edge(v1, v2);
         if(this.edges.contains(e)){
-            //Utility.debugPrintln("Edge already exists. Not added.");
             return false;
         }
         
@@ -335,8 +320,6 @@ public class Graph {
        }
        
        this.edges.remove(e);
-       //Utility.debugPrintln(e.getVertices()[0] + " neighbours: " + getVertex(e.getVertices()[0].x, e.getVertices()[0].y).getNeighbours().toString());
-       //Utility.debugPrintln(e.getVertices()[1] + " neighbours: " + getVertex(e.getVertices()[1].x, e.getVertices()[1].y).getNeighbours().toString());
     }
     
     /**
@@ -379,7 +362,6 @@ public class Graph {
         this.vertices.remove(v);
         
         for (int i = v.getNeighborCount()-1; i >= 0; i --) {
-            Utility.debugPrintln("Removing neighbor ");
             this.removeEdge(v.getNeighbor(i), true);
         }
     }
