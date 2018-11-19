@@ -44,26 +44,26 @@ public class UI implements ActionListener{
     private JMenuBar menuBar;
     private JMenu fileMenu, editMenu, viewMenu, bisectorMenu, dtMenu;
     private JMenuItem clearScreenMenuItem, loadVertexMenuItem, saveVertexMenuItem, loadQuadMenuItem, saveQuadMenuItem;
-    private JMenuItem newQuadMenuItem, deleteVertexMenuItem, shortestPathMenuItem, showChartMenuItem;
+    private JMenuItem newQuadMenuItem, shortestPathMenuItem;
     private JCheckBoxMenuItem highlightPathMenuItem, showBoundaryTriangleMenuItem;
     private JCheckBoxMenuItem showCoordsMenuItem;
-    private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem, showB3SFGMenuItem; // sub-menu items for showVD
+    private JCheckBoxMenuItem showB2SMenuItem, showOnlyChosenB2SMenuItem, showB3SMenuItem, showOnlyChosenB3SMenuItem/*, showB3SFGMenuItem*/; // sub-menu items for showVD
     
-    private boolean isMousePressed = false, mouseWasDragged = false;
-    private Vertex selectedVertex = null, newVertex = null;
+    private boolean /*isMousePressed = false,*/ mouseWasDragged = false;
+    private Vertex selectedVertex = null/*, newVertex = null*/;
     private final DelaunayTriangulation delaunayTriangulation;
     
     public UI(Quadrilateral q, ArrayList<Vertex> vertexSet) {
         this.delaunayTriangulation = new DelaunayTriangulation(q, vertexSet, Toolkit.getDefaultToolkit().getScreenSize());
         createFrame();
-        /*try {
-            loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\test1"));
+        try {          
+            loadVertexSetFile(new File("C:\\Users\\leeho\\Desktop\\School\\Masters Project\\bug.txt"));
         } catch (FileNotFoundException ex) {
             Utility.debugPrintln("File not found");
-        }*/
-        Utility.debugPrintln("Width = " + Toolkit.getDefaultToolkit().getScreenSize().width);
-        Utility.debugPrintln("Height = " + Toolkit.getDefaultToolkit().getScreenSize().height);
-        //generatePoints(100);
+        }
+        //Utility.debugPrintln("Width = " + Toolkit.getDefaultToolkit().getScreenSize().width);
+        //Utility.debugPrintln("Height = " + Toolkit.getDefaultToolkit().getScreenSize().height);
+        //generatePoints(10);
     }
     
     /**
@@ -81,7 +81,7 @@ public class UI implements ActionListener{
                 // User has clicked an existing vertex
                 if ((selectedVertex = delaunayTriangulation.vertexAt(e.getX(), delaunayTriangulation.getBounds().getSize().height - e.getY())) != null) {
                     Utility.debugPrintln("Existing point");
-                    isMousePressed = true;
+                    //isMousePressed = true;
                     delaunayTriangulation.setMovingVertexLoc(selectedVertex);
                 } else {
                     // Add new vertex
@@ -91,7 +91,7 @@ public class UI implements ActionListener{
             
             @Override
             public void mouseReleased(MouseEvent e) {
-                isMousePressed = false;
+                //isMousePressed = false;
                 if (mouseWasDragged) {
                     delaunayTriangulation.moveVertex(selectedVertex, e.getX(), delaunayTriangulation.getBounds().getSize().height - e.getY());
                     mouseWasDragged = false;
@@ -161,9 +161,9 @@ public class UI implements ActionListener{
             case "Clear Screen":
                 this.delaunayTriangulation.reset();
                 break;
-            case "Remove Vertex":
+            /*case "Remove Vertex":
                 removeVertex();
-                break;
+                break;*/
             case "Define New Quadrilateral":
                 newQuadrilateral();
                 break;
@@ -204,7 +204,7 @@ public class UI implements ActionListener{
             case "Highlight Shortest Path":
                 this.delaunayTriangulation.setHighlightShortestPath(this.highlightPathMenuItem.getState());
                 break;
-            case "Show Performance Chart":
+            /*case "Show Performance Chart":
                 // Create performance time chart
                 SwingUtilities.invokeLater(() -> {
                     PerformanceChart example = new PerformanceChart("Delaunay Triangulation Runtime Performance", this.delaunayTriangulation.getPerformanceData());
@@ -213,7 +213,7 @@ public class UI implements ActionListener{
                     example.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
                     example.setVisible(true);
                 });
-                break;
+                break;*/
         }
     }
     
@@ -222,21 +222,17 @@ public class UI implements ActionListener{
      * @param numPoints Number of points to randomly generate
      */
     private void generatePoints(int numPoints) {
-        long startTime = System.nanoTime();
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int maxX = screenSize.width-100;
         int maxY = screenSize.height-130;
         int min = 100;
         
         // If a random vertex is on a line it will not be added so a for loop
-        // is not good enough
-        while (this.delaunayTriangulation.getVertices().size() < numPoints) {
+        // is not good enough. -3 to account for boundary triangle vertices
+        while (this.delaunayTriangulation.getVertices().size()-3 < numPoints) {
             addVertex(randomInt(min, maxX), randomInt(min, maxY));
         }
         
-        long endTime = System.nanoTime();
-        long duration = (endTime - startTime) / 1000000;
-        System.out.println(duration);
     }
     
     /**
@@ -443,7 +439,7 @@ public class UI implements ActionListener{
     /**
      * Allow user to specify a vertex in the VD to remove and reconstruct VD
      */
-    private void removeVertex() {
+    /*private void removeVertex() {
         //JTextField xField = new JTextField(5);
         //JTextField yField = new JTextField(5);
         JTextField vField = new JTextField(5);
@@ -457,7 +453,7 @@ public class UI implements ActionListener{
         rmPtPanel.add(new JLabel("y:"));
         rmPtPanel.add(yField);*/
 
-        int rmPtResult = JOptionPane.showConfirmDialog(null, rmPtPanel, 
+        /*int rmPtResult = JOptionPane.showConfirmDialog(null, rmPtPanel, 
                  "Enter Vertex Number", JOptionPane.OK_CANCEL_OPTION);
         if (rmPtResult == JOptionPane.OK_OPTION) {
             try {
@@ -466,7 +462,7 @@ public class UI implements ActionListener{
                 Utility.debugPrintln("Invalid vertex format. X and Y coordinates must be numbers.");
             }
         }
-    }
+    }*/
     
     /**
      * 
@@ -564,15 +560,12 @@ public class UI implements ActionListener{
         editMenu = new JMenu("Edit");
         
         clearScreenMenuItem = new JMenuItem("Clear Screen");
-        deleteVertexMenuItem = new JMenuItem("Remove Vertex");
         newQuadMenuItem = new JMenuItem("Define New Quadrilateral");
         
         clearScreenMenuItem.addActionListener(this);
-        deleteVertexMenuItem.addActionListener(this);
         newQuadMenuItem.addActionListener(this);
         
         editMenu.add(clearScreenMenuItem);
-        editMenu.add(deleteVertexMenuItem);
         editMenu.add(newQuadMenuItem);
         
         menuBar.add(editMenu);
@@ -645,15 +638,12 @@ public class UI implements ActionListener{
         shortestPathMenuItem = new JMenuItem("Find Shortest Path");
         highlightPathMenuItem = new JCheckBoxMenuItem("Highlight Shortest Path");
         highlightPathMenuItem.setState(this.delaunayTriangulation.getHighlightShortestPath());
-        showChartMenuItem = new JMenuItem("Show Performance Chart");
                 
         shortestPathMenuItem.addActionListener(this);
         highlightPathMenuItem.addActionListener(this);
-        showChartMenuItem.addActionListener(this);
         
         dtMenu.add(shortestPathMenuItem);
         dtMenu.add(highlightPathMenuItem);
-        dtMenu.add(showChartMenuItem);
         
         menuBar.add(dtMenu);
     }
